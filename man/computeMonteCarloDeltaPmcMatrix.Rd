@@ -2,7 +2,7 @@
 % Please edit documentation in R/Pmc.R
 \name{computeMonteCarloDeltaPmcMatrix}
 \alias{computeMonteCarloDeltaPmcMatrix}
-\title{Monte Carlo $\Delta P_{\rm {mc}}$ Matrix computation}
+\title{Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation}
 \usage{
 computeMonteCarloDeltaPmcMatrix(
   paramsList,

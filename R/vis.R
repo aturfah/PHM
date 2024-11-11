@@ -217,7 +217,6 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     ggplot2::ylab("") +
     ggplot2::scale_x_continuous(breaks=1:K,
                                     labels=displayAxisLabels) +
-    # ylab(TeX("$P_{MC} /$ Remaining $P_{MC}$")) +
     scale_func(expand=ggplot2::expansion(mult=c(0, 0.05))) +
     ggplot2::theme_bw() + 
     ggplot2::theme(axis.text.x=displayAxisFmt,

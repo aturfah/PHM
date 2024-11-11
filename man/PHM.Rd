@@ -17,9 +17,30 @@ PHM(
   ...
 )
 }
+\arguments{
+\item{mclustObj}{Output from \code{\link[mclust:Mclust]{mclust::Mclust()}}}
+
+\item{paramsList}{A list generated from \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}} or \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} providing the initial cluster parameter estimates}
+
+\item{partition}{A vector providing obseration partition memberships for the initial state}
+
+\item{data}{An \eqn{N \times D} matrix of observations}
+
+\item{verbose}{Boolean whether to suppress print statements}
+
+\item{computePosterior}{Boolean whether to compute the Posterior matrix for the merges}
+
+\item{partitionModel}{If specifying \code{partition}, the covariance structure to estimate the density for each partition. See \code{\link[mclust:Mclust]{mclust::Mclust()}} for more details}
+
+\item{partitionMaxComponents}{If specifying \code{partition}, the maximum number of components to estimate the density for each partition}
+
+\item{mc}{Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix}
+
+\item{...}{Parameters pased to either \code{\link[=computeDeltaPmcMatrix]{computeDeltaPmcMatrix()}} or \code{\link[=computeMonteCarloDeltaPmcMatrix]{computeMonteCarloDeltaPmcMatrix()}} to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix}
+}
 \value{
 FILL ME IN
 }
 \description{
-TODO: FILL ME IN
+TODO
 }

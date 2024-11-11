@@ -1,21 +1,21 @@
-#' Find the solution for PHM at a specified threshold
+#' Find a clustering for a given \eqn{P_{\rm{mc}}} threshold
 #'
-#' @param phm_output Output of `PHM`
-#' @param threshold Pmc threshold, default is 0.01
+#' @param phm Output of [PHM()]
+#' @param threshold \eqn{P_{\rm{mc}}} threshold, default is 0.01
 #'
-#' TODO: Fill in Returns + More detailed description
+#' @description Each step of the PHM algorithm reduces \eqn{P_{\rm{mc}}}. This gives the results from the PHM algorithm terminated when \eqn{P_{\rm{mc}}} falls below some specified threshold.
 #'
-#' @return Cluster results based on GMM satisfying specified threshold
+#' @return Result of the PHM merging procedure terminated when the \eqn{P_{\rm{mc}}} threshold is satisfied
 #' @export
-thresholdPHM <- function(phm_output, threshold=0.01) {
-  kappa <- length(phm_output)
+thresholdPHM <- function(phm, threshold=0.01) {
+  kappa <- length(phm)
   for (k in kappa:1) {
-    if (phm_output[[k]]$pmc < threshold) {
+    if (phm[[k]]$pmc < threshold) {
       break
     }
   }
 
-  return(phm_output[[k]])
+  return(phm[[k]])
 }
 
 mergeParams <- function(par1, par2) {
@@ -35,7 +35,18 @@ mergeParams <- function(par1, par2) {
 
 #' PHM Algorithm
 #'
-#' TODO: FILL ME IN
+#' @description TODO
+#' 
+#' @param mclustObj Output from [mclust::Mclust()]
+#' @param paramsList A list generated from [constructPmcParamsMclust()] or [constructPmcParamsPartition()] providing the initial cluster parameter estimates
+#' @param partition A vector providing obseration partition memberships for the initial state
+#' @param data An \eqn{N \times D} matrix of observations
+#' @param verbose Boolean whether to suppress print statements
+#' @param computePosterior Boolean whether to compute the Posterior matrix for the merges
+#' @param partitionModel If specifying `partition`, the covariance structure to estimate the density for each partition. See [mclust::Mclust()] for more details
+#' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
+#' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
+#' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #'
 #' @return FILL ME IN
 #' @export
@@ -172,6 +183,11 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
 #'
 #' @details TODO: Fill me in
 #'
+#' @param phm Output from [PHM()]
+#' @param data \eqn{N \times D} matrix of observations
+#' @param initK Number of clusters from which to start computing the posterior matrix
+#' 
+#' @return List of the same structure as from [PHM()] with `posterior_matrix` and `labels` fields calculated for the specified elements.
 #' @export
 addPosteriorMatrix <- function(phm, data, initK=length(phm)) {
   posterior_matrix <- computePosteriorProbMatrix(phm[[initK]]$params, data)

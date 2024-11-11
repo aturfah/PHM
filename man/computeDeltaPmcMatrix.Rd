@@ -2,7 +2,7 @@
 % Please edit documentation in R/Pmc.R
 \name{computeDeltaPmcMatrix}
 \alias{computeDeltaPmcMatrix}
-\title{$\Delta P_{\rm {mc}}$ Matrix computation}
+\title{\eqn{\Delta P_{\rm {mc}}} Matrix computation}
 \usage{
 computeDeltaPmcMatrix(paramsList, integralControl = list())
 }

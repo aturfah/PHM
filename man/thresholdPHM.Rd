@@ -2,20 +2,18 @@
 % Please edit documentation in R/PHM.R
 \name{thresholdPHM}
 \alias{thresholdPHM}
-\title{Find the solution for PHM at a specified threshold}
+\title{Find a clustering for a given \eqn{P_{\rm{mc}}} threshold}
 \usage{
-thresholdPHM(phm_output, threshold = 0.01)
+thresholdPHM(phm, threshold = 0.01)
 }
 \arguments{
-\item{phm_output}{Output of \code{PHM}}
+\item{phm}{Output of \code{\link[=PHM]{PHM()}}}
 
-\item{threshold}{Pmc threshold, default is 0.01
-
-TODO: Fill in Returns + More detailed description}
+\item{threshold}{\eqn{P_{\rm{mc}}} threshold, default is 0.01}
 }
 \value{
-Cluster results based on GMM satisfying specified threshold
+Result of the PHM merging procedure terminated when the \eqn{P_{\rm{mc}}} threshold is satisfied
 }
 \description{
-Find the solution for PHM at a specified threshold
+Each step of the PHM algorithm reduces \eqn{P_{\rm{mc}}}. This gives the results from the PHM algorithm terminated when \eqn{P_{\rm{mc}}} falls below some specified threshold.
 }

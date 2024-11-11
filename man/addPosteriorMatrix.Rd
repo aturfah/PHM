@@ -6,6 +6,16 @@
 \usage{
 addPosteriorMatrix(phm, data, initK = length(phm))
 }
+\arguments{
+\item{phm}{Output from \code{\link[=PHM]{PHM()}}}
+
+\item{data}{\eqn{N \times D} matrix of observations}
+
+\item{initK}{Number of clusters from which to start computing the posterior matrix}
+}
+\value{
+List of the same structure as from \code{\link[=PHM]{PHM()}} with \code{posterior_matrix} and \code{labels} fields calculated for the specified elements.
+}
 \description{
 Compute Posterior Matrix based on PHM merging
 }

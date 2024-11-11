@@ -124,7 +124,7 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 }
 
 
-#' Monte Carlo $\Delta P_{\rm {mc}}$ Matrix computation
+#' Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
 #' Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
 #'
@@ -263,7 +263,7 @@ computePmc <- function(paramsList, integralControl=list()) {
 }
 
 
-#'  $\Delta P_{\rm {mc}}$ Matrix computation
+#'  \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
 #' Compute the merging Pmc reduction matrix calculated using `cubature` package
 #'
