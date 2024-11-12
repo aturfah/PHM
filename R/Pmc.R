@@ -80,7 +80,8 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #' # partition <- c(rep(1, 100), rep(2, 100))
 #' # constructPmcParamsPartition(partition, dat)
 #'
-#' @returns List of lists where each sublist contains the GMM density estimates
+#' @returns List of lists where each sublist contains the 
+#' proportion, mean, covariance matrix estimates
 #' for each group in the partition.
 #' @export
 constructPmcParamsPartition <- function(partition, data, ...) {
@@ -126,9 +127,14 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 
 #' Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
+#' @description 
 #' Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
 #'
-#' See [computeMonteCarloPmc()] for a breakdown of the parameters
+#' @details TODO: Fill me in
+#' 
+#' @inheritParams computeMonteCarloPmc
+#' 
+#' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
 #' @export
 computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=T) {
   K <- length(paramsList)
@@ -156,7 +162,7 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #' Compute Pmc for a given Gaussian mixture distribution based on `cubature` package
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
-#' @param integralControl Specifies arguments for integration methods. See details.
+#' @param integralControl List specifying arguments to pass to [cubature::cubintegrate()]. See details.
 #'
 #' @details
 #' TODO: Clear this up
@@ -267,7 +273,12 @@ computePmc <- function(paramsList, integralControl=list()) {
 #'
 #' Compute the merging Pmc reduction matrix calculated using `cubature` package
 #'
-#' See [computePmc()] for a breakdown of the parameters
+#' @inheritParams computePmc
+#' 
+#' @details See [computePmc] for description of `integralControl` parameters.
+#' 
+#' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
+#' 
 #' @export
 computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
   K <- length(paramsList)

@@ -136,14 +136,29 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 
 #' Visualize PHM merging procedure via Dendrogram
 #'
-#' @details TODO: Fill me in
+#' @description TODO: Fill me in
 #'
+#' @param phm Output from [PHM()]
+#' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
+#' @param uniformHeights Boolean whether the difference in heights of the merges should be constant or dependent on the reduction of \eqn{P_{\rm{mc}}}
+#' @param threshold Error threshold for the integral past which to represent the merges as dashed lines
+#' @param suppressLabels Boolean whether or not to display \eqn{P_{\rm{mc}}} reduction labels on the dendrogram or not
+#' @param mergeLabels String indicating what value to display in the labels on the dendrogram
+#' @param mergeLabelsSize Text size for the numeric value in the labels on the dendrogram
+#' @param mergeLabelsPadding Padding for the merge label text
+#' @param mergeLabelsR Radius for the rounded edges of the merge label box
+#' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram
+#' @param displayAxisSize Text size for the leaf node labels
+#' @param colorAxis Whether or not to color the labels on the leaf nodes
+#' 
+#' @details TODO: Fill me in
+#' 
 #' @export 
 plotPHMDendrogram <- function(phm, colors=NULL, 
                               uniformHeights=F, 
                               threshold=0,
-                              suppress_labels=F,
-                              mergeLabels=c("delta", "pmc", "pct"),
+                              suppressLabels=F,
+                              mergeLabels=c("delta", "pmc", "percent"),
                               mergeLabelsSize=2,
                               mergeLabelsBorderSize=0.15,
                               mergeLabelsPadding=0.15,
@@ -228,7 +243,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
                    legend.position="none"
     )
 
-  if (!suppress_labels) {
+  if (!suppressLabels) {
     plt <- plt + ggplot2::geom_label(data=pmc_dendro_data$labels,
                             ggplot2::aes(x=xposn, y=y+offset, label=lab),
                             size=mergeLabelsSize,
@@ -242,7 +257,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
 #' Generate the distruct plot from the posterior matrix
 #'
-#' QQQ
+#' @description TODO: Fill me in
 #'
 #' @param phm Output from the [PHM()] function
 #' @param K Number of clusters for which to generate the distruct plot
@@ -250,6 +265,8 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 #' @param colors Optinal vector with colors for the mixture components
 #' @param axisTextSize Size for axis labels
 #'
+#' @details TODO: Fill me in
+#' 
 #' @export
 plotPHMDistruct <- function(phm, K=length(phm),
                             colors=NULL,
@@ -343,8 +360,21 @@ plotPHMDistruct <- function(phm, K=length(phm),
 
 #' Plot \eqn{\Delta \P_{\rm{mc}}} matrix
 #'
-#' @param temp doot
+#' @description TODO: Fill  me in
+#' 
+#' @param phm Output from [PHM()]
+#' @param K Number of clusters for which to visualize the heatmap
+#' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
+#' @param displayAxis String indicating what label to place along the axis (corresponding to clusters)
+#' @param displayAxisSize Text size for the axis labels
+#' @param colorAxis Whether or not to color the axis labels
+#' @param visScale Whether to display the raw \eqn{\Delta P_{\rm{mc}}} values or scale them to be percent of total \eqn{P_{\rm{mc}}}
+#' @param visSize Text size for the values inside the heatmap
+#' @param visThreshold At what value suppress the value and show "< (visThreshold)"
+#' @param visDigits Number of digits to round the displayed values
 #'
+#' @details TODO: Fill me in
+#' 
 #' @return pew
 #' @export
 plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
