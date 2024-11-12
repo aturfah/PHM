@@ -6,9 +6,17 @@
 \usage{
 computeDeltaPmcMatrix(paramsList, integralControl = list())
 }
+\arguments{
+\item{paramsList}{List containing lists with each component GMM parameters. See \code{generateDistbnFunc} for format of components.}
+
+\item{integralControl}{List specifying arguments to pass to \code{\link[cubature:cubintegrate]{cubature::cubintegrate()}}. See details.}
+}
+\value{
+\eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
+}
 \description{
 Compute the merging Pmc reduction matrix calculated using \code{cubature} package
 }
 \details{
-See \code{\link[=computePmc]{computePmc()}} for a breakdown of the parameters
+See \link{computePmc} for description of \code{integralControl} parameters.
 }

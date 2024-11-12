@@ -9,8 +9,8 @@ plotPHMDendrogram(
   colors = NULL,
   uniformHeights = F,
   threshold = 0,
-  suppress_labels = F,
-  mergeLabels = c("delta", "pmc", "pct"),
+  suppressLabels = F,
+  mergeLabels = c("delta", "pmc", "percent"),
   mergeLabelsSize = 2,
   mergeLabelsBorderSize = 0.15,
   mergeLabelsPadding = 0.15,
@@ -20,8 +20,33 @@ plotPHMDendrogram(
   colorAxis = NULL
 )
 }
+\arguments{
+\item{phm}{Output from \code{\link[=PHM]{PHM()}}}
+
+\item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
+
+\item{uniformHeights}{Boolean whether the difference in heights of the merges should be constant or dependent on the reduction of \eqn{P_{\rm{mc}}}}
+
+\item{threshold}{Error threshold for the integral past which to represent the merges as dashed lines}
+
+\item{suppressLabels}{Boolean whether or not to display \eqn{P_{\rm{mc}}} reduction labels on the dendrogram or not}
+
+\item{mergeLabels}{String indicating what value to display in the labels on the dendrogram}
+
+\item{mergeLabelsSize}{Text size for the numeric value in the labels on the dendrogram}
+
+\item{mergeLabelsPadding}{Padding for the merge label text}
+
+\item{mergeLabelsR}{Radius for the rounded edges of the merge label box}
+
+\item{displayAxis}{String indicating what label to place on the leaf nodes of the dendrogram}
+
+\item{displayAxisSize}{Text size for the leaf node labels}
+
+\item{colorAxis}{Whether or not to color the labels on the leaf nodes}
+}
 \description{
-Visualize PHM merging procedure via Dendrogram
+TODO: Fill me in
 }
 \details{
 TODO: Fill me in

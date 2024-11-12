@@ -24,5 +24,8 @@ plotPHMDistruct(
 \item{axisTextSize}{Size for axis labels}
 }
 \description{
-QQQ
+TODO: Fill me in
+}
+\details{
+TODO: Fill me in
 }

@@ -12,9 +12,23 @@ computeMonteCarloDeltaPmcMatrix(
   verbose = T
 )
 }
+\arguments{
+\item{paramsList}{List containing lists with each component GMM parameters. See \code{generateDistbnFunc} for format of components.}
+
+\item{mcSamples}{Numeric for number of MC samples to use to approximate the integral. Default 1e5}
+
+\item{batchSize}{Numeric for the observations to assign to each core. Helps with memory concerns. Default 1e3.}
+
+\item{numCores}{Number of cores to use in parallel::mclapply call. Default is \code{floor(detectCores() / 2)}.}
+
+\item{verbose}{Boolean whether to print output messages}
+}
+\value{
+\eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
+}
 \description{
 Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
 }
 \details{
-See \code{\link[=computeMonteCarloPmc]{computeMonteCarloPmc()}} for a breakdown of the parameters
+TODO: Fill me in
 }

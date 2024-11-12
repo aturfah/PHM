@@ -9,7 +9,7 @@ computePmc(paramsList, integralControl = list())
 \arguments{
 \item{paramsList}{List containing lists with each component GMM parameters. See \code{generateDistbnFunc} for format of components.}
 
-\item{integralControl}{Specifies arguments for integration methods. See details.}
+\item{integralControl}{List specifying arguments to pass to \code{\link[cubature:cubintegrate]{cubature::cubintegrate()}}. See details.}
 }
 \value{
 Output from the \code{cubature::cubintegrate()} function.

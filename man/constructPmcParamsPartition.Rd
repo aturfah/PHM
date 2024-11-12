@@ -12,7 +12,8 @@ constructPmcParamsPartition(partition, data, ...)
 \item{data}{Numeric matrix}
 }
 \value{
-List of lists where each sublist contains the GMM density estimates
+List of lists where each sublist contains the
+proportion, mean, covariance matrix estimates
 for each group in the partition.
 }
 \description{

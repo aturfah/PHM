@@ -18,11 +18,32 @@ plotPmcMatrix(
 )
 }
 \arguments{
-\item{temp}{doot}
+\item{phm}{Output from \code{\link[=PHM]{PHM()}}}
+
+\item{K}{Number of clusters for which to visualize the heatmap}
+
+\item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
+
+\item{displayAxis}{String indicating what label to place along the axis (corresponding to clusters)}
+
+\item{displayAxisSize}{Text size for the axis labels}
+
+\item{colorAxis}{Whether or not to color the axis labels}
+
+\item{visScale}{Whether to display the raw \eqn{\Delta P_{\rm{mc}}} values or scale them to be percent of total \eqn{P_{\rm{mc}}}}
+
+\item{visSize}{Text size for the values inside the heatmap}
+
+\item{visThreshold}{At what value suppress the value and show "< (visThreshold)"}
+
+\item{visDigits}{Number of digits to round the displayed values}
 }
 \value{
 pew
 }
 \description{
-Plot \eqn{\Delta \P_{\rm{mc}}} matrix
+TODO: Fill  me in
+}
+\details{
+TODO: Fill me in
 }
