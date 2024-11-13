@@ -111,7 +111,7 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 
   output$label_column <- if (mergeLabels == "delta") {
     output$pmc_change
-  } else if (mergeLabels == "pct") {
+  } else if (mergeLabels == "percent") {
     output$pmc_pct
   } else {
     output$pmc
