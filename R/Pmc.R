@@ -334,3 +334,40 @@ computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
 
   output
 }
+
+
+#' Pairwise \eqn{P_{\rm{mc}}} Matrix computation
+#' 
+#' @description TODO: FILL ME IN
+#' 
+#' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
+#' @param mc Boolean whether to compute \eqn{P_{\rm mc}} with Monte Carlo integration or cubature integration
+#' @param ... Additional parameters passed to [computePmc()] or [computeMonteCarloPmc()]
+#' 
+#' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
+#' 
+#' @export 
+computePairwisePmcMatrix <- function(paramsList, mc=T, ...) {
+  K <- length(paramsList)
+  output <- matrix(0, K, K)
+  for (i in 1:K) {
+    for (j in 1:K) {
+      if (i <= j) next
+
+      params_i <- paramsList[[i]]
+      params_j <- paramsList[[j]]
+
+      params_i$prob <- 0.5
+      params_j$prob <- 0.5
+
+      if (mc) {
+        ppmc <- computeMonteCarloPmc(paramsList, verbose=F, ...)
+      } else {
+        ppmc <- computePmc(paramsList, verbose=F, ...)$integral
+      }
+      output[i, j] <- ppmc
+      output[j, i] <- ppmc
+    }
+  }
+  return(output)
+}
