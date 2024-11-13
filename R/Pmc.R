@@ -357,8 +357,8 @@ computePairwisePmcMatrix <- function(paramsList, mc=T, ...) {
       params_i <- paramsList[[i]]
       params_j <- paramsList[[j]]
 
-      params_i$prob <- 0.5
-      params_j$prob <- 0.5
+      params_i$prob <- 0.5 * params_i$prob / sum(params_i$prob)
+      params_j$prob <- 0.5 * params_j$prob / sum(params_j$prob)
 
       if (mc) {
         ppmc <- computeMonteCarloPmc(paramsList, verbose=F, ...)
