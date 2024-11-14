@@ -25,7 +25,7 @@
 #' # mcl <- Mclust(dat)
 #' # constructPmcParamsMclust(mcl)
 #'
-#' @returns List of lists where each sublist contains the parameters for the 
+#' @returns List of lists where each sublist contains the parameters for the
 #' mixture component or a single list if `singleEleemnt` is `TRUE`.
 #' @export
 constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
@@ -69,18 +69,19 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #'
 #' @details
 #' TODO: Fill me in.
-#' 
+#'
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
 #' @param partition Vector of labels for observations
 #' @param data Numeric matrix
+#' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
 #' # dat <- c(rnorm(100), rnorm(100, 3))
 #' # partition <- c(rep(1, 100), rep(2, 100))
-#' # constructPmcParamsPartition(partition, dat)
+#' # constructPmcParamsPartition(partition, dat, G=1:5)
 #'
-#' @returns List of lists where each sublist contains the 
+#' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
 #' for each group in the partition.
 #' @export
@@ -102,11 +103,11 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 
 #' Monte Carlo \eqn{P_{\rm{mc}}} computation
 #'
-#' @description 
+#' @description
 #' Compute Monte Carlo estimate of Pmc associated with given cluster parameters based on Gaussian cluster assumption.
-#' 
+#'
 #' @details TODO: Fill me in.
-#' 
+#'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
 #' @param mcSamples Numeric for number of MC samples to use to approximate the integral. Default 1e5
 #' @param batchSize Numeric for the observations to assign to each core. Helps with memory concerns. Default 1e3.
@@ -127,13 +128,13 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 
 #' Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
-#' @description 
+#' @description
 #' Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
 #'
 #' @details TODO: Fill me in
-#' 
+#'
 #' @inheritParams computeMonteCarloPmc
-#' 
+#'
 #' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
 #' @export
 computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=T) {
@@ -274,11 +275,11 @@ computePmc <- function(paramsList, integralControl=list()) {
 #' Compute the merging Pmc reduction matrix calculated using `cubature` package
 #'
 #' @inheritParams computePmc
-#' 
+#'
 #' @details See [computePmc] for description of `integralControl` parameters.
-#' 
+#'
 #' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
-#' 
+#'
 #' @export
 computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
   K <- length(paramsList)
@@ -337,16 +338,16 @@ computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
 
 
 #' Pairwise \eqn{P_{\rm{mc}}} Matrix computation
-#' 
+#'
 #' @description TODO: FILL ME IN
-#' 
+#'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
 #' @param mc Boolean whether to compute \eqn{P_{\rm mc}} with Monte Carlo integration or cubature integration
 #' @param ... Additional parameters passed to [computePmc()] or [computeMonteCarloPmc()]
-#' 
+#'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
-#' 
-#' @export 
+#'
+#' @export
 computePairwisePmcMatrix <- function(paramsList, mc=T, ...) {
   K <- length(paramsList)
   output <- matrix(0, K, K)

@@ -10,6 +10,8 @@ constructPmcParamsPartition(partition, data, ...)
 \item{partition}{Vector of labels for observations}
 
 \item{data}{Numeric matrix}
+
+\item{...}{Parameters passed to \code{\link[mclust:Mclust]{mclust::Mclust()}}}
 }
 \value{
 List of lists where each sublist contains the
@@ -27,6 +29,6 @@ See \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}} for a de
 \examples{
 # dat <- c(rnorm(100), rnorm(100, 3))
 # partition <- c(rep(1, 100), rep(2, 100))
-# constructPmcParamsPartition(partition, dat)
+# constructPmcParamsPartition(partition, dat, G=1:5)
 
 }
