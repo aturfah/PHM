@@ -576,27 +576,40 @@ plotPHMMatrix <- function(phm, colors=NULL,
                   Z=log10(Z))
 
   plot_lims <- c(min(matrix_long$Z, na.rm=T),
-               max(matrix_long$Z, na.rm=T))
+                 max(matrix_long$Z, na.rm=T))
+  mid_point <- mean(plot_lims)
 
+  # mid_point <- log10(mean(10^plot_lims))
+  # print(mid_point)
+
+  # print(displayAxisLabels)
+  # print(unique(matrix_long$X))
+  # print(unique(matrix_long$Y))
+  # print(pmc_dendro_data$xlab)
+
+  ## Can be cleaned up, vestigial code from Pmc Matrix
   matrix_long %>%
     dplyr::mutate(Z=Z,
                   Z.mod = Z,
                   Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
-    mutate(X=factor(X, levels=displayAxisLabels, ordered=T),
-          Y=factor(Y, levels=displayAxisLabels, ordered=T)) %>%
+    mutate(X=factor(X, levels=pmc_dendro_data$xlab, ordered=T),
+           Y=factor(Y, levels=pmc_dendro_data$xlab, ordered=T)) %>%
     ggplot2::ggplot(aes(X, Y, fill = Z)) +
     ggplot2::geom_tile(color = gridColor) +
     ggplot2::scale_fill_gradient2(limits = plot_lims,
                                   low = "blue",
-                                  mid="white",
-                                  midpoint = mean(plot_lims),
+                                  # mid="white",
+                                  midpoint = mid_point,
                                   high = "red",
                                   aesthetics = "fill") +
     ggplot2::theme_bw() +
     ggplot2::coord_flip() +
     ggplot2::xlab("") + ggplot2::ylab("") +
+    ggplot2::scale_x_discrete(labels=displayAxisLabels) +
+    ggplot2::scale_y_discrete(labels=displayAxisLabels) +
     ggplot2::theme(legend.position = legendPosition,
       panel.grid = ggplot2::element_blank(),
-      axis.text.x=displayAxisFmt,
-      axis.text.y=displayAxisFmt)
+      axis.text.x = displayAxisFmt,
+      axis.text.y = displayAxisFmt,
+      legend.title = ggplot2::element_blank())
 }
