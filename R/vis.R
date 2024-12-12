@@ -502,6 +502,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
                           gridColor="black",
                           legendPosition="none") {
   displayAxis = match.arg(displayAxis)
+  K <- length(phm)
 
   ## Same preprocessing as plotPmcMatrix
   ## By default, only color with "box" axis display; otherwise no color
@@ -565,6 +566,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
                                 label_map[[mc["col"]]])
     label_map[[mc["col"]]] <- NULL
   }
+  colnames(merge_matrix) <- paste0("V", seq_along(phm))
 
   matrix_long <- merge_matrix %>%
     dplyr::as_tibble(.name_repair = "unique") %>%
