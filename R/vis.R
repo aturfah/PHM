@@ -23,7 +23,7 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
     for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt # height_tracker[[posn]]$height + hgt
 
     ## For the components that were merged, add a vertical bar for them
-    new_rows <- rbind(c(ID=component_id_map[mcs[1]], 
+    new_rows <- rbind(c(ID=component_id_map[mcs[1]],
                         y=height_tracker[[mcs[1]]]$base,
                         yend=height_tracker[[mcs[1]]]$height,
                         pmc=pmc_remains[idx],
@@ -103,7 +103,7 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
     ) %>%
     dplyr::mutate(y=yend)
   output <- dplyr::bind_rows(
-    output, 
+    output,
     horiz_comps
   )
 
@@ -150,12 +150,12 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 #' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram
 #' @param displayAxisSize Text size for the leaf node labels
 #' @param colorAxis Whether or not to color the labels on the leaf nodes
-#' 
+#'
 #' @details TODO: Fill me in
-#' 
-#' @export 
-plotPHMDendrogram <- function(phm, colors=NULL, 
-                              uniformHeights=F, 
+#'
+#' @export
+plotPHMDendrogram <- function(phm, colors=NULL,
+                              uniformHeights=F,
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
@@ -169,7 +169,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
   displayAxis <- match.arg(displayAxis)
   mergeLabels <- match.arg(mergeLabels)
   K <- length(phm)
-  pmc_dendro_data <- constructPHMDendrogramData(phm, 
+  pmc_dendro_data <- constructPHMDendrogramData(phm,
                                                 uniformHeights = uniformHeights,
                                                 mergeLabels=mergeLabels,
                                                 threshold=threshold)
@@ -178,7 +178,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
-   
+  
   ## Default is the paired pallette; only if K < 12
   if (colorAxis && is.null(colors)) {
     if (K > 12) {
@@ -203,7 +203,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     }
   }
   displayAxisFmt <- ggtext::element_markdown(
-        color=unname(colors[pmc_dendro_data$xlab]), 
+        color=unname(colors[pmc_dendro_data$xlab]),
         size=displayAxisSize)
   displayAxisLabels <- if (displayAxis == "box") {
     rep("\U25A0", K)
@@ -221,9 +221,9 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     offset <- 0
     scale_func <- ggplot2::scale_y_continuous
   }
-  
+ 
   plt <- ggplot2::ggplot(
-      pmc_dendro_data$df, 
+      pmc_dendro_data$df,
       ggplot2::aes(x=x, y=y+offset, xend=xend, yend=yend+offset)) +
     ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="dashed"), linetype="dashed") +
     ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="solid"), linetype="solid") +
@@ -233,7 +233,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     ggplot2::scale_x_continuous(breaks=1:K,
                                     labels=displayAxisLabels) +
     scale_func(expand=ggplot2::expansion(mult=c(0, 0.05))) +
-    ggplot2::theme_bw() + 
+    ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x=displayAxisFmt,
                    axis.text.y=ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
@@ -266,7 +266,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 #' @param axisTextSize Size for axis labels
 #'
 #' @details TODO: Fill me in
-#' 
+#'
 #' @export
 plotPHMDistruct <- function(phm, K=length(phm),
                             colors=NULL,
@@ -361,7 +361,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
 #' Plot \eqn{\Delta \P_{\rm{mc}}} matrix
 #'
 #' @description TODO: Fill  me in
-#' 
+#'
 #' @param phm Output from [PHM()]
 #' @param K Number of clusters for which to visualize the heatmap
 #' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
@@ -374,7 +374,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
 #' @param visDigits Number of digits to round the displayed values
 #'
 #' @details TODO: Fill me in
-#' 
+#'
 #' @return pew
 #' @export
 plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
@@ -426,7 +426,7 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
   }
 
   displayAxisFmt <- ggtext::element_markdown(
-        color=unname(colors), 
+        color=unname(colors),
         size=displayAxisSize)
 
 
@@ -481,4 +481,120 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
           axis.text.y=displayAxisFmt)
 
   return(htmp)
+}
+
+
+#' Visualize PHM dendrogram structure
+#'
+#' @description TODO: Fill me in
+#'
+#' @param doot pew
+#'
+#' @details FILL ME IN
+#'
+#' @return pew
+#' @export
+#'
+plotPHMMatrix <- function(phm, colors=NULL,
+                          displayAxis=c("box", "label", "index", "none"),
+                          displayAxisSize=NULL,
+                          colorAxis=NULL,
+                          gridColor="black",
+                          legendPosition="none") {
+  displayAxis = match.arg(displayAxis)
+
+  ## Same preprocessing as plotPmcMatrix
+  ## By default, only color with "box" axis display; otherwise no color
+  if (is.null(colorAxis)) {
+    colorAxis <- displayAxis == "box" || !is.null(colors)
+  }
+  
+  ## Default is the paired pallette; only if K < 12
+  if (colorAxis && is.null(colors)) {
+    if (K > 12) {
+      warning("More clusters than in default pallette. Suppressing coloring.")
+      colors <- rep("#000000", K)
+    } else {
+      colors <- RColorBrewer::brewer.pal(K, "Paired")
+    }
+  } else if (colorAxis && K > length(colors)) {
+    warning("Not enough colors provided. Suppressing coloring.")
+    colors <- rep("#000000", K)
+  } else if (!colorAxis) {
+    colors <- rep("#000000", K)
+  }
+
+  ## Set axis theme
+  if (is.null(displayAxisSize)) {
+    if (displayAxis == "box") {
+        displayAxisSize <- 8
+    } else {
+        displayAxisSize <- 10
+    }
+  }
+  pmc_dendro_data <- constructPHMDendrogramData(phm)
+  displayAxisFmt <- ggtext::element_markdown(
+        color=unname(colors[pmc_dendro_data$xlab]),
+        size=displayAxisSize)
+  displayAxisLabels <- if (displayAxis == "box") {
+    rep("\U25A0", K)
+  } else if (displayAxis == "label") {
+    pmc_dendro_data$display_names
+  } else if (displayAxis == "index") {
+    pmc_dendro_data$xlab
+  } else {
+    NULL
+  }
+
+  ## Construct Merging Matrix
+  label_map <- as.list(seq_along(phm))
+  merge_matrix <- matrix(NA, nrow=length(phm), ncol=length(phm))
+  for (x in rev(seq_along(phm))) {
+    mc <- phm[[x]]$merge_components
+
+    if (sum(mc) < 0 || x == 1) next
+
+    grid <- expand.grid(label_map[[mc["row"]]],
+                        label_map[[mc["col"]]])
+
+    merge_matrix[grid[, 1], grid[, 2]] <- phm[[x-1]]$pmc_change
+    merge_matrix[grid[, 2], grid[, 1]] <- phm[[x-1]]$pmc_change
+
+    ## Update
+    label_map[[mc["row"]]] <- c(label_map[[mc["row"]]],
+                                label_map[[mc["col"]]])
+    label_map[[mc["col"]]] <- NULL
+  }
+
+  matrix_long <- merge_matrix %>%
+    dplyr::as_tibble(.name_repair = "unique") %>%
+    tibble::rowid_to_column(var = "X") %>%
+    tidyr::gather(key = "Y", value = "Z", -1) %>%
+    dplyr::mutate(Y = as.numeric(gsub("V", "", Y)),
+                  Z=log10(Z))
+
+  plot_lims <- c(min(matrix_long$Z, na.rm=T),
+               max(matrix_long$Z, na.rm=T))
+
+  matrix_long %>%
+    dplyr::mutate(Z=Z,
+                  Z.mod = Z,
+                  Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
+    mutate(X=factor(X, levels=displayAxisLabels, ordered=T),
+          Y=factor(Y, levels=displayAxisLabels, ordered=T)) %>%
+    ggplot2::ggplot(aes(X, Y, fill = Z)) +
+    ggplot2::geom_tile(color = gridColor) +
+    ggplot2::scale_fill_gradient2(limits = plot_lims,
+                                  low = "blue",
+                                  mid="white",
+                                  midpoint = mean(plot_lims),
+                                  high = "red",
+                                  aesthetics = "fill") +
+    ggplot2::theme_bw() +
+    ggplot2::coord_flip() +
+    ggplot2::xlab("") + ggplot2::ylab("") +
+    ggplot2::theme(legend.position = legendPosition,
+      panel.grid = ggplot2::element_blank(),
+      axis.text.x=displayAxisFmt,
+      axis.text.y=displayAxisFmt)
 }
