@@ -1,10 +1,17 @@
-constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta", threshold=1e-3) {
+constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels="delta", threshold=1e-3) {
   K <- length(phm)
   pmc <- phm[[K]]$pmc
   pmc_remains <- sapply(K:2, function(k) phm[[k]]$pmc)
   pmc_change <- sapply((K-1):1, function(k) phm[[k]]$pmc_change)
-  height <- if (uniformHeights) {1:(K-1)} else {
-    pmc / (pmc_remains)
+  height <- if (scaleHeights == "uniform") {
+    1:(K-1)
+  } else {
+    1 + pmc / pmc_remains
+  }
+  if (scaleHeights == "log10") {
+    height = log10(height)
+  } else if (scaleHeights == "log2") {
+    height = log2(height)
   }
   merge_components <- t(sapply(K:2, function(k) phm[[k]]$merge_components))
 
@@ -43,8 +50,9 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 
     ## Make note of the combined merge nodes so we have the merges stored somewhere
     merge_tree[[mcs[1]]] <- list(
-      merge_tree[[mcs[1]]],
-      merge_tree[[mcs[2]]]
+      left=merge_tree[[mcs[1]]],
+      right=merge_tree[[mcs[2]]],
+      order=idx
     )
     merge_tree[[mcs[2]]] <- NULL
 
@@ -75,7 +83,6 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
     sapply(vec, function(x) which(x_posns == x))
   }
   output <- dplyr::mutate(output, x=ifelse(y==0, map_xposns(ID), NA))
-
 
   while(any(is.na(output))) {
     output <- output %>%
@@ -140,7 +147,7 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 #'
 #' @param phm Output from [PHM()]
 #' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
-#' @param uniformHeights Boolean whether the difference in heights of the merges should be constant or dependent on the reduction of \eqn{P_{\rm{mc}}}
+#' @param scaleHeights String specifying how to set the heights in the dendrogram.
 #' @param threshold Error threshold for the integral past which to represent the merges as dashed lines
 #' @param suppressLabels Boolean whether or not to display \eqn{P_{\rm{mc}}} reduction labels on the dendrogram or not
 #' @param mergeLabels String indicating what value to display in the labels on the dendrogram
@@ -155,7 +162,7 @@ constructPHMDendrogramData <- function(phm, uniformHeights=F, mergeLabels="delta
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              uniformHeights=F,
+                              scaleHeights=c("unscaled", "log10", "log2", "uniform"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
@@ -166,11 +173,12 @@ plotPHMDendrogram <- function(phm, colors=NULL,
                               displayAxis=c("box", "label", "index", "none"),
                               displayAxisSize=NULL,
                               colorAxis=NULL) {
+  scaleHeights = match.arg(scaleHeights)
   displayAxis <- match.arg(displayAxis)
   mergeLabels <- match.arg(mergeLabels)
   K <- length(phm)
   pmc_dendro_data <- constructPHMDendrogramData(phm,
-                                                uniformHeights = uniformHeights,
+                                                scaleHeights = scaleHeights,
                                                 mergeLabels=mergeLabels,
                                                 threshold=threshold)
 
@@ -215,16 +223,12 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     NULL
   }
 
-  offset <- 1
-  scale_func <- ggplot2::scale_y_log10
-  if (uniformHeights) {
-    offset <- 0
-    scale_func <- ggplot2::scale_y_continuous
-  }
- 
+
+  scale_func <- ggplot2::scale_y_continuous # ggplot2::scale_y_log10
+
   plt <- ggplot2::ggplot(
       pmc_dendro_data$df,
-      ggplot2::aes(x=x, y=y+offset, xend=xend, yend=yend+offset)) +
+      ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
     ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="dashed"), linetype="dashed") +
     ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="solid"), linetype="solid") +
     # xlab("Mixture Component ID") +
@@ -245,7 +249,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
   if (!suppressLabels) {
     plt <- plt + ggplot2::geom_label(data=pmc_dendro_data$labels,
-                            ggplot2::aes(x=xposn, y=y+offset, label=lab),
+                            ggplot2::aes(x=xposn, y=y, label=lab),
                             size=mergeLabelsSize,
                             label.size=mergeLabelsBorderSize,
                             label.padding = ggplot2::unit(mergeLabelsPadding, "lines"),
