@@ -7,7 +7,7 @@
 plotPHMDendrogram(
   phm,
   colors = NULL,
-  uniformHeights = F,
+  scaleHeights = c("unscaled", "log10", "log2", "uniform"),
   threshold = 0,
   suppressLabels = F,
   mergeLabels = c("delta", "pmc", "percent"),
@@ -25,7 +25,7 @@ plotPHMDendrogram(
 
 \item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
 
-\item{uniformHeights}{Boolean whether the difference in heights of the merges should be constant or dependent on the reduction of \eqn{P_{\rm{mc}}}}
+\item{scaleHeights}{String specifying how to set the heights in the dendrogram.}
 
 \item{threshold}{Error threshold for the integral past which to represent the merges as dashed lines}
 
