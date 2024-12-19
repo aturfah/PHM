@@ -162,7 +162,7 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("unscaled", "log10", "log2", "uniform"),
+                              scaleHeights=c("log10", "unscaled", "log2", "uniform"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
