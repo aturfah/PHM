@@ -186,7 +186,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
-  
+
   ## Default is the paired pallette; only if K < 12
   if (colorAxis && is.null(colors)) {
     if (K > 12) {
@@ -513,7 +513,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
-  
+
   ## Default is the paired pallette; only if K < 12
   if (colorAxis && is.null(colors)) {
     if (K > 12) {
@@ -596,8 +596,8 @@ plotPHMMatrix <- function(phm, colors=NULL,
     dplyr::mutate(Z=Z,
                   Z.mod = Z,
                   Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
-    mutate(X=factor(X, levels=pmc_dendro_data$xlab, ordered=T),
-           Y=factor(Y, levels=pmc_dendro_data$xlab, ordered=T)) %>%
+    dplyr::mutate(X=factor(X, levels=pmc_dendro_data$xlab, ordered=T),
+                  Y=factor(Y, levels=pmc_dendro_data$xlab, ordered=T)) %>%
     ggplot2::ggplot(aes(X, Y, fill = Z)) +
     ggplot2::geom_tile(color = gridColor) +
     ggplot2::scale_fill_gradient2(limits = plot_lims,
