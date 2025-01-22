@@ -1,5 +1,13 @@
-constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels="delta", threshold=1e-3) {
+constructPHMDendrogramData <- function(phm,
+                                       scaleHeights="unscaled",
+                                       mergeLabels="delta",
+                                       threshold=1e-3,
+                                       groupProbs=NULL) {
   K <- length(phm)
+  if (is.null(groupProbs)) {
+    groupProbs <- rep(1, K)
+  }
+
   pmc <- phm[[K]]$pmc
   pmc_remains <- sapply(K:2, function(k) phm[[k]]$pmc)
   pmc_change <- sapply((K-1):1, function(k) phm[[k]]$pmc_change)
@@ -16,6 +24,7 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
   merge_components <- t(sapply(K:2, function(k) phm[[k]]$merge_components))
 
   ## Figure out the components that merge together
+  groupProbs_new <- groupProbs
   output <- data.frame()
   merge_tree <- lapply(1:K, function(k) k)
   height_tracker <- lapply(1:K, function(k) list(base=0, height=0))
@@ -35,18 +44,27 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
                         yend=height_tracker[[mcs[1]]]$height,
                         pmc=pmc_remains[idx],
                         pmc_pct=pmc_change[idx]/pmc,
-                        pmc_change=pmc_change[idx]),
+                        pmc_change=pmc_change[idx],
+                        gprob=groupProbs_new[mcs[1]] ),
                       c(ID=component_id_map[mcs[2]],
                         y=height_tracker[[mcs[2]]]$base,
                         yend=height_tracker[[mcs[2]]]$height,
                         pmc=pmc_remains[idx],
                         pmc_pct=pmc_change[idx]/pmc,
-                        pmc_change=pmc_change[idx]))
+                        pmc_change=pmc_change[idx],
+                        gprob=groupProbs_new[mcs[2]]))
     if (nrow(output) == 0)  {
       output <- data.frame(new_rows)
     } else {
       output <- rbind(new_rows, output)
     }
+
+    ## Combine the group probs based on parameters
+    probs1 <- sum(phm[[K - idx + 1]]$params[[mcs[1]]]$prob)
+    probs2 <- sum(phm[[K - idx + 1]]$params[[mcs[2]]]$prob)
+    groupProbs_new[mcs[1]] <- (groupProbs_new[mcs[1]] * probs1 +
+        groupProbs_new[mcs[2]] * probs2) / (probs1 + probs2)
+    groupProbs_new <- groupProbs_new[-mcs[2]]
 
     ## Make note of the combined merge nodes so we have the merges stored somewhere
     merge_tree[[mcs[1]]] <- list(
@@ -91,8 +109,9 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
                     ID=ID.x,
                     pmc=pmc.x,
                     pmc_pct=pmc_pct.x,
-                    pmc_change=pmc_change.x) %>%
-      dplyr::group_by(ID, y, yend, x, pmc, pmc_change, pmc_pct) %>%
+                    pmc_change=pmc_change.x,
+                    gprob=gprob.x) %>%
+      dplyr::group_by(ID, y, yend, x, pmc, pmc_change, pmc_pct, gprob) %>%
       dplyr::summarize(x=ifelse(all(is.na(x)), mean(x.y), mean(x)),
                 xend=x, .groups="keep") %>%
       dplyr::ungroup() %>%
@@ -106,6 +125,7 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
     dplyr::summarize(
       xend=max(x),
       x=min(x),
+      gprob=mean(gprob),
       .groups="keep"
     ) %>%
     dplyr::mutate(y=yend)
@@ -157,6 +177,9 @@ constructPHMDendrogramData <- function(phm, scaleHeights="unscaled", mergeLabels
 #' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram
 #' @param displayAxisSize Text size for the leaf node labels
 #' @param colorAxis Whether or not to color the labels on the leaf nodes
+#' @param groupProbs Vector of class probability conditional on base group membership
+#' @param groupColorMax Color of lines corresponding to high group probability
+#' @param groupColorMin Color of lines corresponding to low group probability
 #'
 #' @details TODO: Fill me in
 #'
@@ -172,15 +195,27 @@ plotPHMDendrogram <- function(phm, colors=NULL,
                               mergeLabelsR=0.1,
                               displayAxis=c("box", "label", "index", "none"),
                               displayAxisSize=NULL,
-                              colorAxis=NULL) {
+                              colorAxis=NULL,
+                              groupProbs=NULL,
+                              groupColorMax="black",
+                              groupColorMin="lightgray") {
   scaleHeights = match.arg(scaleHeights)
   displayAxis <- match.arg(displayAxis)
   mergeLabels <- match.arg(mergeLabels)
   K <- length(phm)
+
+  if (!is.null(groupProbs) && length(groupProbs) != K) {
+    stop("If specified, groupProbs must have same length as phm")
+  }
+  if (!is.null(groupProbs)) {
+    groupProbs <- unname(groupProbs)
+  }
+
   pmc_dendro_data <- constructPHMDendrogramData(phm,
                                                 scaleHeights = scaleHeights,
                                                 mergeLabels=mergeLabels,
-                                                threshold=threshold)
+                                                threshold=threshold,
+                                                groupProbs=groupProbs)
 
   ## By default, only color with "box" axis display; otherwise no color
   if (is.null(colorAxis)) {
@@ -225,17 +260,20 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
 
   scale_func <- ggplot2::scale_y_continuous # ggplot2::scale_y_log10
-
-  plt <- ggplot2::ggplot(
-      pmc_dendro_data$df,
-      ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
-    ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="dashed"), linetype="dashed") +
-    ggplot2::geom_segment(data=dplyr::filter(pmc_dendro_data$df, linetype=="solid"), linetype="solid") +
+  plt <- ggplot2::ggplot(pmc_dendro_data$df,
+                         ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
+    ggplot2::geom_segment(ggplot2::aes(color=gprob),
+                          data=dplyr::filter(pmc_dendro_data$df, linetype=="dashed"),
+                          linetype="dashed") +
+    ggplot2::geom_segment(ggplot2::aes(color=gprob),
+                          data=dplyr::filter(pmc_dendro_data$df, linetype=="solid"),
+                          linetype="solid") +
     # xlab("Mixture Component ID") +
     ggplot2::xlab("") +
     ggplot2::ylab("") +
     ggplot2::scale_x_continuous(breaks=1:K,
                                     labels=displayAxisLabels) +
+    ggplot2::scale_color_gradient(low=groupColorMin, high=groupColorMax) +
     scale_func(expand=ggplot2::expansion(mult=c(0, 0.05))) +
     ggplot2::theme_bw() +
     ggplot2::theme(axis.text.x=displayAxisFmt,
@@ -249,7 +287,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
   if (!suppressLabels) {
     plt <- plt + ggplot2::geom_label(data=pmc_dendro_data$labels,
-                            ggplot2::aes(x=xposn, y=y, label=lab),
+                            ggplot2::aes(x=xposn, y=y, label=lab, alpha=NULL),
                             size=mergeLabelsSize,
                             label.size=mergeLabelsBorderSize,
                             label.padding = ggplot2::unit(mergeLabelsPadding, "lines"),
@@ -598,7 +636,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
                   Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
     dplyr::mutate(X=factor(X, levels=pmc_dendro_data$xlab, ordered=T),
                   Y=factor(Y, levels=pmc_dendro_data$xlab, ordered=T)) %>%
-    ggplot2::ggplot(aes(X, Y, fill = Z)) +
+    ggplot2::ggplot(ggplot2::aes(X, Y, fill = Z)) +
     ggplot2::geom_tile(color = gridColor) +
     ggplot2::scale_fill_gradient2(limits = plot_lims,
                                   low = "blue",
