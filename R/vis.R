@@ -617,7 +617,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
   if (fillScale == "Pmc") {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "distinguishabilityCriterion"))
-    fillScaleFunc <- function(z) -inv_log10(log10(x))
+    fillScaleFunc <- function(x) -inv_log10(log10(x))
   }
   matrix_long <- merge_matrix %>%
     dplyr::as_tibble(.name_repair = "unique") %>%
