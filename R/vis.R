@@ -542,8 +542,11 @@ plotPHMMatrix <- function(phm, colors=NULL,
                           displayAxisSize=NULL,
                           colorAxis=NULL,
                           gridColor="black",
+                          fillLimits=NULL,
+                          fillScale=c("log10", "Pmc"),
                           legendPosition="none") {
   displayAxis = match.arg(displayAxis)
+  fillScale = match.arg(fillScale)
   K <- length(phm)
 
   ## Same preprocessing as plotPmcMatrix
@@ -610,15 +613,26 @@ plotPHMMatrix <- function(phm, colors=NULL,
   }
   colnames(merge_matrix) <- paste0("V", seq_along(phm))
 
+  fillScaleFunc <- log10
+  if (fillScale == "Pmc") {
+    load(system.file("extdata", "pmc_scale_function.RData", 
+                     package = "distinguishabilityCriterion"))
+    fillScaleFunc <- function(z) -inv_log10(log10(x))
+  }
   matrix_long <- merge_matrix %>%
     dplyr::as_tibble(.name_repair = "unique") %>%
     tibble::rowid_to_column(var = "X") %>%
     tidyr::gather(key = "Y", value = "Z", -1) %>%
     dplyr::mutate(Y = as.numeric(gsub("V", "", Y)),
-                  Z=log10(Z))
+                  Z=fillScaleFunc(Z))
 
-  plot_lims <- c(min(matrix_long$Z, na.rm=T),
-                 max(matrix_long$Z, na.rm=T))
+  if (is.null(fillLimits)) {
+    plot_lims <- c(min(matrix_long$Z, na.rm=T),
+                  max(matrix_long$Z, na.rm=T))
+  } else {
+    plot_lims <- fillLimits
+  }
+
   mid_point <- mean(plot_lims)
 
   # mid_point <- log10(mean(10^plot_lims))
