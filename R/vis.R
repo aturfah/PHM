@@ -624,19 +624,29 @@ plotPHMMatrix <- function(phm, colors=NULL,
     tibble::rowid_to_column(var = "X") %>%
     tidyr::gather(key = "Y", value = "Z", -1) %>%
     dplyr::mutate(Y = as.numeric(gsub("V", "", Y)),
+                  Z.old=Z,
                   Z=fillScaleFunc(Z))
 
+  plot_lims <- fillLimits
   if (is.null(fillLimits)) {
-    plot_lims <- c(min(matrix_long$Z, na.rm=T),
-                  max(matrix_long$Z, na.rm=T))
+    plot_lims <- c(min(matrix_long$Z.old, na.rm=T),
+                  max(matrix_long$Z.old, na.rm=T))
+  } else if (is.na(fillLimits[1])) {
+    plot_lims[1] <- min(matrix_long$Z.old, na.rm=T)
+  } else if (is.na(fillLimits[2])) {
+    plot_lims[2] <- max(matrix_long$Z.old, na.rm=T)
+  }
+
+  if (fillScale == "log10") {
+    plot_lims <- log10(plot_lims)
   } else {
-    plot_lims <- fillLimits
+    plot_lims <- -inv_log10(log10(plot_lims))
   }
 
   mid_point <- mean(plot_lims)
-
-  # mid_point <- log10(mean(10^plot_lims))
-  # print(mid_point)
+  # print(min(matrix_long$Z, na.rm=T))
+  # print(max(matrix_long$Z, na.rm=T))
+  # print(fillLimits)
 
   # print(displayAxisLabels)
   # print(unique(matrix_long$X))
