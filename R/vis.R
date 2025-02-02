@@ -17,9 +17,9 @@ constructPHMDendrogramData <- function(phm,
     1 + pmc / pmc_remains
   }
   if (scaleHeights == "log10") {
-    height = log10(height)
+    height <- log10(height)
   } else if (scaleHeights == "log2") {
-    height = log2(height)
+    height <- log2(height)
   }
   merge_components <- t(sapply(K:2, function(k) phm[[k]]$merge_components))
 
