@@ -11,6 +11,8 @@ plotPHMMatrix(
   displayAxisSize = NULL,
   colorAxis = NULL,
   gridColor = "black",
+  fillLimits = NULL,
+  fillScale = c("log10", "Pmc"),
   legendPosition = "none"
 )
 }

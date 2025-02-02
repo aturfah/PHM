@@ -17,7 +17,10 @@ plotPHMDendrogram(
   mergeLabelsR = 0.1,
   displayAxis = c("box", "label", "index", "none"),
   displayAxisSize = NULL,
-  colorAxis = NULL
+  colorAxis = NULL,
+  groupProbs = NULL,
+  groupColorMax = "black",
+  groupColorMin = "lightgray"
 )
 }
 \arguments{
@@ -44,6 +47,12 @@ plotPHMDendrogram(
 \item{displayAxisSize}{Text size for the leaf node labels}
 
 \item{colorAxis}{Whether or not to color the labels on the leaf nodes}
+
+\item{groupProbs}{Vector of class probability conditional on base group membership}
+
+\item{groupColorMax}{Color of lines corresponding to high group probability}
+
+\item{groupColorMin}{Color of lines corresponding to low group probability}
 }
 \description{
 TODO: Fill me in
