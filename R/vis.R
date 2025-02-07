@@ -667,7 +667,11 @@ plotPHMMatrix <- function(phm, colors=NULL,
                                   # mid="white",
                                   midpoint = mid_point,
                                   high = "red",
-                                  aesthetics = "fill") +
+                                  aesthetics = "fill",
+                                  breaks=c(plot_lims[1],
+                                           plot_lims[2]),
+                                  labels=c("Least", "Most"),
+                                  name="Similarity") +
     ggplot2::theme_bw() +
     ggplot2::coord_flip() +
     ggplot2::xlab("") + ggplot2::ylab("") +
@@ -676,6 +680,5 @@ plotPHMMatrix <- function(phm, colors=NULL,
     ggplot2::theme(legend.position = legendPosition,
       panel.grid = ggplot2::element_blank(),
       axis.text.x = displayAxisFmt,
-      axis.text.y = displayAxisFmt,
-      legend.title = ggplot2::element_blank())
+      axis.text.y = displayAxisFmt)
 }
