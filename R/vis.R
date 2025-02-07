@@ -670,7 +670,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
                                   aesthetics = "fill",
                                   breaks=c(plot_lims[1],
                                            plot_lims[2]),
-                                  labels=c("Least", "Most"),
+                                  labels=c("Low", "High"),
                                   name="Similarity") +
     ggplot2::theme_bw() +
     ggplot2::coord_flip() +
