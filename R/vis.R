@@ -14,7 +14,7 @@ constructPHMDendrogramData <- function(phm,
   height <- if (scaleHeights == "uniform") {
     1:(K-1)
   } else {
-    1 + pmc / pmc_remains
+    pmc / pmc_remains
   }
   if (scaleHeights == "log10") {
     height <- log10(height)
