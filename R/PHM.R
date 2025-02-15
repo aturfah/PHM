@@ -115,12 +115,17 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     labels=if(computePosterior) {rep(1, N)} else {NULL},
     pmc_change=NA,
     params=NULL,
+    pmc_components=1,
+    pmc_accum=0,
     merge_components=c(-1, -1),
     pmc=0))
 
   pmc <- sum(delta_pmc)
   tmp_delta <- delta_pmc
   tmp_params <- paramsList
+  components <- rep(1, K)
+  tmp_comp <- 1
+  pmc_accum <- rep(0, K)
 
   for (idx in K:2) {
     ## Store the results
@@ -128,8 +133,11 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     output[[idx]]$labels <- class_labels[data_labels]
     output[[idx]]$pmc <- sum(tmp_delta)
     output[[idx]]$params <- tmp_params
+    output[[idx]]$pmc_components <- tmp_comp
     if (idx < K) {
       output[[idx]]$pmc_change <- output[[idx+1]]$pmc - output[[idx]]$pmc
+      output[[idx]]$pmc_accum <- pmc_accum[i]
+      pmc_accum[i] <- pmc_accum[i] + output[[idx]]$pmc_change
     }
     output[[idx]]$pmc_matrix <- tmp_delta
     output[[idx]]$posterior_matrixrix <- posterior_matrix
@@ -150,7 +158,16 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     new_row_delta[i] <- 0
     new_row_delta <- new_row_delta[-j]
 
-    ## New row for Pairwise Pmc Matrix
+    ## Keep track of the components and accumulated Pmc for height
+    pmc_accum[i] <- pmc_accum[i] + pmc_accum[j]
+    pmc_accum[i] <- pmc_accum[i]
+    pmc_accum <- pmc_accum[-j]
+
+    components[i] <- components[i] + components[j]
+    tmp_comp <- components[i] * (components[i] - 1) / 2
+    components <- components[-j]
+
+    ## Construct new Merge Parameter
     merged_params <- mergeParams(tmp_params[[i]], tmp_params[[j]])
 
     ## Shrink matrix my removing j row/column
@@ -175,6 +192,8 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   }
 
   output[[1]]$pmc_change <- output[[2]]$pmc
+  output[[1]]$pmc_components <- tmp_comp
+  output[[1]]$pmc_accum <- pmc - output[[1]]$pmc_change
 
   output
 }

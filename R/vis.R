@@ -11,8 +11,13 @@ constructPHMDendrogramData <- function(phm,
   pmc <- phm[[K]]$pmc
   pmc_remains <- sapply(K:2, function(k) phm[[k]]$pmc)
   pmc_change <- sapply((K-1):1, function(k) phm[[k]]$pmc_change)
+  pmc_components <- sapply((K-1):1, function(k) phm[[k]]$pmc_components)
+  pmc_accum <- sapply((K-1):1, function(k) phm[[k]]$pmc_accum)
+
   height <- if (scaleHeights == "uniform") {
     1:(K-1)
+  } else if(scaleHeights == "accum") {
+    pmc_change / pmc_components# (pmc_change + pmc_accum) / pmc_components
   } else {
     pmc / pmc_remains
   }
@@ -20,6 +25,11 @@ constructPHMDendrogramData <- function(phm,
     height <- 1 + log10(height)
   } else if (scaleHeights == "log2") {
     height <- 1 + log2(height)
+  } else if (scaleHeights == "accum") {
+    load(system.file("extdata", "pmc_scale_function.RData", 
+                     package = "distinguishabilityCriterion"))
+    height <- inv_log10(log10(height))
+    height <- (height / min(height))^2
   }
   merge_components <- t(sapply(K:2, function(k) phm[[k]]$merge_components))
 
@@ -36,7 +46,7 @@ constructPHMDendrogramData <- function(phm,
     hgt <- height[idx]
 
     ## Add this height to all components in height_tracker
-    for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt # height_tracker[[posn]]$height + hgt
+    for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt
 
     ## For the components that were merged, add a vertical bar for them
     new_rows <- rbind(c(ID=component_id_map[mcs[1]],
@@ -185,7 +195,7 @@ constructPHMDendrogramData <- function(phm,
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("log10", "unscaled", "log2", "uniform"),
+                              scaleHeights=c("log10", "unscaled", "log2", "uniform", "accum"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
