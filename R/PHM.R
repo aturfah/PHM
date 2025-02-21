@@ -117,6 +117,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     params=NULL,
     pmc_components=1,
     pmc_accum=0,
+    min_merge_pmc=NA,
     merge_components=c(-1, -1),
     pmc=0))
 
@@ -126,6 +127,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   components <- rep(1, K)
   tmp_comp <- 1
   pmc_accum <- rep(0, K)
+  component_map <- lapply(1:K, function(x) x)
 
   for (idx in K:2) {
     ## Store the results
@@ -138,6 +140,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
       output[[idx]]$pmc_change <- output[[idx+1]]$pmc - output[[idx]]$pmc
       output[[idx]]$pmc_accum <- pmc_accum[i]
       pmc_accum[i] <- pmc_accum[i] + output[[idx]]$pmc_change
+      output[[idx]]$min_merge_pmc <- min_merge_pmc
     }
     output[[idx]]$pmc_matrix <- tmp_delta
     output[[idx]]$posterior_matrixrix <- posterior_matrix
@@ -158,13 +161,22 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     new_row_delta[i] <- 0
     new_row_delta <- new_row_delta[-j]
 
+    ## Track minimum Pmc between the components
+    component_map[[i]] <- c(component_map[[i]], component_map[[j]])
+    candidate_posns <- as.matrix(expand.grid(component_map[[i]], component_map[[i]]))
+    candidate_posns <- candidate_posns[which(candidate_posns[, 1] - candidate_posns[, 2] != 0), ]
+    min_merge_pmc <- delta_pmc[candidate_posns]
+    min_merge_pmc <- min(min_merge_pmc[which(min_merge_pmc > 0)]) ## Ignore 0 values for this case
+    component_map[[j]] <- NULL
+
+
     ## Keep track of the components and accumulated Pmc for height
     pmc_accum[i] <- pmc_accum[i] + pmc_accum[j]
     pmc_accum[i] <- pmc_accum[i]
     pmc_accum <- pmc_accum[-j]
 
     components[i] <- components[i] + components[j]
-    tmp_comp <- components[i] * (components[i] - 1) / 2
+    tmp_comp <- components[i]
     components <- components[-j]
 
     ## Construct new Merge Parameter
@@ -194,6 +206,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   output[[1]]$pmc_change <- output[[2]]$pmc
   output[[1]]$pmc_components <- tmp_comp
   output[[1]]$pmc_accum <- pmc - output[[1]]$pmc_change
+  output[[1]]$min_merge_pmc <- min_merge_pmc
 
   output
 }

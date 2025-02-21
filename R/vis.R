@@ -1,5 +1,5 @@
 constructPHMDendrogramData <- function(phm,
-                                       scaleHeights="unscaled",
+                                       scaleHeights="average",
                                        mergeLabels="delta",
                                        threshold=1e-3,
                                        groupProbs=NULL) {
@@ -12,24 +12,28 @@ constructPHMDendrogramData <- function(phm,
   pmc_remains <- sapply(K:2, function(k) phm[[k]]$pmc)
   pmc_change <- sapply((K-1):1, function(k) phm[[k]]$pmc_change)
   pmc_components <- sapply((K-1):1, function(k) phm[[k]]$pmc_components)
-  pmc_accum <- sapply((K-1):1, function(k) phm[[k]]$pmc_accum)
+  pmc_min <- sapply((K-1):1, function(k) phm[[k]]$min_merge_pmc)
 
   height <- if (scaleHeights == "uniform") {
     1:(K-1)
-  } else if(scaleHeights == "accum") {
-    pmc_change / pmc_components# (pmc_change + pmc_accum) / pmc_components
+  } else if(scaleHeights == "average") {
+    pmc_change / choose(pmc_components, 2)
+  } else if (scaleHeights == "min") {
+    pmc_min
   } else {
     pmc / pmc_remains
   }
+
   if (scaleHeights == "log10") {
     height <- 1 + log10(height)
   } else if (scaleHeights == "log2") {
     height <- 1 + log2(height)
-  } else if (scaleHeights == "accum") {
+  } else if (scaleHeights %in% c("average", "min")) {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "distinguishabilityCriterion"))
     height <- inv_log10(log10(height))
-    height <- (height / min(height))^2
+    height <- height^2
+    height <- height + (1:length(height)) * 1e-6 ## Slight height offset
   }
   merge_components <- t(sapply(K:2, function(k) phm[[k]]$merge_components))
 
@@ -195,7 +199,7 @@ constructPHMDendrogramData <- function(phm,
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("log10", "unscaled", "log2", "uniform", "accum"),
+                              scaleHeights=c("average", "min", "log10", "unscaled", "log2", "uniform"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
@@ -553,10 +557,11 @@ plotPHMMatrix <- function(phm, colors=NULL,
                           colorAxis=NULL,
                           gridColor="black",
                           fillLimits=NULL,
+                          # fillValue=c("deltaPmc", "minDeltaPmc", "scaledDeltaPmc"),
                           fillScale=c("log10", "Pmc"),
                           legendPosition="none") {
-  displayAxis = match.arg(displayAxis)
-  fillScale = match.arg(fillScale)
+  displayAxis <- match.arg(displayAxis)
+  fillScale <- match.arg(fillScale)
   K <- length(phm)
 
   ## Same preprocessing as plotPmcMatrix
@@ -654,14 +659,6 @@ plotPHMMatrix <- function(phm, colors=NULL,
   }
 
   mid_point <- mean(plot_lims)
-  # print(min(matrix_long$Z, na.rm=T))
-  # print(max(matrix_long$Z, na.rm=T))
-  # print(fillLimits)
-
-  # print(displayAxisLabels)
-  # print(unique(matrix_long$X))
-  # print(unique(matrix_long$Y))
-  # print(pmc_dendro_data$xlab)
 
   ## Can be cleaned up, vestigial code from Pmc Matrix
   matrix_long %>%
