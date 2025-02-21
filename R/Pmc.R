@@ -318,7 +318,7 @@ computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
 
   for (i in 1:(K-1)) {
     for (j in ((i+1):K)) {
-      res <- cubintegrate(
+      res <- cubature::cubintegrate(
         f=generatePmcReductionFunc(i, j),
         lower=rep(intCont$lowerLimit, D),
         upper=rep(intCont$upperLimit, D),
