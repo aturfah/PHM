@@ -120,6 +120,16 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
   K <- length(paramsList)
   if (K == 1) return(0)
 
+  probs <- lapply(paramsList, function(x) x$prob)
+  total_prob <- Reduce(sum, probs)
+
+  if (total_prob != 1) {
+    warning("Probabilities in paramsList do not sum to 1. Re-scaling...")
+    for (idx in 1:K) {
+      paramsList[[idx]]$prob <- paramsList[[idx]]$prob / total_prob
+    }
+  }
+
   post_mat <- posteriorMatrixMCPmc(paramsList, mcSamples, batchSize, numCores, verbose)
 
   return(sum(post_mat * (1 - post_mat)) / mcSamples)
