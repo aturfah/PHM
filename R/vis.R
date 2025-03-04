@@ -16,18 +16,16 @@ constructPHMDendrogramData <- function(phm,
 
   height <- if (scaleHeights == "uniform") {
     1:(K-1)
-  } else if(scaleHeights == "average") {
-    pmc_change / choose(pmc_components, 2)
   } else if (scaleHeights == "min") {
     pmc_min
   } else {
-    pmc / pmc_remains
+    pmc_change / choose(pmc_components, 2)
   }
 
   if (scaleHeights == "log10") {
-    height <- 1 + log10(height)
+    height <- -log10(height)
   } else if (scaleHeights == "log2") {
-    height <- 1 + log2(height)
+    height <- -log2(height)
   } else if (scaleHeights %in% c("average", "min")) {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "distinguishabilityCriterion"))
