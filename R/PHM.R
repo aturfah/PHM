@@ -61,7 +61,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   posterior_matrix <- NULL
   data_labels <- NULL
   if (!is.null(mclustObj)) {
-    if (is.null(data) & computePosterior) {
+    if (is.null(data) && computePosterior) {
       ## Data/Posterior Matrix assumed from the object
       data <- mclustObj$data
       posterior_matrix <- mclustObj$z
@@ -125,7 +125,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   tmp_delta <- delta_pmc
   tmp_params <- paramsList
   components <- rep(1, K)
-  tmp_comp <- 1
+  tmp_comp <- 2
   pmc_accum <- rep(0, K)
   component_map <- lapply(1:K, function(x) x)
 

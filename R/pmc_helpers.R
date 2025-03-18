@@ -95,7 +95,7 @@ computePosteriorProbMatrix <- function(paramsList, data) {
                          densJ <- generateDistbnFunc(paramsList[[j]])
                          sum(paramsList[[j]]$prob) * densJ(data)
                        }))
-  t(apply(distbn.mat, 1, function(x) x / sum(x)))
+  t(apply(distbn.mat, 1, function(x) if (sum(x) != 0) x / sum(x) else x + 1 / length(x)))
 }
 
 

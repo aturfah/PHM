@@ -101,6 +101,153 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 }
 
 
+weightedMclust <- function(data, weights, 
+                           init_data=NULL, init_idx=NULL,
+                           G=NULL, modelNames=NULL, ...) {
+  
+  if (is.null(dim(data))) data <- matrix(data, ncol=1)
+  
+  if (is.null(init_data)) {
+    if (is.null(init_idx)) {
+      init_data <- data
+    } else {
+      init_data <- data[init_idx, , drop=F]
+    }
+  }
+  
+  hc_init <- hc(data = init_data, 
+                modelName = mclust::mclust.options("hcModelName"), 
+                use = mclust::mclust.options("hcUse"))
+  
+  ## Prepare the for loop
+  if (is.null(G)) G <- 1:5
+  if (is.null(modelNames)) modelNames <- mclust::mclust.options("emModelNames")
+  
+  ## For provided G, fit the baseline GMM and then tune with weights
+  res <- expand.grid(G=G, mn=modelNames) %>%
+    data.frame() %>%
+    apply(1, function (id_vec) {
+      g <- as.numeric(id_vec["G"])
+      mn <- id_vec["mn"]
+
+      mcl <- mclust::Mclust(init_data,
+                            G=g, modelNames=mn,
+                            initialization=list(hcPairs=hc_init),
+                            verbose=F, ...)
+
+      ## Model fails to fit, automatically fail
+      if (is.null(mcl$parameters)) {
+        mcl$bic <- -Inf
+        return(mcl)
+      }
+
+      ## Model names don't align with estep
+      mn_old <- mn
+      if (g == 1) {
+        mn <- gsub("X", "V", mcl$modelName)
+      }
+      # print(paste(g, mn_old, mn, mcl$modelName))
+
+      ## Get the Z matrix for data from mcl
+      mcl$data <- data
+      mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
+      mcl$z <- mcl$z + .Machine$double.eps^2
+      mcl$z <- mcl$z / rowSums(mcl$z)
+
+      do.call("me.weighted", c(list(weights=weights), mcl))
+    })
+
+  maxBIC <- -Inf
+  model <- NULL
+  for (mcl in res) {
+    if (mcl$bic > maxBIC) model <- mcl
+    maxBIC <- max(maxBIC, mcl$bic)
+  }
+  
+  model
+}
+
+
+#' Construct \eqn{P_{\rm{mc}}} parameter list from a partition with weights
+#'
+#' @description
+#' Estimates the weighted mixture model density for a partition of the data using `Mclust`
+#'
+#' @details
+#' TODO: Fill me in.
+#'
+#' See [constructPmcParamsMclust()] for a description of the output.
+#'
+#' @param partition Vector of labels for observations
+#' @param data Numeric matrix
+#' @param weights Numeric matrix
+#' @param threshold Threshold past which to not include weights (for computational efficiency)
+#' @param ... Parameters passed to [mclust::Mclust()]
+#'
+#' @examples
+#' # dat <- c(rnorm(100), rnorm(100, 3))
+#' # partition <- c(rep(1, 100), rep(2, 100))
+#' # constructPmcParamsPartition(partition, dat, G=1:5)
+#'
+#' @returns List of lists where each sublist contains the
+#' proportion, mean, covariance matrix estimates
+#' for each group in the partition.
+#' @export
+constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, threshold=1e-4, ...) {
+  if (!is.factor(partition)) partition <- as.factor(partition)
+  K <- length(unique(partition))
+
+  if (is.null(dim(data)))
+    data <- matrix(data, ncol=1)
+
+  if (nrow(data) != length(partition))
+    stop("data and partition must have same number of observations")
+
+  ## Validate weights
+  if (is.null(weights)) {
+    # dist_mat <- as.matrix(dist(data, "euc"))
+    dist_to_clust <- sapply(unique(partition), function(k) {
+      clust_idx <- which(partition == k)
+      clust_mat <- data[clust_idx, ]
+      sapply(1:nrow(data), function(idx) {
+        clust_dist <- colSums((t(clust_mat) - data[idx, ])^2)
+
+        # min(dist_mat[idx, clust_idx])
+        min(clust_dist[which(clust_dist > 0)])
+      })
+    })
+    print(dim(dist_to_clust))
+    weights <- exp(-1 * dist_to_clust^2)
+    weights <- weights/ rowSums(weights)
+  } else if (is.matrix(weights)) {
+    if (ncol(weights) != K)
+      stop("weights must have 1 column per cluster")
+    if (nrow(weights) != nrow(data))
+      stop("weights must have 1 row per observation")
+  } else {
+    stop("Weights must be provided as an {Observations}x{Clusters} matrix")
+  }
+
+  label_ids <- unique(partition)
+  lapply(label_ids, function(k) {
+    idx <- which(label_ids == k)
+    dat <- data[which(partition == k), , drop=F]
+    w <- weights[, idx]
+
+    ## Filter ignore observations with w < threshold
+    valid <- which(w >= threshold)
+    data_valid <- data[valid, , drop=F]
+    w <- w[valid]
+
+    wmcl <- weightedMclust(data_valid, weights = w, init_data = dat, ...)
+    pars <- constructPmcParamsMclust(wmcl, T)
+    pars$class <- k
+    pars$prob <- pars$prob * nrow(dat) / nrow(data)
+    return(pars)
+  })
+}
+
+
 #' Monte Carlo \eqn{P_{\rm{mc}}} computation
 #'
 #' @description
