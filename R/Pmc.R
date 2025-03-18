@@ -216,7 +216,6 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
         min(clust_dist[which(clust_dist > 0)])
       })
     })
-    print(dim(dist_to_clust))
     weights <- exp(-1 * dist_to_clust^2)
     weights <- weights/ rowSums(weights)
   } else if (is.matrix(weights)) {
