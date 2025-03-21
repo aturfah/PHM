@@ -182,6 +182,7 @@ weightedMclust <- function(data, weights,
 #' @param data Numeric matrix
 #' @param weights Numeric matrix
 #' @param threshold Threshold past which to not include weights (for computational efficiency)
+#' @param linkFunc Function to use to combine all distances within a cluster for weights. Default is min
 #' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
@@ -193,7 +194,7 @@ weightedMclust <- function(data, weights,
 #' proportion, mean, covariance matrix estimates
 #' for each group in the partition.
 #' @export
-constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, threshold=1e-4, ...) {
+constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, threshold=1e-4, linkFunc=min, ...) {
   if (!is.factor(partition)) partition <- as.factor(partition)
   K <- length(unique(partition))
 
@@ -211,13 +212,11 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
       clust_mat <- data[clust_idx, ]
       sapply(1:nrow(data), function(idx) {
         clust_dist <- colSums((t(clust_mat) - data[idx, ])^2)
-
-        # min(dist_mat[idx, clust_idx])
-        min(clust_dist[which(clust_dist > 0)])
+        linkFunc(clust_dist[which(clust_dist > 0)])
       })
     })
-    weights <- exp(-1 * dist_to_clust^2)
-    weights <- weights/ rowSums(weights)
+    weights <- exp(-1 * dist_to_clust)
+    weights <- weights / rowSums(weights)
   } else if (is.matrix(weights)) {
     if (ncol(weights) != K)
       stop("weights must have 1 column per cluster")
