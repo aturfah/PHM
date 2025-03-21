@@ -175,6 +175,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     pmc_accum[i] <- pmc_accum[i]
     pmc_accum <- pmc_accum[-j]
 
+    # tmp_comp <- max(components[i], components[j])
     components[i] <- components[i] + components[j]
     tmp_comp <- components[i]
     components <- components[-j]
