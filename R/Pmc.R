@@ -200,6 +200,9 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 
   if (is.null(dim(data)))
     data <- matrix(data, ncol=1)
+  else if (!is.matrix(data)) {
+    stop("data must be a matrix")
+  }
 
   if (nrow(data) != length(partition))
     stop("data and partition must have same number of observations")
