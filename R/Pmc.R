@@ -120,7 +120,7 @@ weightedMclust <- function(data, weights,
                 use = mclust::mclust.options("hcUse"))
   
   ## Prepare the for loop
-  if (is.null(G)) G <- 1:5
+  if (is.null(G)) G <- 1:10
   if (is.null(modelNames)) modelNames <- mclust::mclust.options("emModelNames")
   
   ## For provided G, fit the baseline GMM and then tune with weights
