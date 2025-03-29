@@ -53,6 +53,7 @@ mergeParams <- function(par1, par2) {
 PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
                 verbose=T,
                 computePosterior=T,
+                partitionWeightedDensity=T,
                 partitionModel="VVI",
                 partitionMaxComponents=10,
                 mc=T, ...) {
@@ -72,13 +73,26 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     if (is.null(data)) {
       stop("Must provide data")
     }
-    if (verbose) cat("Estimating partition densities\n")
-    paramsList <- constructPmcParamsPartition(partition, data,
-                                           modelNames=partitionModel,
-                                           G=1:partitionMaxComponents)
+    if (is.null(paramsList)) {
+      if (verbose) cat("Estimating partition densities\n")
+      partDensFunc <- if (partitionWeightedDensity) {
+        constructPmcParamsWeightedPartition
+      } else {
+        constructPmcParamsPartition
+      }
+      paramsList <- partDensFunc(partition, data,
+                                modelNames=partitionModel,
+                                G=1:partitionMaxComponents)
+    }
+    part_levels <- sapply(paramsList, function(x) x$class)
+    data_labels <- as.numeric(factor(partition, levels=part_levels))
   } else if (!is.null(paramsList)) {
     if (is.null(data)) {
       stop("Must provide data")
+    }
+    if (!is.null(partition)) {
+      part_levels <- sapply(paramsList, function(x) x$class)
+      data_labels <- as.numeric(factor(partition, levels=part_levels))
     }
   } else {
     stop("Must provide one of mclustObj, paramsList, or partition")
@@ -93,7 +107,9 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
     if (is.null(posterior_matrix)) {
       if (verbose) cat("PHM Constructing Posterior Data Matrix\n")
       posterior_matrix <- computePosteriorProbMatrix(paramsList, data)
-      data_labels <- apply(posterior_matrix, 1, which.max)
+      if (is.null(partition)) {
+        data_labels <- apply(posterior_matrix, 1, which.max)
+      }
     }
   }
   N <- nrow(data)
