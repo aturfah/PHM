@@ -328,7 +328,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
                             colors=NULL,
                             labels=NULL,
                             axisTextSize=6,
-                            partition=T) {
+                            partition=F) {
 
   ## Validation for colors
   if (is.null(colors) && K > 12) {
@@ -338,7 +338,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
   }
 
   ## Validation for labels
-  if (partition && K == length(phm)) {
+  if (partition && (K == length(phm))) {
     ## Onehot encode the cluster labels to get posterior
     clust_labels <- phm[[K]]$labels
     clust_levels <- sapply(phm[[K]]$params, function(x) x$class)
