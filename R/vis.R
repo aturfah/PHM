@@ -319,6 +319,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 #' @param labels Ground truth class labels for the observations (ordered factor vector)
 #' @param colors Optinal vector with colors for the mixture components
 #' @param axisTextSize Size for axis labels
+#' @param partition Whether to visualize from the posterior matrix or partition labels
 #'
 #' @details TODO: Fill me in
 #'
@@ -326,7 +327,8 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 plotPHMDistruct <- function(phm, K=length(phm),
                             colors=NULL,
                             labels=NULL,
-                            axisTextSize=6) {
+                            axisTextSize=6,
+                            partition=T) {
 
   ## Validation for colors
   if (is.null(colors) && K > 12) {
@@ -336,15 +338,28 @@ plotPHMDistruct <- function(phm, K=length(phm),
   }
 
   ## Validation for labels
-  post_mat <- phm[[K]]$posterior_matrix
-  if (is.null(post_mat)) stop("Does phm have a posterior matrix computed? Run addPosteriorMatrix() to compute.")
+  if (partition && K == length(phm)) {
+    ## Onehot encode the cluster labels to get posterior
+    clust_labels <- phm[[K]]$labels
+    clust_levels <- sapply(phm[[K]]$params, function(x) x$class)
+    clust_labels <- factor(clust_labels, levels=clust_levels)
+    post_mat <- sapply(clust_labels, function(idx) {
+      v <- numeric(K)
+      v[idx] <- 1
+      v
+    })
+    post_mat <- t(post_mat)
+  } else {
+    post_mat <- phm[[K]]$posterior_matrix
+    if (is.null(post_mat)) stop("Does phm have a posterior matrix computed? Run addPosteriorMatrix() to compute.")
+  }
 
   if (is.null(labels)) {
     if (is.null(phm[[K]]$labels)) stop("Must either provide labels or have them computed. Run addPosteriorMatrix() to compute.")
     labels <- phm[[K]]$labels
   }
   if (!is.factor(labels)) labels <- factor(labels)
-  labels_order=levels(labels)
+  labels_order <- levels(labels)
 
   ## Define break points for the distruct plot
   group_counts <- table(labels)
