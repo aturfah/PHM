@@ -130,6 +130,15 @@ weightedMclust <- function(data, weights,
       g <- as.numeric(id_vec["G"])
       mn <- id_vec["mn"]
 
+      ## Don't allow models where number of params is > # of samples
+      mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
+      if (mcl_params > sum(weights)) {
+        out <- list(bic=-Inf)
+        attributes(out) <- list(returnCode=-342)
+        # print(paste(g, mn, round(sum(weights), 4), mcl_params))
+        return(out)
+      }
+
       mcl <- mclust::Mclust(init_data,
                             G=g, modelNames=mn,
                             initialization=list(hcPairs=hc_init),
@@ -147,7 +156,7 @@ weightedMclust <- function(data, weights,
         mn <- gsub("X", "V", mcl$modelName)
       }
       # print(paste(g, mn_old, mn, mcl$modelName))
-
+ 
       ## Get the Z matrix for data from mcl
       mcl$data <- data
       mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
