@@ -160,6 +160,8 @@ weightedMclust <- function(data, weights,
   maxBIC <- -Inf
   model <- NULL
   for (mcl in res) {
+    if (is.null(attributes(mcl)$returnCode) || attributes(mcl)$returnCode < 0) next
+
     if (mcl$bic > maxBIC) model <- mcl
     maxBIC <- max(maxBIC, mcl$bic)
   }
