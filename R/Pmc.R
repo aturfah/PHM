@@ -134,8 +134,9 @@ weightedMclust <- function(data, weights,
       mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
       if (mcl_params > sum(weights)) {
         out <- list(bic=-Inf)
+        cat(paste("\tSkipping", g, mn, "insufficient samples", 
+            round(sum(weights), 4), "for params", mcl_params), "\n")
         attributes(out) <- list(returnCode=-342)
-        # print(paste(g, mn, round(sum(weights), 4), mcl_params))
         return(out)
       }
 
@@ -174,7 +175,7 @@ weightedMclust <- function(data, weights,
     if (mcl$bic > maxBIC) model <- mcl
     maxBIC <- max(maxBIC, mcl$bic)
   }
-  
+
   model
 }
 
@@ -250,6 +251,10 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
     valid <- which(w >= threshold)
     data_valid <- data[valid, , drop=F]
     w <- w[valid]
+
+    cat("Estimating Cluster", which(label_ids == k), 
+        "of", length(label_ids), "Nk =", nrow(dat), "\n")
+    cat("\tWeights:", round(sum(w), 4), "\n")
 
     wmcl <- weightedMclust(data_valid, weights = w, init_data = dat, ...)
     pars <- constructPmcParamsMclust(wmcl, T)
