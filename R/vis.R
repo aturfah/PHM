@@ -23,7 +23,9 @@ constructPHMDendrogramData <- function(phm,
     # pmc_change / 2^pmc_components
   }
 
-  if (scaleHeights == "log10") {
+  if (scaleHeights == "unscaled") {
+    height <- 1 / height
+  } else if (scaleHeights == "log10") {
     height <- -log10(height)
   } else if (scaleHeights == "log2") {
     height <- -log2(height)
@@ -198,7 +200,7 @@ constructPHMDendrogramData <- function(phm,
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("average", "min", "log10", "unscaled", "log2", "uniform"),
+                              scaleHeights=c("unscaled", "log10", "log2", "average", "min", "uniform"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
@@ -285,7 +287,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
     ggplot2::xlab("") +
     ggplot2::ylab("") +
     ggplot2::scale_x_continuous(breaks=1:K,
-                                    labels=displayAxisLabels) +
+                                labels=displayAxisLabels) +
     ggplot2::scale_color_gradient(low=groupColorMin, high=groupColorMax) +
     scale_func(expand=ggplot2::expansion(mult=c(0, 0.05))) +
     ggplot2::theme_bw() +
