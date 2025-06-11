@@ -50,6 +50,11 @@ constructPHMDendrogramData <- function(phm,
     mcs <- unname(merge_components[idx, ])
     hgt <- height[idx]
 
+    ## Verify that height doesn't go down
+    for (posn in mcs) {
+      hgt <- max(hgt, height_tracker[[posn]]$base + 1e-6)
+    }
+
     ## Add this height to all components in height_tracker
     for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt
 
