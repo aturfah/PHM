@@ -31,7 +31,7 @@ constructPHMDendrogramData <- function(phm,
     height <- -log2(height)
   } else if (scaleHeights %in% c("average", "min")) {
     load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "distinguishabilityCriterion"))
+                     package = "PHM"))
     height <- inv_log10(log10(height))
     height <- height^2
     height <- height + (1:length(height)) * 1e-6 ## Slight height offset
