@@ -1,9 +1,9 @@
-# distinguishabilityCriterion (WIP)
+# PHM (WIP)
 
-To install please run `devtools::install_github("aturfah/distinguishabilityCriterion")`
+To install please run `devtools::install_github("aturfah/PHM")`
 
 To load in an `R` session, run the following:
 ```
-library(distinguishabilityCriterion)
+library(PHM)
 library(mclust)
 ```
