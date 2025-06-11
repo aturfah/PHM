@@ -20,7 +20,7 @@ constructPHMDendrogramData <- function(phm,
     pmc_min
   } else {
     pmc_change / choose(pmc_components, 2)
-    # pmc_change / 2^pmc_components
+    # pmc_change / 2^pmc_components 
   }
 
   if (scaleHeights == "unscaled") {
