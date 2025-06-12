@@ -22,7 +22,7 @@
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
 #' mcl <- Mclust(dat)
 #' constructPmcParamsMclust(mcl)
 #'
@@ -80,8 +80,8 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
-#' partition <- c(rep(1, 100), rep(2, 100))
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
@@ -129,8 +129,8 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
-#' partition <- c(rep(1, 100), rep(2, 100))
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params_w <- constructPmcParamsWeightedPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
@@ -215,6 +215,13 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @param numCores Number of cores to use in parallel::mclapply call. Default is 1.
 #' @param verbose Boolean whether to print output messages
 #'
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeMonteCarloPmc(params, 1e5, verbose=T)
+#' 
 #' @return Monte Carlo estimate of \eqn{P_{\rm mc}}
 #' @export
 computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples, numCores=1, verbose=F) {
@@ -250,6 +257,13 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 #' 
 #' @inheritParams computeMonteCarloPmc
 #'
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeMonteCarloDeltaPmcMatrix(params, 1e5, verbose=T)
+#' 
 #' @return \eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 #' @export
 computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=F) {

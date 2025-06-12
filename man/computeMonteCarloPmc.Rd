@@ -35,3 +35,11 @@ We can approximate it for a \eqn{K}-cluster configuration using a Monte Carlo in
 \deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K  \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
 Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}
 }
+\examples{
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+params <- constructPmcParamsPartition(partition, dat, G=1:5)
+computeMonteCarloPmc(params, 1e5, verbose=T)
+
+}
