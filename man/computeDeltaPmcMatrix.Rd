@@ -15,8 +15,20 @@ computeDeltaPmcMatrix(paramsList, integralControl = list())
 \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
 }
 \description{
-Compute the merging Pmc reduction matrix calculated using \code{cubature} package
+Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 }
 \details{
+#' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
+For each pair of clusters \eqn{j, k}, \eqn{\Delta P_{\rm mc}} is
+\deqn{\Delta P_{\rm mc}^{(j, k)} = \int \pi_j(x) \, \pi_k(x) P(x) dx}
+Where the relationship \eqn{P_{\rm mc} = \sum_{i < j} 2\Delta P_{\rm mc}^{(i, j)}}
 See \link{computePmc} for description of \code{integralControl} parameters.
+}
+\examples{
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+params <- constructPmcParamsPartition(partition, dat, G=1:5)
+computeDeltaPmcMatrix(params)
+
 }

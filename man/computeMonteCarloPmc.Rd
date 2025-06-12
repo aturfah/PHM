@@ -32,7 +32,7 @@ Compute Monte Carlo estimate of \eqn{P_{\rm mc}} for a given cluster configurati
 \details{
 \eqn{P_{\rm{mc}}} can be difficult to evaluate as standard cubature methods tend to perform poorly in higher dimensions.
 We can approximate it for a \eqn{K}-cluster configuration using a Monte Carlo integral of the form
-\deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K  \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
+\deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K 2 \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
 Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}
 }
 \examples{

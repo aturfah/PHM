@@ -18,9 +18,23 @@ Output from the \code{cubature::cubintegrate()} function.
 Compute Pmc for a given Gaussian mixture distribution based on \code{cubature} package
 }
 \details{
-TODO: Clear this up
-For \code{pcubature} the control variables are \code{method} for the integration
-For \code{pcubature} the control variables are \code{lowerLimit} and \code{upperLimit} for the integral (defaults to \pm Inf)
-For \code{pcubature} the control variables are \code{maxEval} which sets the number of integral evaluations (defaults to 1e6)
-For \code{pcubature} the control variables are \code{relTol} which sets the maximum tolerance (defaults to 1e-5)
+For a given cluster configuration, the overall misclassification probability \eqn{P_{\rm mc}} can be evaluated as
+\deqn{P_{\rm mc} = \sum_{j=1}^K \int 2 \left(1 - \pi_j(x)\right) \, \pi_j(x) P(x) dx}
+
+This integral is implemented using the \code{cubature} function. the \code{integralControl} variable accepts arguments to the \code{\link[cubature:cubintegrate]{cubature::cubintegrate()}} function
+The defaults for this function are:
+\itemize{
+\item \code{method}: Which integration method is to be used. Default is \code{hcubature}
+\item \code{lowerLimit} and \code{upperLimit}: The bounds of integration. Default is \eqn{\pm \infty}.
+\item \code{maxEval}: Sets the maximum number of integral evaluations. Default is 1e6
+\item \code{relTol}: Sets the convergence tolerance for the integration. Default is 1e-5
+}
+}
+\examples{
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+params <- constructPmcParamsPartition(partition, dat, G=1:5)
+computePmc(params)
+
 }

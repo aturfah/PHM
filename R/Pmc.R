@@ -206,7 +206,7 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @details
 #' \eqn{P_{\rm{mc}}} can be difficult to evaluate as standard cubature methods tend to perform poorly in higher dimensions.
 #' We can approximate it for a \eqn{K}-cluster configuration using a Monte Carlo integral of the form
-#' \deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K  \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
+#' \deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K 2 \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
 #' Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See [constructPmcParamsMclust] for format of components.
@@ -247,13 +247,14 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 #' Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
 #' @description
-#' Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{i-j^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
+#' Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 #'
 #' @details
 #' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
-#' For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}} value 
-#' \deqn{\Delta \hat P_{\rm mc} = \frac{1}{M} \sum_{i=1}^M \sum_{j=1}^K \sum_{k\neq j} \pi_j(x_i) \, \pi_k(x_i) }
+#' For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}^{(j, k)}} value.
+#' \deqn{\Delta \hat P_{\rm mc}^{(j, k)} = \frac{1}{M} \sum_{i=1}^M \pi_j(x_i) \, \pi_k(x_i) }
 #' Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}.
+#' Note that \eqn{\Delta \hat P_{\rm mc}^{(j, k)} = \Delta \hat P_{\rm mc}^{(k, j)}}
 #' 
 #' @inheritParams computeMonteCarloPmc
 #'
@@ -293,14 +294,27 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
 #' @param integralControl List specifying arguments to pass to [cubature::cubintegrate()]. See details.
-#'
+#' 
 #' @details
-#' TODO: Clear this up
-#' For `pcubature` the control variables are `method` for the integration
-#' For `pcubature` the control variables are `lowerLimit` and `upperLimit` for the integral (defaults to \pm Inf)
-#' For `pcubature` the control variables are `maxEval` which sets the number of integral evaluations (defaults to 1e6)
-#' For `pcubature` the control variables are `relTol` which sets the maximum tolerance (defaults to 1e-5)
+#' For a given cluster configuration, the overall misclassification probability \eqn{P_{\rm mc}} can be evaluated as
+#' \deqn{P_{\rm mc} = \sum_{j=1}^K \int 2 \left(1 - \pi_j(x)\right) \, \pi_j(x) P(x) dx}
+#' 
+#' This integral is implemented using the `cubature` function. the `integralControl` variable accepts arguments to the [cubature::cubintegrate()] function
+#' The defaults for this function are:
+#' \itemize{
+#'  \item \code{method}: Which integration method is to be used. Default is \code{hcubature}
+#'  \item \code{lowerLimit} and \code{upperLimit}: The bounds of integration. Default is \eqn{\pm \infty}.
+#'  \item \code{maxEval}: Sets the maximum number of integral evaluations. Default is 1e6
+#'  \item \code{relTol}: Sets the convergence tolerance for the integration. Default is 1e-5
+#' }
 #'
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computePmc(params)
+#' 
 #' @return Output from the `cubature::cubintegrate()` function.
 #' @export
 computePmc <- function(paramsList, integralControl=list()) {
@@ -401,14 +415,26 @@ computePmc <- function(paramsList, integralControl=list()) {
 
 #'  \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
-#' Compute the merging Pmc reduction matrix calculated using `cubature` package
+#' Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 #'
 #' @inheritParams computePmc
 #'
-#' @details See [computePmc] for description of `integralControl` parameters.
-#'
+#' @details 
+#' #' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
+#' For each pair of clusters \eqn{j, k}, \eqn{\Delta P_{\rm mc}} is 
+#' \deqn{\Delta P_{\rm mc}^{(j, k)} = \int \pi_j(x) \, \pi_k(x) P(x) dx}
+#' Where the relationship \eqn{P_{\rm mc} = \sum_{i < j} 2\Delta P_{\rm mc}^{(i, j)}}
+#' See [computePmc] for description of `integralControl` parameters.
+#' 
 #' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
-#'
+#' 
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeDeltaPmcMatrix(params)
+#' 
 #' @export
 computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
   K <- length(paramsList)

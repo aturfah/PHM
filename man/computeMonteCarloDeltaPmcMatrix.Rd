@@ -27,13 +27,14 @@ computeMonteCarloDeltaPmcMatrix(
 \eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 }
 \description{
-Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{i-j^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
+Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 }
 \details{
 Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
-For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}} value
-\deqn{\Delta \hat P_{\rm mc} = \frac{1}{M} \sum_{i=1}^M \sum_{j=1}^K \sum_{k\neq j} \pi_j(x_i) \, \pi_k(x_i) }
+For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}^{(j, k)}} value.
+\deqn{\Delta \hat P_{\rm mc}^{(j, k)} = \frac{1}{M} \sum_{i=1}^M \pi_j(x_i) \, \pi_k(x_i) }
 Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}.
+Note that \eqn{\Delta \hat P_{\rm mc}^{(j, k)} = \Delta \hat P_{\rm mc}^{(k, j)}}
 }
 \examples{
 set.seed(1)
