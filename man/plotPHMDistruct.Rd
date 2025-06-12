@@ -9,7 +9,8 @@ plotPHMDistruct(
   K = length(phm),
   colors = NULL,
   labels = NULL,
-  axisTextSize = 6
+  axisTextSize = 6,
+  partition = F
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ plotPHMDistruct(
 \item{labels}{Ground truth class labels for the observations (ordered factor vector)}
 
 \item{axisTextSize}{Size for axis labels}
+
+\item{partition}{Whether to visualize from the posterior matrix or partition labels}
 }
 \description{
 TODO: Fill me in

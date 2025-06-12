@@ -9,26 +9,29 @@ computeMonteCarloPmc(
   mcSamples = 1e+05,
   batchSize = mcSamples,
   numCores = 1,
-  verbose = T
+  verbose = F
 )
 }
 \arguments{
-\item{paramsList}{List containing lists with each component GMM parameters. See \code{generateDistbnFunc} for format of components.}
+\item{paramsList}{List containing lists with each component GMM parameters. See \link{constructPmcParamsMclust} for format of components.}
 
-\item{mcSamples}{Numeric for number of MC samples to use to approximate the integral. Default 1e5}
+\item{mcSamples}{Numeric for number of MC samples to use to approximate the integral.}
 
-\item{batchSize}{Numeric for the observations to assign to each core. Helps with memory concerns. Default 1e3.}
+\item{batchSize}{Numeric for the observations to assign to each core. Helps with memory concerns. Default \code{mcSamples}.}
 
-\item{numCores}{Number of cores to use in parallel::mclapply call. Default is \code{floor(detectCores() / 2)}.}
+\item{numCores}{Number of cores to use in parallel::mclapply call. Default is 1.}
 
 \item{verbose}{Boolean whether to print output messages}
 }
 \value{
-Value of Pmc from the Monte Carlo integral
+Monte Carlo estimate of \eqn{P_{\rm mc}}
 }
 \description{
-Compute Monte Carlo estimate of Pmc associated with given cluster parameters based on Gaussian cluster assumption.
+Compute Monte Carlo estimate of \eqn{P_{\rm mc}} for a given cluster configuration based on estimated GMM densities.
 }
 \details{
-TODO: Fill me in.
+\eqn{P_{\rm{mc}}} can be difficult to evaluate as standard cubature methods tend to perform poorly in higher dimensions.
+We can approximate it for a \eqn{K}-cluster configuration using a Monte Carlo integral of the form
+\deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K  \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
+Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}
 }

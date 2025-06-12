@@ -7,7 +7,7 @@
 plotPHMDendrogram(
   phm,
   colors = NULL,
-  scaleHeights = c("average", "min", "log10", "unscaled", "log2", "uniform"),
+  scaleHeights = c("unscaled", "log10", "log2", "average", "min", "uniform"),
   threshold = 0,
   suppressLabels = F,
   mergeLabels = c("delta", "pmc", "percent"),

@@ -11,6 +11,7 @@ PHM(
   data = NULL,
   verbose = T,
   computePosterior = T,
+  partitionWeightedDensity = T,
   partitionModel = "VVI",
   partitionMaxComponents = 10,
   mc = T,

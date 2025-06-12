@@ -9,26 +9,29 @@ computeMonteCarloDeltaPmcMatrix(
   mcSamples = 1e+06,
   batchSize = mcSamples,
   numCores = 1,
-  verbose = T
+  verbose = F
 )
 }
 \arguments{
-\item{paramsList}{List containing lists with each component GMM parameters. See \code{generateDistbnFunc} for format of components.}
+\item{paramsList}{List containing lists with each component GMM parameters. See \link{constructPmcParamsMclust} for format of components.}
 
-\item{mcSamples}{Numeric for number of MC samples to use to approximate the integral. Default 1e5}
+\item{mcSamples}{Numeric for number of MC samples to use to approximate the integral.}
 
-\item{batchSize}{Numeric for the observations to assign to each core. Helps with memory concerns. Default 1e3.}
+\item{batchSize}{Numeric for the observations to assign to each core. Helps with memory concerns. Default \code{mcSamples}.}
 
-\item{numCores}{Number of cores to use in parallel::mclapply call. Default is \code{floor(detectCores() / 2)}.}
+\item{numCores}{Number of cores to use in parallel::mclapply call. Default is 1.}
 
 \item{verbose}{Boolean whether to print output messages}
 }
 \value{
-\eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
+\eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 }
 \description{
-Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
+Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{i-j^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 }
 \details{
-TODO: Fill me in
+Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
+For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}} value
+\deqn{\Delta \hat P_{\rm mc} = \frac{1}{M} \sum_{i=1}^M \sum_{j=1}^K \sum_{k\neq j} \pi_j(x_i) \, \pi_k(x_i) }
+Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}.
 }

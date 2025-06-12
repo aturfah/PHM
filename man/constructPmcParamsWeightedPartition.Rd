@@ -9,36 +9,48 @@ constructPmcParamsWeightedPartition(
   data,
   weights = NULL,
   threshold = 1e-04,
+  linkFunc = min,
+  verbose = F,
   ...
 )
 }
 \arguments{
 \item{partition}{Vector of labels for observations}
 
-\item{data}{Numeric matrix}
+\item{data}{Numeric matrix for data (\eqn{N \times p})}
 
-\item{weights}{Numeric matrix}
+\item{weights}{Optional precomputed weight matrix (\eqn{N \times K})}
 
 \item{threshold}{Threshold past which to not include weights (for computational efficiency)}
+
+\item{linkFunc}{Function to use to combine all distances within a cluster for weight calculation. Default is \code{min}}
+
+\item{verbose}{Whether to print out debug messages. Default is \code{FALSE}}
 
 \item{...}{Parameters passed to \code{\link[mclust:Mclust]{mclust::Mclust()}}}
 }
 \value{
 List of lists where each sublist contains the
 proportion, mean, covariance matrix estimates
-for each group in the partition.
+for each cluster.
 }
 \description{
-Estimates the weighted mixture model density for a partition of the data using \code{Mclust}
+Estimates the weighted mixture model density for a partition of the data using \code{Mclust}.
 }
 \details{
-TODO: Fill me in.
+This procedure attempts to account for clustering uncertainty when estimating the cluster densities.
+For a given observation \eqn{x_i} and cluster \eqn{C_j} we estimate its cluster-specific weight based on an observation-cluster distance \eqn{d(x_i, C_j)}.
+By default we take the observation-cluster distance to be the smallest Euclidean distance to any member in that cluster, and compute the weight for cluster \eqn{j} as:
+\deqn{w_{ij} = \frac{e^{-d(x_i, C_j)}}{\sum_{k=1}^K e^{-d(x_i, C_k)}}}
+\code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} is a special case of this procedure with weights of 1 if an observation is in a cluster and 0 otherwise.
+The weights are then passed to a weighted EM procedure to estimate the cluster-specific density via GMM.
 
 See \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}} for a description of the output.
 }
 \examples{
-# dat <- c(rnorm(100), rnorm(100, 3))
-# partition <- c(rep(1, 100), rep(2, 100))
-# constructPmcParamsPartition(partition, dat, G=1:5)
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100))
+params_w <- constructPmcParamsWeightedPartition(partition, dat, G=1:5)
 
 }

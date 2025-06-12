@@ -16,19 +16,21 @@ constructPmcParamsPartition(partition, data, ...)
 \value{
 List of lists where each sublist contains the
 proportion, mean, covariance matrix estimates
-for each group in the partition.
+for each cluster.
 }
 \description{
 Estimates the mixture model density for a partition of the data using \code{Mclust}
 }
 \details{
-TODO: Fill me in.
+Performs a naive density estimation, fitting a GMM to each partition separately.
+Only observations in a cluster are considered to fit the GMM.
 
 See \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}} for a description of the output.
 }
 \examples{
-# dat <- c(rnorm(100), rnorm(100, 3))
-# partition <- c(rep(1, 100), rep(2, 100))
-# constructPmcParamsPartition(partition, dat, G=1:5)
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100))
+params <- constructPmcParamsPartition(partition, dat, G=1:5)
 
 }
