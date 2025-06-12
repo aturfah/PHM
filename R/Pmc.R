@@ -21,7 +21,8 @@
 #' @param singleElement Boolean, whether to combine into a single list element
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
+#' # set.seed(1)
+#' # dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
 #' # mcl <- Mclust(dat)
 #' # constructPmcParamsMclust(mcl)
 #'
@@ -68,7 +69,8 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #' Estimates the mixture model density for a partition of the data using `Mclust`
 #'
 #' @details
-#' TODO: Fill me in.
+#' Performs a na\"ive density estimation, fitting a GMM to each partition separately.
+#' Only observations in a cluster are considered to fit the GMM.
 #'
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
@@ -77,9 +79,10 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
+#' # set.seed(1)
+#' # dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
 #' # partition <- c(rep(1, 100), rep(2, 100))
-#' # constructPmcParamsPartition(partition, dat, G=1:5)
+#' # params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
@@ -101,106 +104,33 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 }
 
 
-weightedMclust <- function(data, weights, 
-                           init_data=NULL, init_idx=NULL,
-                           G=NULL, modelNames=NULL, ...) {
-  
-  if (is.null(dim(data))) data <- matrix(data, ncol=1)
-  
-  if (is.null(init_data)) {
-    if (is.null(init_idx)) {
-      init_data <- data
-    } else {
-      init_data <- data[init_idx, , drop=F]
-    }
-  }
-  
-  hc_init <- hc(data = init_data, 
-                modelName = mclust::mclust.options("hcModelName"), 
-                use = mclust::mclust.options("hcUse"))
-  
-  ## Prepare the for loop
-  if (is.null(G)) G <- 1:10
-  if (is.null(modelNames)) modelNames <- mclust::mclust.options("emModelNames")
-  
-  ## For provided G, fit the baseline GMM and then tune with weights
-  res <- expand.grid(G=G, mn=modelNames) %>%
-    data.frame() %>%
-    apply(1, function (id_vec) {
-      g <- as.numeric(id_vec["G"])
-      mn <- id_vec["mn"]
-
-      ## Don't allow models where number of params is > # of samples
-      mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
-      if (mcl_params > sum(weights)) {
-        out <- list(bic=-Inf)
-        cat(paste("\tSkipping", g, mn, "insufficient samples", 
-            round(sum(weights), 4), "for params", mcl_params), "\n")
-        attributes(out) <- list(returnCode=-342)
-        return(out)
-      }
-
-      mcl <- mclust::Mclust(init_data,
-                            G=g, modelNames=mn,
-                            initialization=list(hcPairs=hc_init),
-                            verbose=F, ...)
-
-      ## Model fails to fit, automatically fail
-      if (is.null(mcl$parameters)) {
-        mcl$bic <- -Inf
-        return(mcl)
-      }
-
-      ## Model names don't align with estep
-      mn_old <- mn
-      if (g == 1) {
-        mn <- gsub("X", "V", mcl$modelName)
-      }
-      # print(paste(g, mn_old, mn, mcl$modelName))
- 
-      ## Get the Z matrix for data from mcl
-      mcl$data <- data
-      mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
-      mcl$z <- mcl$z + .Machine$double.eps^2
-      mcl$z <- mcl$z / rowSums(mcl$z)
-
-      do.call("me.weighted", c(list(weights=weights), mcl))
-    })
-
-  maxBIC <- -Inf
-  model <- NULL
-  for (mcl in res) {
-    if (is.null(attributes(mcl)$returnCode) || attributes(mcl)$returnCode < 0) next
-
-    if (mcl$bic > maxBIC) model <- mcl
-    maxBIC <- max(maxBIC, mcl$bic)
-  }
-
-  model
-}
-
-
 #' Construct \eqn{P_{\rm{mc}}} parameter list from a partition with weights
 #'
 #' @description
-#' Estimates the weighted mixture model density for a partition of the data using `Mclust`
+#' Estimates the weighted mixture model density for a partition of the data using `Mclust`.
 #'
 #' @details
-#' TODO: Fill me in.
-#'
+#' This procedure attempts to account for clustering uncertainty when estimating the cluster densities.
+#' For a given observation \eqn{x_i} and cluster $j$ we estimate its cluster-specific weight based on an observation-cluster distance \eqn{d(x_i, C_k)}.
+#' By default we take the observation-cluster distance to be the smallest Euclidean distance to any member in that cluster, and compute the weight for cluster \eqn{j} as:
+#' \deqn{w_{ik} = \frac{e^{-d(x_i, C_j)}}{\sum_{k=1}^K e^{d(x_i, C_k)}}}
+#' [constructPmcParamsPartition()] is a special case of this procedure with weights of 1 if an observation is in a cluster and 0 otherwise.
+#' The weights are then passed to a weighted EM procedure to estimate the cluster-specific density via GMM.
+#' 
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
 #' @param partition Vector of labels for observations
-#' @param data Numeric matrix
-#' @param weights Numeric matrix
+#' @param data Numeric matrix for data (\eqn{N \times p})
+#' @param weights Optional precomputed weight matrix (\eqn{N \times K})
 #' @param threshold Threshold past which to not include weights (for computational efficiency)
-#' @param linkFunc Function to use to combine all distances within a cluster for weights. Default is min
+#' @param linkFunc Function to use to combine all distances within a cluster for weight calculation. Default is \code{min}
 #' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
+#' # set.seed(1)
+#' # dat <- matrix(c(rnorm(200), rnorm(200, 3)), ncol=2, byrow=T)
 #' # partition <- c(rep(1, 100), rep(2, 100))
-#' # constructPmcParamsPartition(partition, dat, G=1:5)
+#' # params_w <- constructPmcParamsWeightedPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
@@ -521,7 +451,7 @@ computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
 #'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'
-#' @export
+#' export
 computePairwisePmcMatrix <- function(paramsList, mc=T, ...) {
   K <- length(paramsList)
   output <- matrix(0, K, K)
