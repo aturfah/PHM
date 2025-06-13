@@ -1,5 +1,6 @@
 constructPHMDendrogramData <- function(phm,
-                                       scaleHeights="average",
+                                       scaleHeights="pmcdist",
+                                       heightValue="merge",
                                        mergeLabels="delta",
                                        threshold=1e-3,
                                        groupProbs=NULL) {
@@ -14,9 +15,7 @@ constructPHMDendrogramData <- function(phm,
   pmc_components <- sapply((K-1):1, function(k) phm[[k]]$pmc_components)
   pmc_min <- sapply((K-1):1, function(k) phm[[k]]$min_merge_pmc)
 
-  height <- if (scaleHeights == "uniform") {
-    1:(K-1)
-  } else if (scaleHeights == "min") {
+  height <- if (heightValue == "min") {
     pmc_min
   } else {
     pmc_change / choose(pmc_components, 2)
@@ -27,9 +26,7 @@ constructPHMDendrogramData <- function(phm,
     height <- 1 / height
   } else if (scaleHeights == "log10") {
     height <- -log10(height)
-  } else if (scaleHeights == "log2") {
-    height <- -log2(height)
-  } else if (scaleHeights %in% c("average", "min")) {
+  } else if (scaleHeights %in% c("pmcdist")) {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "PHM"))
     height <- inv_log10(log10(height))
@@ -183,11 +180,12 @@ constructPHMDendrogramData <- function(phm,
 
 #' Visualize PHM merging procedure via Dendrogram
 #'
-#' @description TODO: Fill me in
+#' @description Visualize the PHM merging procedure using a dendrogram. Visualization options, such as displaying the merge \eqn{\Delta P_{\rm mc}} value and tracking group membership across merges is included.
 #'
 #' @param phm Output from [PHM()]
 #' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
 #' @param scaleHeights String specifying how to set the heights in the dendrogram.
+#' @param heightValue Whether to use the \eqn{\Delta P_{\rm mc}} or \eqn{\min \Delta P_{\rm mc}} value to determine branch height for a merge
 #' @param threshold Error threshold for the integral past which to represent the merges as dashed lines
 #' @param suppressLabels Boolean whether or not to display \eqn{P_{\rm{mc}}} reduction labels on the dendrogram or not
 #' @param mergeLabels String indicating what value to display in the labels on the dendrogram
@@ -201,11 +199,25 @@ constructPHMDendrogramData <- function(phm,
 #' @param groupColorMax Color of lines corresponding to high group probability
 #' @param groupColorMin Color of lines corresponding to low group probability
 #'
-#' @details TODO: Fill me in
+#' @details 
+#' 
+#' The options for height scaling are
+#' \itemize{
+#'  \item \code{"unscaled"}:
+#'  \item \code{"log10"}:
+#'  \item \code{"pmcdist"}:
+#' }
+#' 
+#' The options for the value for the \eqn{P_{\rm mc}} height are
+#' \itemize{
+#'  \item \code{"merge"}:
+#'  \item \code{"min"}:
+#' }
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("unscaled", "log10", "log2", "average", "min", "uniform"),
+                              scaleHeights=c("unscaled", "log10", "pmcdist"),
+                              heightValue=c("merge", "min"),
                               threshold=0,
                               suppressLabels=F,
                               mergeLabels=c("delta", "pmc", "percent"),
@@ -233,6 +245,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
   pmc_dendro_data <- constructPHMDendrogramData(phm,
                                                 scaleHeights = scaleHeights,
+                                                heightValue = heightValue,
                                                 mergeLabels=mergeLabels,
                                                 threshold=threshold,
                                                 groupProbs=groupProbs)
@@ -319,7 +332,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 
 #' Generate the distruct plot from the posterior matrix
 #'
-#' @description TODO: Fill me in
+#' @description Visualize a distruct plot based on either a partition or the posterior cluster probabilities.
 #'
 #' @param phm Output from the [PHM()] function
 #' @param K Number of clusters for which to generate the distruct plot
@@ -328,7 +341,8 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 #' @param axisTextSize Size for axis labels
 #' @param partition Whether to visualize from the posterior matrix or partition labels
 #'
-#' @details TODO: Fill me in
+#' @details 
+#' In the case of visualizing for a partition, the posterior probabilities are set to 1 if it is the cluster the obesrvation is assigned to and 0 otherwise.
 #'
 #' @export
 plotPHMDistruct <- function(phm, K=length(phm),
