@@ -1,4 +1,4 @@
-# PHM: Multiresolution Clustering of Genomic Data
+# PHM: PHM: software package for multi-resolution clustering
 
 **Version 1.0**
 
