@@ -1,8 +1,8 @@
-# PHM: PHM: software package for multi-resolution clustering
+# PHM: software package for multi-resolution clustering
 
 **Version 1.0**
 
-This package implements the PHM algorithm for multiresolution and consensus clustering analysis of generic data, as well as its associated visualizations. 
+This package implements the PHM algorithm for multiresolution and consensus clustering analysis, as well as its associated visualizations. 
 The method and computational procedures are described in [Turfah and Wen (2025)](#).
 
 For questions/commens regarding the package, please contact Ali Turfah (aturfah at umich dot com).
