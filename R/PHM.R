@@ -48,7 +48,22 @@ mergeParams <- function(par1, par2) {
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #'
-#' @return FILL ME IN
+#' @return
+#' A list of lists for each step of the PHM algorithm. Each sublist contains
+#' \itemize{
+#'  \item \code{clusters}: Number of clusters \eqn{K} at this merge
+#'  \item \code{posterior_matrix}: \eqn{N\times K} matrix of posterior cluster probabilities
+#'  \item \code{labels}: Partition of the observations
+#'  \item \code{pmc_change}: Value of \eqn{\Delta P_{\rm mc}} leading to this value of \eqn{K}
+#'  \item \code{params}: Cluster-specific densities
+#'  \item \code{pmc_components}: Number of original clusters involved in this merge
+#'  \item \code{pmc_accum}: Accumulated \eqn{\Delta P_{\rm mc}} in this subtree (unused)
+#'  \item \code{min_merge_pmc}: Minimum value of \eqn{\Delta P_{\rm mc}} for all merges in this subtree
+#'  \item \code{merge_components}: Index of components merged in this step
+#'  \item \code{pmc}: Overall \eqn{P_{\rm mc}} remaining in the cluster configuration
+#'  \item \code{pmc_matrix}: \eqn{\Delta P_{\rm mc}} matrix for the remaining clusters
+#' }
+#' 
 #' @export
 PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
                 verbose=T,
@@ -127,7 +142,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   ## Parameters/data to store
   output <- lapply(1:K, function(k) list(
     clusters=k,
-    posterior_matrixrix=if(computePosterior) {matrix(1, nrow=N)} else {NULL},
+    posterior_matrix=if(computePosterior) {matrix(1, nrow=N)} else {NULL},
     labels=if(computePosterior) {rep(1, N)} else {NULL},
     pmc_change=NA,
     params=NULL,
@@ -159,7 +174,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
       output[[idx]]$min_merge_pmc <- min_merge_pmc
     }
     output[[idx]]$pmc_matrix <- tmp_delta
-    output[[idx]]$posterior_matrixrix <- posterior_matrix
+    output[[idx]]$posterior_matrix <- posterior_matrix
 
     ## Identify the components to merge
     maxval <- max(tmp_delta, na.rm=T)
