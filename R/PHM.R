@@ -35,7 +35,8 @@ mergeParams <- function(par1, par2) {
 
 #' PHM Algorithm
 #'
-#' @description TODO
+#' @description 
+#' Implements the PHM algorithm which constructs a clustering hierarchy by successively merging clusters with the largest \eqn{\Delta P_{\rm mc}} values.
 #' 
 #' @param mclustObj Output from [mclust::Mclust()]
 #' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates
@@ -47,7 +48,14 @@ mergeParams <- function(par1, par2) {
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
-#'
+#' 
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' phm <- PHM(paramsList=params, data=dat, partition=partition)
+#' 
 #' @return
 #' A list of lists for each step of the PHM algorithm. Each sublist contains
 #' \itemize{
