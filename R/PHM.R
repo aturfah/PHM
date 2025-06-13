@@ -38,12 +38,12 @@ mergeParams <- function(par1, par2) {
 #' @description TODO
 #' 
 #' @param mclustObj Output from [mclust::Mclust()]
-#' @param paramsList A list generated from [constructPmcParamsMclust()] or [constructPmcParamsPartition()] providing the initial cluster parameter estimates
+#' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates
 #' @param partition A vector providing obseration partition memberships for the initial state
 #' @param data An \eqn{N \times D} matrix of observations
-#' @param verbose Boolean whether to suppress print statements
+#' @param verbose Boolean whether to suppress debug statements
 #' @param computePosterior Boolean whether to compute the Posterior matrix for the merges
-#' @param partitionModel If specifying `partition`, the covariance structure to estimate the density for each partition. See [mclust::Mclust()] for more details
+#' @param partitionModel If no partition provided, the covariance structure to estimate the density for each partition using [constructPmcParamsPartition()]
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
