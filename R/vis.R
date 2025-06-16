@@ -203,20 +203,20 @@ constructPHMDendrogramData <- function(phm,
 #' 
 #' The options for height scaling are
 #' \itemize{
-#'  \item \code{"unscaled"}:
-#'  \item \code{"log10"}:
-#'  \item \code{"pmcdist"}:
+#'  \item \code{"log10"}: 
+#'  \item \code{"unscaled"}: 
+#'  \item \code{"pmcdist"}: 
 #' }
 #' 
 #' The options for the value for the \eqn{P_{\rm mc}} height are
 #' \itemize{
-#'  \item \code{"merge"}:
-#'  \item \code{"min"}:
+#'  \item \code{"merge"}: 
+#'  \item \code{"min"}: 
 #' }
 #'
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
-                              scaleHeights=c("unscaled", "log10", "pmcdist"),
+                              scaleHeights=c("log10", "unscaled", "pmcdist"),
                               heightValue=c("merge", "min"),
                               threshold=0,
                               suppressLabels=F,
@@ -234,6 +234,8 @@ plotPHMDendrogram <- function(phm, colors=NULL,
   scaleHeights = match.arg(scaleHeights)
   displayAxis <- match.arg(displayAxis)
   mergeLabels <- match.arg(mergeLabels)
+  heightValue <- match.arg(heightValue)
+
   K <- length(phm)
 
   if (!is.null(groupProbs) && length(groupProbs) != K) {
@@ -451,7 +453,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
 
 #' Plot \eqn{\Delta \P_{\rm{mc}}} matrix
 #'
-#' @description TODO: Fill  me in
+#' @description Visualize the matrix of \eqn{\Delta P_{\rm mc}} values
 #'
 #' @param phm Output from [PHM()]
 #' @param K Number of clusters for which to visualize the heatmap
@@ -464,9 +466,6 @@ plotPHMDistruct <- function(phm, K=length(phm),
 #' @param visThreshold At what value suppress the value and show "< (visThreshold)"
 #' @param visDigits Number of digits to round the displayed values
 #'
-#' @details TODO: Fill me in
-#'
-#' @return pew
 #' @export
 plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
                           displayAxis=c("box", "label", "index", "none"),
@@ -575,17 +574,25 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
 }
 
 
-#' Visualize PHM dendrogram structure
+#' Visualize PHM dendrogram structure with a heatmap
 #'
-#' @description TODO: Fill me in
+#' @description 
+#' For a pair of clusters \eqn{i, j}, the heatmap position \eqn{i, j} is the value of \eqn{\Delta P_{\rm mc}} where the clusters are first merged.
 #'
-#' @param doot pew
+#' @param phm Output from [PHM()]
+#' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
+#' @param displayAxis String indicating what label to place along the axis (corresponding to clusters)
+#' @param displayAxisSize Text size for the axis labels
+#' @param colorAxis Whether or not to color the axis labels
+#' @param gridColor What color to make the heatmap grid
+#' @param fillLimits Optional vector to manually set limits of the fill scaling. Default is to use the min and max \eqn{\Delta P_{\rm mc}} values from \code{phm}
+#' @param fillScale Whether to use \eqn{\log_{10} \Delta P_{\rm mc}} or the spline scaling for the heatmap color
+#' @param legendPosition Where to put the legend for the heatmap colors. Default is to suppress.
 #'
-#' @details FILL ME IN
+#' @details
+#' 
 #'
-#' @return pew
 #' @export
-#'
 plotPHMMatrix <- function(phm, colors=NULL,
                           displayAxis=c("box", "label", "index", "none"),
                           displayAxisSize=NULL,
