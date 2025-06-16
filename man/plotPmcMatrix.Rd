@@ -2,7 +2,7 @@
 % Please edit documentation in R/vis.R
 \name{plotPmcMatrix}
 \alias{plotPmcMatrix}
-\title{Plot \eqn{\Delta \P_{\rm{mc}}} matrix}
+\title{Plot \eqn{\Delta P_{\rm{mc}}} matrix}
 \usage{
 plotPmcMatrix(
   phm,
