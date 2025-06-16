@@ -35,8 +35,9 @@ The parameters in each sublist are
 }
 }
 \examples{
-# dat <- c(rnorm(100), rnorm(100, 3))
-# mcl <- Mclust(dat)
-# constructPmcParamsMclust(mcl)
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+mcl <- Mclust(dat)
+constructPmcParamsMclust(mcl)
 
 }

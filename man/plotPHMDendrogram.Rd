@@ -7,7 +7,8 @@
 plotPHMDendrogram(
   phm,
   colors = NULL,
-  scaleHeights = c("average", "min", "log10", "unscaled", "log2", "uniform"),
+  scaleHeights = c("log10", "unscaled", "pmcdist"),
+  heightValue = c("merge", "min"),
   threshold = 0,
   suppressLabels = F,
   mergeLabels = c("delta", "pmc", "percent"),
@@ -28,7 +29,9 @@ plotPHMDendrogram(
 
 \item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
 
-\item{scaleHeights}{String specifying how to set the heights in the dendrogram.}
+\item{scaleHeights}{String specifying how to set the heights in the dendrogram. See Details for more information.}
+
+\item{heightValue}{Whether to use the \eqn{\Delta P_{\rm mc}} or \eqn{\min \Delta P_{\rm mc}} value to determine branch height for a merge. See Details for more information.}
 
 \item{threshold}{Error threshold for the integral past which to represent the merges as dashed lines}
 
@@ -42,7 +45,7 @@ plotPHMDendrogram(
 
 \item{mergeLabelsR}{Radius for the rounded edges of the merge label box}
 
-\item{displayAxis}{String indicating what label to place on the leaf nodes of the dendrogram}
+\item{displayAxis}{String indicating what label to place on the leaf nodes of the dendrogram. See Details for more information.}
 
 \item{displayAxisSize}{Text size for the leaf node labels}
 
@@ -54,9 +57,25 @@ plotPHMDendrogram(
 
 \item{groupColorMin}{Color of lines corresponding to low group probability}
 }
+\value{
+A ggplot object
+}
 \description{
-TODO: Fill me in
+Visualize the PHM merging procedure using a dendrogram. Visualization options, such as displaying the merge \eqn{\Delta P_{\rm mc}} value and tracking group membership across merges is included.
 }
 \details{
-TODO: Fill me in
+There are two options for the value for the \eqn{P_{\rm mc}} height for merging subtrees \eqn{\mathcal{S}_1, \mathcal{S}_2} (\eqn{m = |\mathcal{S}_1| + |\mathcal{S}_2|}):
+\itemize{
+\item \code{"merge"}: \eqn{\binom{m}{2}^{-1} \DeltaP_{\rm mc}^{(\mathcal{S}_1, \mathcal{S}2)}}
+\item \code{"min"}: \eqn{\min_{i \in \mathcal{S}_1,\, j \in \mathcal{S}_2} \DeltaP_{\rm mc}^{(i, j)}}
+}
+
+Once the value for the tree height is obtained, there are three options to scale.
+\itemize{
+\item \code{"unscaled"}: The height can be left unscaled
+\item \code{"log10"}: A \eqn{\log_{10}} scaling can be applied to the height to better reveal different clustering resolutions.
+\item \code{"pmcdist"}: A spline-based scaling where we map the value to a linear distance between two Gaussian clusters.
+}
+
+The \code{displayAxis} parameter controls what to display on the axes of the heatmap. \code{box} displays a standard box, which is most useful for color-coded axes. \code{label} displays the cluster label, as specified in the \code{phm} parameters. \code{index} displays the numeric index of each cluster in the \code{phm} parameter list. \code{none} suppresses the cluster label entirely, and is mose useful for when there are a large number of clusters.
 }

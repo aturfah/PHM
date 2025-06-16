@@ -2,7 +2,7 @@
 % Please edit documentation in R/vis.R
 \name{plotPHMMatrix}
 \alias{plotPHMMatrix}
-\title{Visualize PHM dendrogram structure}
+\title{Visualize PHM dendrogram structure with a heatmap}
 \usage{
 plotPHMMatrix(
   phm,
@@ -12,19 +12,39 @@ plotPHMMatrix(
   colorAxis = NULL,
   gridColor = "black",
   fillLimits = NULL,
-  fillScale = c("log10", "Pmc"),
+  fillScale = c("log10", "pmcdist"),
   legendPosition = "none"
 )
 }
 \arguments{
-\item{doot}{pew}
+\item{phm}{Output from \code{\link[=PHM]{PHM()}}}
+
+\item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
+
+\item{displayAxis}{String indicating what label to place along the axis (corresponding to clusters). See Details for more information.}
+
+\item{displayAxisSize}{Text size for the axis labels}
+
+\item{colorAxis}{Whether or not to color the axis labels}
+
+\item{gridColor}{What color to make the heatmap grid}
+
+\item{fillLimits}{Optional vector to manually set limits of the fill scaling. Default is to use the min and max \eqn{\Delta P_{\rm mc}} values from \code{phm}}
+
+\item{fillScale}{Whether to use \eqn{\log_{10} \Delta P_{\rm mc}} or the spline scaling for the heatmap color}
+
+\item{legendPosition}{Where to put the legend for the heatmap colors. Default is to suppress.}
 }
 \value{
-pew
+A ggplot object
 }
 \description{
-TODO: Fill me in
+For a pair of clusters \eqn{i, j}, the heatmap position \eqn{i, j} is the value of \eqn{\Delta P_{\rm mc}} where the clusters are first merged. This allows for a more straightforward visualization of the multi-resolution structure of heatmaps when combined with the dendrogram.
 }
 \details{
-FILL ME IN
+Consider a pair of initial clusters \eqn{i, j}, and let \eqn{\mathcal{S}} be the smallest subtree containing both \eqn{i, j} (\eqn{\mathcal{S}_i} contains cluster \eqn{i} and \eqn{\mathcal{S}_{j}} contains cluster \eqn{j}). The pairwise value for \eqn{i, j}, \eqn{\rho(i, j)} is based on \eqn{\Delta P_{\rm mc}^{ \left(\mathcal{S}(i), \mathcal{S}(j)\right)}}, which is the \eqn{\Delta P_{\rm mc}} value at which \eqn{i, j} are merged into a single cluster.
+
+As with the dendrogram heights (\code{\link[=plotPHMDendrogram]{plotPHMDendrogram()}}) there are multiple options for scaling \eqn{\rho(i, j)}. The first is \code{log10} scaling, where \eqn{\rho(i, j) = \log_{10} \Delta P_{\rm mc}}. The second is a spline-based scaling, \code{pmcdist}, where we map the \eqn{\Delta P_{\rm mc}} value to a linear distance between two Gaussian clusters.
+
+The \code{displayAxis} parameter controls what to display on the axes of the heatmap. \code{box} displays a standard box, which is most useful for color-coded axes. \code{label} displays the cluster label, as specified in the \code{phm} parameters. \code{index} displays the numeric index of each cluster in the \code{phm} parameter list. \code{none} suppresses the cluster label entirely, and is mose useful for when there are a large number of clusters.
 }

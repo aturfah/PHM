@@ -13,6 +13,7 @@ thresholdPHM(phm, threshold = 0.01)
 }
 \value{
 Result of the PHM merging procedure terminated when the \eqn{P_{\rm{mc}}} threshold is satisfied
+export
 }
 \description{
 Each step of the PHM algorithm reduces \eqn{P_{\rm{mc}}}. This gives the results from the PHM algorithm terminated when \eqn{P_{\rm{mc}}} falls below some specified threshold.

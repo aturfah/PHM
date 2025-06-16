@@ -21,9 +21,10 @@
 #' @param singleElement Boolean, whether to combine into a single list element
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
-#' # mcl <- Mclust(dat)
-#' # constructPmcParamsMclust(mcl)
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' mcl <- Mclust(dat)
+#' constructPmcParamsMclust(mcl)
 #'
 #' @returns List of lists where each sublist contains the parameters for the
 #' mixture component or a single list if `singleEleemnt` is `TRUE`.
@@ -68,7 +69,8 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #' Estimates the mixture model density for a partition of the data using `Mclust`
 #'
 #' @details
-#' TODO: Fill me in.
+#' Performs a naive density estimation, fitting a GMM to each partition separately.
+#' Only observations in a cluster are considered to fit the GMM.
 #'
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
@@ -77,13 +79,14 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
-#' # partition <- c(rep(1, 100), rep(2, 100))
-#' # constructPmcParamsPartition(partition, dat, G=1:5)
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
-#' for each group in the partition.
+#' for each cluster.
 #' @export
 constructPmcParamsPartition <- function(partition, data, ...) {
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
@@ -101,112 +104,40 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 }
 
 
-weightedMclust <- function(data, weights, 
-                           init_data=NULL, init_idx=NULL,
-                           G=NULL, modelNames=NULL, ...) {
-  
-  if (is.null(dim(data))) data <- matrix(data, ncol=1)
-  
-  if (is.null(init_data)) {
-    if (is.null(init_idx)) {
-      init_data <- data
-    } else {
-      init_data <- data[init_idx, , drop=F]
-    }
-  }
-  
-  hc_init <- hc(data = init_data, 
-                modelName = mclust::mclust.options("hcModelName"), 
-                use = mclust::mclust.options("hcUse"))
-  
-  ## Prepare the for loop
-  if (is.null(G)) G <- 1:10
-  if (is.null(modelNames)) modelNames <- mclust::mclust.options("emModelNames")
-  
-  ## For provided G, fit the baseline GMM and then tune with weights
-  res <- expand.grid(G=G, mn=modelNames) %>%
-    data.frame() %>%
-    apply(1, function (id_vec) {
-      g <- as.numeric(id_vec["G"])
-      mn <- id_vec["mn"]
-
-      ## Don't allow models where number of params is > # of samples
-      mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
-      if (mcl_params > sum(weights)) {
-        out <- list(bic=-Inf)
-        cat(paste("\tSkipping", g, mn, "insufficient samples", 
-            round(sum(weights), 4), "for params", mcl_params), "\n")
-        attributes(out) <- list(returnCode=-342)
-        return(out)
-      }
-
-      mcl <- mclust::Mclust(init_data,
-                            G=g, modelNames=mn,
-                            initialization=list(hcPairs=hc_init),
-                            verbose=F, ...)
-
-      ## Model fails to fit, automatically fail
-      if (is.null(mcl$parameters)) {
-        mcl$bic <- -Inf
-        return(mcl)
-      }
-
-      ## Model names don't align with estep
-      mn_old <- mn
-      if (g == 1) {
-        mn <- gsub("X", "V", mcl$modelName)
-      }
-      # print(paste(g, mn_old, mn, mcl$modelName))
- 
-      ## Get the Z matrix for data from mcl
-      mcl$data <- data
-      mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
-      mcl$z <- mcl$z + .Machine$double.eps^2
-      mcl$z <- mcl$z / rowSums(mcl$z)
-
-      do.call("me.weighted", c(list(weights=weights), mcl))
-    })
-
-  maxBIC <- -Inf
-  model <- NULL
-  for (mcl in res) {
-    if (is.null(attributes(mcl)$returnCode) || attributes(mcl)$returnCode < 0) next
-
-    if (mcl$bic > maxBIC) model <- mcl
-    maxBIC <- max(maxBIC, mcl$bic)
-  }
-
-  model
-}
-
-
 #' Construct \eqn{P_{\rm{mc}}} parameter list from a partition with weights
 #'
 #' @description
-#' Estimates the weighted mixture model density for a partition of the data using `Mclust`
+#' Estimates the weighted mixture model density for a partition of the data using `Mclust`.
 #'
 #' @details
-#' TODO: Fill me in.
-#'
+#' This procedure attempts to account for clustering uncertainty when estimating the cluster densities.
+#' For a given observation \eqn{x_i} and cluster \eqn{C_j} we estimate its cluster-specific weight based on an observation-cluster distance \eqn{d(x_i, C_j)}.
+#' By default we take the observation-cluster distance to be the smallest Euclidean distance to any member in that cluster, and compute the weight for cluster \eqn{j} as:
+#' \deqn{w_{ij} = \frac{e^{-d(x_i, C_j)}}{\sum_{k=1}^K e^{-d(x_i, C_k)}}}
+#' [constructPmcParamsPartition()] is a special case of this procedure with weights of 1 if an observation is in a cluster and 0 otherwise.
+#' The weights are then passed to a weighted EM procedure to estimate the cluster-specific density via GMM.
+#' 
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
 #' @param partition Vector of labels for observations
-#' @param data Numeric matrix
-#' @param weights Numeric matrix
+#' @param data Numeric matrix for data (\eqn{N \times p})
+#' @param weights Optional precomputed weight matrix (\eqn{N \times K})
 #' @param threshold Threshold past which to not include weights (for computational efficiency)
-#' @param linkFunc Function to use to combine all distances within a cluster for weights. Default is min
+#' @param linkFunc Function to use to combine all distances within a cluster for weight calculation. Default is \code{min}
+#' @param verbose Whether to print out debug messages. Default is \code{FALSE}
 #' @param ... Parameters passed to [mclust::Mclust()]
 #'
 #' @examples
-#' # dat <- c(rnorm(100), rnorm(100, 3))
-#' # partition <- c(rep(1, 100), rep(2, 100))
-#' # constructPmcParamsPartition(partition, dat, G=1:5)
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params_w <- constructPmcParamsWeightedPartition(partition, dat, G=1:5)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
-#' for each group in the partition.
+#' for each cluster.
 #' @export
-constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, threshold=1e-4, linkFunc=min, ...) {
+constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, threshold=1e-4, linkFunc=min, verbose=F, ...) {
   if (!is.factor(partition)) partition <- as.factor(partition)
   K <- length(unique(partition))
 
@@ -252,9 +183,11 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
     data_valid <- data[valid, , drop=F]
     w <- w[valid]
 
-    cat("Estimating Cluster", which(label_ids == k), 
-        "of", length(label_ids), "Nk =", nrow(dat), "\n")
-    cat("\tWeights:", round(sum(w), 4), "\n")
+    if (verbose) {
+      cat("Estimating Cluster", which(label_ids == k), 
+          "of", length(label_ids), "Nk =", nrow(dat), "\n")
+      cat("\tWeights:", round(sum(w), 4), "\n")
+    }
 
     wmcl <- weightedMclust(data_valid, weights = w, init_data = dat, ...)
     pars <- constructPmcParamsMclust(wmcl, T)
@@ -268,19 +201,30 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' Monte Carlo \eqn{P_{\rm{mc}}} computation
 #'
 #' @description
-#' Compute Monte Carlo estimate of Pmc associated with given cluster parameters based on Gaussian cluster assumption.
+#' Compute Monte Carlo estimate of \eqn{P_{\rm mc}} for a given cluster configuration based on estimated GMM densities.
 #'
-#' @details TODO: Fill me in.
+#' @details
+#' \eqn{P_{\rm{mc}}} can be difficult to evaluate as standard cubature methods tend to perform poorly in higher dimensions.
+#' We can approximate it for a \eqn{K}-cluster configuration using a Monte Carlo integral of the form
+#' \deqn{\hat P_{{\rm mc}} = \frac{1}{M} \sum_{i=1}^{M} \sum_{j=1}^K 2 \left(1 - \pi_j(x_i) \right) \, \pi_j(x_i)}
+#' Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}
 #'
-#' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
-#' @param mcSamples Numeric for number of MC samples to use to approximate the integral. Default 1e5
-#' @param batchSize Numeric for the observations to assign to each core. Helps with memory concerns. Default 1e3.
-#' @param numCores Number of cores to use in parallel::mclapply call. Default is `floor(detectCores() / 2)`.
+#' @param paramsList List containing lists with each component GMM parameters. See [constructPmcParamsMclust] for format of components.
+#' @param mcSamples Numeric for number of MC samples to use to approximate the integral.
+#' @param batchSize Numeric for the observations to assign to each core. Helps with memory concerns. Default `mcSamples`.
+#' @param numCores Number of cores to use in parallel::mclapply call. Default is 1.
 #' @param verbose Boolean whether to print output messages
 #'
-#' @return Value of Pmc from the Monte Carlo integral
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeMonteCarloPmc(params, 1e5, verbose=T)
+#' 
+#' @return Monte Carlo estimate of \eqn{P_{\rm mc}}
 #' @export
-computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples, numCores=1, verbose=T) {
+computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples, numCores=1, verbose=F) {
   K <- length(paramsList)
   if (K == 1) return(0)
 
@@ -303,15 +247,27 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 #' Monte Carlo \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
 #' @description
-#' Compute the merging Pmc reduction matrix estimated via Monte Carlo integration
+#' Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 #'
-#' @details TODO: Fill me in
-#'
+#' @details
+#' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
+#' For each pair of clusters \eqn{j, k} we estimate their \eqn{\Delta P_{\rm mc}^{(j, k)}} value.
+#' \deqn{\Delta \hat P_{\rm mc}^{(j, k)} = \frac{1}{M} \sum_{i=1}^M \pi_j(x_i) \, \pi_k(x_i) }
+#' Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}.
+#' Note that \eqn{\Delta \hat P_{\rm mc}^{(j, k)} = \Delta \hat P_{\rm mc}^{(k, j)}}
+#' 
 #' @inheritParams computeMonteCarloPmc
 #'
-#' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeMonteCarloDeltaPmcMatrix(params, 1e5, verbose=T)
+#' 
+#' @return \eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 #' @export
-computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=T) {
+computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=F) {
   K <- length(paramsList)
 
   output <- matrix(0, K, K)
@@ -338,14 +294,27 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
 #' @param integralControl List specifying arguments to pass to [cubature::cubintegrate()]. See details.
-#'
+#' 
 #' @details
-#' TODO: Clear this up
-#' For `pcubature` the control variables are `method` for the integration
-#' For `pcubature` the control variables are `lowerLimit` and `upperLimit` for the integral (defaults to \pm Inf)
-#' For `pcubature` the control variables are `maxEval` which sets the number of integral evaluations (defaults to 1e6)
-#' For `pcubature` the control variables are `relTol` which sets the maximum tolerance (defaults to 1e-5)
+#' For a given cluster configuration, the overall misclassification probability \eqn{P_{\rm mc}} can be evaluated as
+#' \deqn{P_{\rm mc} = \sum_{j=1}^K \int 2 \left(1 - \pi_j(x)\right) \, \pi_j(x) P(x) dx}
+#' 
+#' This integral is implemented using the `cubature` function. the `integralControl` variable accepts arguments to the [cubature::cubintegrate()] function
+#' The defaults for this function are:
+#' \itemize{
+#'  \item \code{method}: Which integration method is to be used. Default is \code{hcubature}
+#'  \item \code{lowerLimit} and \code{upperLimit}: The bounds of integration. Default is \eqn{\pm \infty}.
+#'  \item \code{maxEval}: Sets the maximum number of integral evaluations. Default is 1e6
+#'  \item \code{relTol}: Sets the convergence tolerance for the integration. Default is 1e-5
+#' }
 #'
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computePmc(params)
+#' 
 #' @return Output from the `cubature::cubintegrate()` function.
 #' @export
 computePmc <- function(paramsList, integralControl=list()) {
@@ -446,14 +415,26 @@ computePmc <- function(paramsList, integralControl=list()) {
 
 #'  \eqn{\Delta P_{\rm {mc}}} Matrix computation
 #'
-#' Compute the merging Pmc reduction matrix calculated using `cubature` package
+#' Compute the \eqn{\Delta P_{\rm mc}} matrix for a set of clusters, where the \eqn{ij^{th}} element is \eqn{\Delta P_{\rm mc}^{(i, j)}}.
 #'
 #' @inheritParams computePmc
 #'
-#' @details See [computePmc] for description of `integralControl` parameters.
-#'
+#' @details 
+#' #' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
+#' For each pair of clusters \eqn{j, k}, \eqn{\Delta P_{\rm mc}} is 
+#' \deqn{\Delta P_{\rm mc}^{(j, k)} = \int \pi_j(x) \, \pi_k(x) P(x) dx}
+#' Where the relationship \eqn{P_{\rm mc} = \sum_{i < j} 2\Delta P_{\rm mc}^{(i, j)}}
+#' See [computePmc] for description of `integralControl` parameters.
+#' 
 #' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
-#'
+#' 
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' computeDeltaPmcMatrix(params)
+#' 
 #' @export
 computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
   K <- length(paramsList)
@@ -521,7 +502,7 @@ computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
 #'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'
-#' @export
+#' export
 computePairwisePmcMatrix <- function(paramsList, mc=T, ...) {
   K <- length(paramsList)
   output <- matrix(0, K, K)

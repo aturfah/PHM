@@ -11,6 +11,7 @@ PHM(
   data = NULL,
   verbose = T,
   computePosterior = T,
+  partitionWeightedDensity = T,
   partitionModel = "VVI",
   partitionMaxComponents = 10,
   mc = T,
@@ -20,17 +21,17 @@ PHM(
 \arguments{
 \item{mclustObj}{Output from \code{\link[mclust:Mclust]{mclust::Mclust()}}}
 
-\item{paramsList}{A list generated from \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}} or \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} providing the initial cluster parameter estimates}
+\item{paramsList}{A list generated from \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}}, \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}}, \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} providing the initial cluster parameter estimates}
 
 \item{partition}{A vector providing obseration partition memberships for the initial state}
 
 \item{data}{An \eqn{N \times D} matrix of observations}
 
-\item{verbose}{Boolean whether to suppress print statements}
+\item{verbose}{Boolean whether to suppress debug statements}
 
 \item{computePosterior}{Boolean whether to compute the Posterior matrix for the merges}
 
-\item{partitionModel}{If specifying \code{partition}, the covariance structure to estimate the density for each partition. See \code{\link[mclust:Mclust]{mclust::Mclust()}} for more details}
+\item{partitionModel}{If no partition provided, the covariance structure to estimate the density for each partition using \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}}}
 
 \item{partitionMaxComponents}{If specifying \code{partition}, the maximum number of components to estimate the density for each partition}
 
@@ -39,8 +40,29 @@ PHM(
 \item{...}{Parameters pased to either \code{\link[=computeDeltaPmcMatrix]{computeDeltaPmcMatrix()}} or \code{\link[=computeMonteCarloDeltaPmcMatrix]{computeMonteCarloDeltaPmcMatrix()}} to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix}
 }
 \value{
-FILL ME IN
+A list of lists for each step of the PHM algorithm. Each sublist contains
+\itemize{
+\item \code{clusters}: Number of clusters \eqn{K} at this merge
+\item \code{posterior_matrix}: \eqn{N\times K} matrix of posterior cluster probabilities
+\item \code{labels}: Partition of the observations
+\item \code{pmc_change}: Value of \eqn{\Delta P_{\rm mc}} leading to this value of \eqn{K}
+\item \code{params}: Cluster-specific densities
+\item \code{pmc_components}: Number of original clusters involved in this merge
+\item \code{pmc_accum}: Accumulated \eqn{\Delta P_{\rm mc}} in this subtree (unused)
+\item \code{min_merge_pmc}: Minimum value of \eqn{\Delta P_{\rm mc}} for all merges in this subtree
+\item \code{merge_components}: Index of components merged in this step
+\item \code{pmc}: Overall \eqn{P_{\rm mc}} remaining in the cluster configuration
+\item \code{pmc_matrix}: \eqn{\Delta P_{\rm mc}} matrix for the remaining clusters
+}
 }
 \description{
-TODO
+Implements the PHM algorithm which constructs a clustering hierarchy by successively merging clusters with the largest \eqn{\Delta P_{\rm mc}} values.
+}
+\examples{
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+params <- constructPmcParamsPartition(partition, dat, G=1:5)
+phm <- PHM(paramsList=params, data=dat, partition=partition)
+
 }

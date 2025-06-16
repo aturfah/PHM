@@ -6,7 +6,7 @@
 #' @description Each step of the PHM algorithm reduces \eqn{P_{\rm{mc}}}. This gives the results from the PHM algorithm terminated when \eqn{P_{\rm{mc}}} falls below some specified threshold.
 #'
 #' @return Result of the PHM merging procedure terminated when the \eqn{P_{\rm{mc}}} threshold is satisfied
-#' @export
+#' export
 thresholdPHM <- function(phm, threshold=0.01) {
   kappa <- length(phm)
   for (k in kappa:1) {
@@ -35,20 +35,43 @@ mergeParams <- function(par1, par2) {
 
 #' PHM Algorithm
 #'
-#' @description TODO
+#' @description 
+#' Implements the PHM algorithm which constructs a clustering hierarchy by successively merging clusters with the largest \eqn{\Delta P_{\rm mc}} values.
 #' 
 #' @param mclustObj Output from [mclust::Mclust()]
-#' @param paramsList A list generated from [constructPmcParamsMclust()] or [constructPmcParamsPartition()] providing the initial cluster parameter estimates
+#' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates
 #' @param partition A vector providing obseration partition memberships for the initial state
 #' @param data An \eqn{N \times D} matrix of observations
-#' @param verbose Boolean whether to suppress print statements
+#' @param verbose Boolean whether to suppress debug statements
 #' @param computePosterior Boolean whether to compute the Posterior matrix for the merges
-#' @param partitionModel If specifying `partition`, the covariance structure to estimate the density for each partition. See [mclust::Mclust()] for more details
+#' @param partitionModel If no partition provided, the covariance structure to estimate the density for each partition using [constructPmcParamsPartition()]
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
-#'
-#' @return FILL ME IN
+#' 
+#' @examples 
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
+#' params <- constructPmcParamsPartition(partition, dat, G=1:5)
+#' phm <- PHM(paramsList=params, data=dat, partition=partition)
+#' 
+#' @return
+#' A list of lists for each step of the PHM algorithm. Each sublist contains
+#' \itemize{
+#'  \item \code{clusters}: Number of clusters \eqn{K} at this merge
+#'  \item \code{posterior_matrix}: \eqn{N\times K} matrix of posterior cluster probabilities
+#'  \item \code{labels}: Partition of the observations
+#'  \item \code{pmc_change}: Value of \eqn{\Delta P_{\rm mc}} leading to this value of \eqn{K}
+#'  \item \code{params}: Cluster-specific densities
+#'  \item \code{pmc_components}: Number of original clusters involved in this merge
+#'  \item \code{pmc_accum}: Accumulated \eqn{\Delta P_{\rm mc}} in this subtree (unused)
+#'  \item \code{min_merge_pmc}: Minimum value of \eqn{\Delta P_{\rm mc}} for all merges in this subtree
+#'  \item \code{merge_components}: Index of components merged in this step
+#'  \item \code{pmc}: Overall \eqn{P_{\rm mc}} remaining in the cluster configuration
+#'  \item \code{pmc_matrix}: \eqn{\Delta P_{\rm mc}} matrix for the remaining clusters
+#' }
+#' 
 #' @export
 PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
                 verbose=T,
@@ -127,7 +150,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
   ## Parameters/data to store
   output <- lapply(1:K, function(k) list(
     clusters=k,
-    posterior_matrixrix=if(computePosterior) {matrix(1, nrow=N)} else {NULL},
+    posterior_matrix=if(computePosterior) {matrix(1, nrow=N)} else {NULL},
     labels=if(computePosterior) {rep(1, N)} else {NULL},
     pmc_change=NA,
     params=NULL,
@@ -159,7 +182,7 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
       output[[idx]]$min_merge_pmc <- min_merge_pmc
     }
     output[[idx]]$pmc_matrix <- tmp_delta
-    output[[idx]]$posterior_matrixrix <- posterior_matrix
+    output[[idx]]$posterior_matrix <- posterior_matrix
 
     ## Identify the components to merge
     maxval <- max(tmp_delta, na.rm=T)
