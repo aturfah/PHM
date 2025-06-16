@@ -26,9 +26,12 @@ plotPHMDistruct(
 
 \item{partition}{Whether to visualize from the posterior matrix or partition labels}
 }
+\value{
+A ggplot object
+}
 \description{
-TODO: Fill me in
+Visualize a distruct plot based on either a partition or the posterior cluster probabilities.
 }
 \details{
-TODO: Fill me in
+In the case of visualizing for a partition, the posterior probabilities are set to 1 if it is the cluster the obesrvation is assigned to and 0 otherwise.
 }

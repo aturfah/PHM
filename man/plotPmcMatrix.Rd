@@ -39,11 +39,8 @@ plotPmcMatrix(
 \item{visDigits}{Number of digits to round the displayed values}
 }
 \value{
-pew
+A ggplot object
 }
 \description{
-TODO: Fill  me in
-}
-\details{
-TODO: Fill me in
+Visualize the matrix of \eqn{\Delta P_{\rm mc}} values
 }
