@@ -184,15 +184,15 @@ constructPHMDendrogramData <- function(phm,
 #'
 #' @param phm Output from [PHM()]
 #' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
-#' @param scaleHeights String specifying how to set the heights in the dendrogram.
-#' @param heightValue Whether to use the \eqn{\Delta P_{\rm mc}} or \eqn{\min \Delta P_{\rm mc}} value to determine branch height for a merge
+#' @param scaleHeights String specifying how to set the heights in the dendrogram. See Details for more information.
+#' @param heightValue Whether to use the \eqn{\Delta P_{\rm mc}} or \eqn{\min \Delta P_{\rm mc}} value to determine branch height for a merge. See Details for more information.
 #' @param threshold Error threshold for the integral past which to represent the merges as dashed lines
 #' @param suppressLabels Boolean whether or not to display \eqn{P_{\rm{mc}}} reduction labels on the dendrogram or not
 #' @param mergeLabels String indicating what value to display in the labels on the dendrogram
 #' @param mergeLabelsSize Text size for the numeric value in the labels on the dendrogram
 #' @param mergeLabelsPadding Padding for the merge label text
 #' @param mergeLabelsR Radius for the rounded edges of the merge label box
-#' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram
+#' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram. See Details for more information.
 #' @param displayAxisSize Text size for the leaf node labels
 #' @param colorAxis Whether or not to color the labels on the leaf nodes
 #' @param groupProbs Vector of class probability conditional on base group membership
@@ -201,19 +201,22 @@ constructPHMDendrogramData <- function(phm,
 #'
 #' @details 
 #' 
-#' The options for height scaling are
+#' There are two options for the value for the \eqn{P_{\rm mc}} height for merging subtrees \eqn{\mathcal{S}_1, \mathcal{S}_2} (\eqn{m = |\mathcal{S}_1| + |\mathcal{S}_2|}):
 #' \itemize{
-#'  \item \code{"log10"}: 
-#'  \item \code{"unscaled"}: 
-#'  \item \code{"pmcdist"}: 
+#'  \item \code{"merge"}: \eqn{\binom{m}{2}^{-1} \Delta\pmis^{(\mathcal{S}_1, \mathcal{S}2)}}
+#'  \item \code{"min"}: \eqn{\min_{i \in \mathcal{S}_1,\, j \in \mathcal{S}_2} \Delta\pmis^{(i, j)}}
 #' }
 #' 
-#' The options for the value for the \eqn{P_{\rm mc}} height are
+#' Once the value for the tree height is obtained, there are three options to scale.
 #' \itemize{
-#'  \item \code{"merge"}: 
-#'  \item \code{"min"}: 
+#'  \item \code{"unscaled"}: The height can be left unscaled
+#'  \item \code{"log10"}: A \eqn{\log_{10}} scaling can be applied to the height to better reveal different clustering resolutions.
+#'  \item \code{"pmcdist"}: A spline-based scaling where we map the value to a linear distance between two Gaussian clusters.
 #' }
+#' 
+#' The \code{displayAxis} parameter controls what to display on the axes of the heatmap. \code{box} displays a standard box, which is most useful for color-coded axes. \code{label} displays the cluster label, as specified in the \code{phm} parameters. \code{index} displays the numeric index of each cluster in the \code{phm} parameter list. \code{none} suppresses the cluster label entirely, and is mose useful for when there are a large number of clusters.
 #'
+#' @return A ggplot object
 #' @export
 plotPHMDendrogram <- function(phm, colors=NULL,
                               scaleHeights=c("log10", "unscaled", "pmcdist"),
@@ -346,6 +349,7 @@ plotPHMDendrogram <- function(phm, colors=NULL,
 #' @details 
 #' In the case of visualizing for a partition, the posterior probabilities are set to 1 if it is the cluster the obesrvation is assigned to and 0 otherwise.
 #'
+#' @return A ggplot object
 #' @export
 plotPHMDistruct <- function(phm, K=length(phm),
                             colors=NULL,
@@ -466,6 +470,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
 #' @param visThreshold At what value suppress the value and show "< (visThreshold)"
 #' @param visDigits Number of digits to round the displayed values
 #'
+#' @return A ggplot object
 #' @export
 plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
                           displayAxis=c("box", "label", "index", "none"),
@@ -577,11 +582,11 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
 #' Visualize PHM dendrogram structure with a heatmap
 #'
 #' @description 
-#' For a pair of clusters \eqn{i, j}, the heatmap position \eqn{i, j} is the value of \eqn{\Delta P_{\rm mc}} where the clusters are first merged.
+#' For a pair of clusters \eqn{i, j}, the heatmap position \eqn{i, j} is the value of \eqn{\Delta P_{\rm mc}} where the clusters are first merged. This allows for a more straightforward visualization of the multi-resolution structure of heatmaps when combined with the dendrogram.
 #'
 #' @param phm Output from [PHM()]
 #' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
-#' @param displayAxis String indicating what label to place along the axis (corresponding to clusters)
+#' @param displayAxis String indicating what label to place along the axis (corresponding to clusters). See Details for more information.
 #' @param displayAxisSize Text size for the axis labels
 #' @param colorAxis Whether or not to color the axis labels
 #' @param gridColor What color to make the heatmap grid
@@ -590,8 +595,13 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
 #' @param legendPosition Where to put the legend for the heatmap colors. Default is to suppress.
 #'
 #' @details
+#' Consider a pair of initial clusters \eqn{i, j}, and let \eqn{\mathcal{S}} be the smallest subtree containing both \eqn{i, j} (\eqn{\mathcal{S}_i} contains cluster \eqn{i} and \eqn{\mathcal{S}_{j}} contains cluster \eqn{j}). The pairwise value for \eqn{i, j}, \eqn{\rho(i, j)} is based on \eqn{\Delta P_{\rm mc}^{ \left(\mathcal{S}(i), \mathcal{S}(j)\right)}}, which is the \eqn{\Delta P_{\rm mc}} value at which \eqn{i, j} are merged into a single cluster. 
 #' 
+#' As with the dendrogram heights ([plotPHMDendrogram()]) there are multiple options for scaling \eqn{\rho(i, j)}. The first is \code{log10} scaling, where \eqn{\rho(i, j) = \log_{10} \Delta P_{\rm mc}}. The second is a spline-based scaling, \code{pmcdist}, where we map the \eqn{\Delta P_{\rm mc}} value to a linear distance between two Gaussian clusters.
+#' 
+#' The \code{displayAxis} parameter controls what to display on the axes of the heatmap. \code{box} displays a standard box, which is most useful for color-coded axes. \code{label} displays the cluster label, as specified in the \code{phm} parameters. \code{index} displays the numeric index of each cluster in the \code{phm} parameter list. \code{none} suppresses the cluster label entirely, and is mose useful for when there are a large number of clusters.
 #'
+#' @return A ggplot object
 #' @export
 plotPHMMatrix <- function(phm, colors=NULL,
                           displayAxis=c("box", "label", "index", "none"),
@@ -600,7 +610,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
                           gridColor="black",
                           fillLimits=NULL,
                           # fillValue=c("deltaPmc", "minDeltaPmc", "scaledDeltaPmc"),
-                          fillScale=c("log10", "Pmc"),
+                          fillScale=c("log10", "pmcdist"),
                           legendPosition="none") {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
@@ -671,7 +681,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
   colnames(merge_matrix) <- paste0("V", seq_along(phm))
 
   fillScaleFunc <- log10
-  if (fillScale == "Pmc") {
+  if (fillScale == "pmcdist") {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "distinguishabilityCriterion"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
