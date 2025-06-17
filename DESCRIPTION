@@ -22,3 +22,6 @@ Imports:
     RColorBrewer,
     ggtext,
     magrittr
+Depends: 
+    R (>= 3.5)
+LazyData: true
