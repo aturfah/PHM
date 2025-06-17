@@ -4,5 +4,6 @@
 
 ## Table of Contents
 
-1. [Weighted Parameter Estimation](#)
+1. [Weighted Density Estimation](weighted_density_estimation.md)
 2. [Nested Diamonds](nested_diamonds.md)
+3. [Double Ring](double_ring.md)
