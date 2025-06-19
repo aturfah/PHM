@@ -741,3 +741,190 @@ plotPHMMatrix <- function(phm, colors=NULL,
       axis.text.x = displayAxisFmt,
       axis.text.y = displayAxisFmt)
 }
+
+
+#' Visualize regions contributing to \eqn{P_{\rm mc}} in a 2D plot
+#'
+#' @description Visualize the point-specific \eqn{P_{\rm mc}} over a grid of points to visually inspect cluster contributions to \eqn{P_{\rm mc}}
+#' 
+#'
+#' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates. Parameters should be 2D
+#' @param data A \eqn{N \times 2} matrix containing observations
+#' @param partition A vector containing class labels
+#' @param colors Vector of \eqn{K} hex codes to color the leaf node labels
+#' @param xlim Vector with min/max values for the x-axis `NULL` sets this based on the maximum and minimum x-values for observations
+#' @param ylim Vector with min/max values for the y-axis `NULL` sets this based on the maximum and minimum y-values for observations
+#' @param suppressPmc Flag whether to display the regions contributing to \eqn{P_{\rm mc}} in the plot
+#' @param numPmcPatches Number of points along each axis in the \eqn{P_{mc}} grid to evaluate. Higher values gives a smoother visualization
+#' @param logPmcThreshold Threshold for \eqn{P_{\rm mc}} values to display. All coordinates with \eqn{\log_{10} P_{\rm mc}} below this value will be ignored.
+#' @param logPmcMidpoint Midpoint in the \eqn{P_{\rm mc}} color gradient
+#' @param PmcColor Hex value for the maximum value in the \eqn{P_{\rm mc}} color gradient
+#' @param suppressDensity Flag whether to overlay the cluster-specific densities
+#' @param densityLevels Values of the density at which to display the level curves
+#' @param densityLevelWidth Line width for the density curves
+#' @param suppressObservations Flag whether to display the observations from \code{data}
+#' @param pointSize Size of the data scatterplot points
+#' @param labelSize Text size for the cluster labels
+#' @param textSize Text size for the plots
+#' @param legendPosition Where to put the legend for the heatmap colors. Default is to suppress
+#'
+#' @details
+#' For an arbitrary point \eqn{\mathbf x}, using the Monte Carlo evaluation of \eqn{P_{\rm mc}} its point-specific \eqn{P_{\rm mc}} can be calculated as
+#' \deqn{\sum_{k=1}^K \pi_k(\mathbf{x}) (1 - \pi_k(\mathbf{x})) \times f(x=\mathbf{x}) }
+#' Where \eqn{f(\mathbf{x})} is the overall data density evaluated at a point. Note that for a sample of \eqn{M} points, the average of these point-specific \eqn{P_{\rm mc}} values produce the Monte Carlo estimate of \eqn{P_{\rm mc}} described in Turfah and Wen (2025).
+#' 
+#' The point-specific \eqn{P_{\rm mc}} of each point in a grid is evaluated and visualized. The cluster-specific density level sets and/or the partitioned observations can be overlaid over this to better understand how the \eqn{P_{\rm mc}} value was obtained.
+#' 
+#' @return A ggplot object
+#' @export
+plotPmc2D <- function(paramsList,
+                      data,
+                      partition,
+                      colors=RColorBrewer::brewer.pal(length(paramsList), "Paired"),
+                      xlim=NULL,
+                      ylim=NULL,
+                      suppressPmc=F,
+                      numPmcPatches=200,
+                      logPmcThreshold=-4,
+                      logPmcMidpoint=0.6 * logPmcThreshold,
+                      PmcColor="#222",
+                      suppressDensity=F,
+                      densityLevels=c(1e-2, 1e-1),
+                      densityLevelWidth=0.3,
+                      suppressObservations=F,
+                      pointSize=0.5,
+                      labelSize=2,
+                      textSize=9,
+                      legendPosition="none"
+                      ) {
+  ## Validate parameter dimensions
+  if (length(partition) != nrow(data)) stop("Observations mismatch between partition and data")
+  if (ncol(data) != 2) stop("Data must be of dimension 2")
+  if (!is.null(xlim) && length(xlim) != 2) stop("xlim must be of length 2 or NULL")
+  if (!is.null(ylim) && length(ylim) != 2) stop("ylim must be of length 2 or NULL")
+
+  ## No color specified => black
+  if (is.null(colors)) colors <- rep("#000000", length(paramsList))
+
+  ## Define plot limits
+  if (is.null(xlim)) {
+    xlim <- c(min(data[, 1]), max(data[, 1]))
+    if (xlim[1] < 0) {
+      xlim[1] <- xlim[1] * 1.1
+    } else {
+      xlim[1] <- xlim[1] / 1.1
+    }
+    if (xlim[2] < 0) {
+      xlim[2] <- xlim[2] / 1.1
+    } else {
+      xlim[2] <- xlim[2] * 1.1
+    }
+  }
+  if (is.null(ylim)) {
+    ylim <- c(min(data[, 2]), max(data[, 2]))
+    if (ylim[1] < 0) {
+      ylim[1] <- ylim[1] * 1.1
+    } else {
+      ylim[1] <- ylim[1] / 1.1
+    }
+    if (ylim[2] < 0) {
+      ylim[2] <- ylim[2] / 1.1
+    } else {
+      ylim[2] <- ylim[2] * 1.1
+    }
+  }
+
+  data_df <- data.frame(
+    data, 
+    g=as.factor(partition)
+  )
+
+  ## Construct Grid of points at which to evaluate Pmc
+  mat <- expand.grid(X=seq(min(xlim), max(xlim), length.out=numPmcPatches),
+                     Y=seq(min(ylim), max(ylim), length.out=numPmcPatches)) %>%
+    as.matrix()
+
+  ## Evaluate Pmc
+  density_mat <- sapply(paramsList, function(x) {
+    K <- length(x$prob)
+
+    tmp <- sapply(1:K, function(idx) {
+      x$prob[idx] * mvtnorm::dmvnorm(mat, x$mean[, idx], x$var[, , idx]) / sum(x$prob)
+    })
+    rowSums(tmp)
+  })
+  posterior <- density_mat / rowSums(density_mat)
+  pmc <- rowSums(posterior * (1 - posterior)) * rowSums(density_mat)
+
+  ## Cluster Density Matrix for visualization
+  class_labels <- sapply(paramsList, function(x) x$class)
+  names(colors) <- class_labels
+  dens_df <- data.frame(mat, dens=density_mat) %>%
+    tidyr::pivot_longer(cols=starts_with("dens")) %>%
+    dplyr::mutate(name=stringr::str_remove(name, "dens."),
+           name=as.numeric(name),
+           name=class_labels[name],
+           name=factor(name, levels=class_labels))
+
+  ## Generate plot
+  plt <- data.frame(mat, pmc=log10(pmc)) %>%
+    dplyr::filter(pmc > logPmcThreshold) %>%
+    ggplot2::ggplot()
+
+  if (!suppressPmc) {
+    labels_func <- function(x) {
+      x_fmt <- format(round(x, 1), trim = TRUE)
+      x_fmt[x == logPmcThreshold] <- paste0("≤ ", logPmcThreshold)
+      x_fmt
+    }
+    plt <- plt + ggplot2::geom_point(aes(x=X, y=Y, color=pmc)) +
+      ggplot2::scale_color_gradient2(midpoint=logPmcMidpoint,
+                            high=PmcColor, low="white",
+                            limits=c(logPmcThreshold,
+                                    max(log10(pmc))),
+                            na.value="white",
+                            name="log(Pmc)",
+                            labels=labels_func) +
+      ggnewscale::new_scale_color()
+  }
+  if (!suppressObservations) {
+    plt <- plt + ggplot2::geom_point(
+        aes(x=X1,
+            y=X2,
+            color=g),
+        size=pointSize,
+        alpha=0.5,
+        data = data_df
+      ) +
+      ggplot2::scale_color_manual(values=colors,
+                                  guide="none") +
+      ggnewscale::new_scale_color()
+  }
+  if (!suppressDensity) {
+    plt <- plt + ggplot2::geom_contour(aes(x=X, y=Y, color=name, group=name, z=value), 
+                 breaks = densityLevels,
+                 linewidth=densityLevelWidth, data=dens_df) +
+      ggplot2::scale_color_manual(values=colors,
+                                  guide="none")
+  }
+  plt <- plt + 
+    ## Cluster labels
+    ggplot2::geom_label(
+      aes(x=X1, y=X2, label=g),
+      size=labelSize,
+      data=data_df %>% group_by(g) %>% dplyr::summarize(X1=mean(X1), X2=mean(X2))
+    ) +
+    ## Formatting
+    ggplot2::scale_x_continuous(limits=xlim) +
+    ggplot2::scale_y_continuous(limits=ylim) +
+    ggplot2::xlab("") + ggplot2::ylab("") +
+    ggplot2::theme_bw() + 
+    ggplot2::theme(legend.position=legendPosition,
+          panel.grid.major.x = ggplot2::element_blank(),
+          panel.grid.minor.x = ggplot2::element_blank(),
+          panel.grid.major.y = ggplot2::element_blank(),
+          panel.grid.minor.y = ggplot2::element_blank(),
+          text=ggplot2::element_text(size=textSize))
+
+  return(plt)
+}

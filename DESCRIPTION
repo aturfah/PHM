@@ -21,7 +21,8 @@ Imports:
     ggplot2,
     RColorBrewer,
     ggtext,
-    magrittr
+    magrittr,
+    ggnewscale
 Depends: 
     R (>= 3.5)
 LazyData: true
