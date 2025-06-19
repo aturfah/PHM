@@ -7,3 +7,4 @@
 1. [Weighted Density Estimation](weighted_density_estimation.md)
 2. [Nested Diamonds](nested_diamonds.md)
 3. [Double Ring](double_ring.md)
+4. [Half Moons](half_moons.md)
