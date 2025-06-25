@@ -7,6 +7,8 @@ The method and computational procedures are described in [Turfah and Wen (2025)]
 
 For questions/commens regarding the package, please contact Ali Turfah (aturfah at umich dot com).
 
+Please see our [user guide](https://aturfah.github.io/PHM) for a detailed guide and use case examples.
+
 ## License
 
 Software distributed under the terms of the GNU General Public License version 3.0. See [LICENSE](LICENSE) for more details.
@@ -21,4 +23,3 @@ library(PHM)
 library(mclust)
 ```
 
-Please see **docs** for a detailed guide and examples
