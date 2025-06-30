@@ -54,15 +54,15 @@ params_f <- constructPmcParamsWeightedPartition(fcl_clust, dat, weights=fcl_weig
 In the plots below, the dashed lines correspond to the underlying cluster densities, while the solid red and blue lines are the estimated densities from each procedure. Looking to the unweighted density scheme, it tends to under-estimate the density in the tails of the distribution which understates the overlap between the clusters. The default weighting scheme tends to over-estimate the weights in the tails of the distributions. Finally, the density based on the $c$-means weights very closely matches the original clustering solution.
 
 <center>
-<img src="figures/weighted_density/gauss.png" alt="Alt Text" width="600">
+<img src="figures/weighted_density/gauss.png" alt="Alt Text" class="figure">
 </center>
 
 
 In terms of the estimated $P_{\rm mc}$ between the clusters, in this case the unweighted scheme under-estimates $P_{\rm mc} = 0.11$, the default weighting scheme somewhat over-estimates $P_{\rm mc} = 0.3$, while the $c$-means weights get an accurate estimate of $P_{\rm mc} = 0.23$. 
 
 ```
-     Truth   Unweighted   Weighted   Cmeans 
-     0.225        0.109      0.300    0.226 
+Truth   Unweighted   Weighted   Cmeans 
+0.225        0.109      0.300    0.226 
 ```
 
 ## Double Rings Example
@@ -79,17 +79,15 @@ hcl_labels <- cutree(hcl, 10)
 The data and partition is visualized below
 
 <center>
-<img src="figures/weighted_density/data_plot.png" alt="Alt Text" width="600">
+<img src="figures/weighted_density/data_plot.png" alt="Alt Text" class="figure" >
 </center>
 
-
-Based on this partition, we compare the results for estimating the cluster-specific densities via GMM in two ways
 
 
 
 Below are the estimated cluster-specific densities, as well as the estimated $P_{\rm mc}$ values for each set of density estimates. We see that the value of $P_{mc}$ is significantly higher for the weighted density estimate that it is for the unweighted density.
 
 <center>
-<img src="figures/weighted_density/density_plot.png" alt="Alt Text" width="600">
+<img src="figures/weighted_density/density_plot.png" alt="Alt Text" class="figure" >
 </center>
 
