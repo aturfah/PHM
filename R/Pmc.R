@@ -57,10 +57,8 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
       )
     }
     output <- Reduce(g, output)
-
-  } else {
-    return(output)
   }
+  return(output)
 }
 
 #' Construct \eqn{P_{\rm{mc}}} parameter list from a partition
