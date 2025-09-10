@@ -159,7 +159,8 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
         linkFunc(clust_dist[which(clust_dist > 0)])
       })
     })
-    weights <- exp(-1 * dist_to_clust)
+    mindist <- apply(dist_to_clust, 1, min)
+    weights <- exp(-1 * (dist_to_clust - mindist))
     weights <- weights / rowSums(weights)
   } else if (is.matrix(weights)) {
     if (ncol(weights) != K)
