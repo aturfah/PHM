@@ -4,6 +4,11 @@
 
 ## Table of Contents
 
+### Overview
+
+1. [Installation](#)
+2. [Parametrization Structure](#)
+
 ### Synthetic Data Examples
 
 1. [Weighted Density Estimation](weighted_density_estimation.md)
@@ -13,6 +18,6 @@
 
 ### Real Data Illustrations
 
-5. [Human Genome Diversity Project](#)
-6. [Peripheral Blood Mononuclear Cells](#)
-7. [Larval *C. elegans* Cells](#)
+1. [Human Genome Diversity Project](#)
+2. [Peripheral Blood Mononuclear Cells](#)
+3. [Larval *C. elegans* Cells](#)
