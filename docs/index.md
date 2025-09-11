@@ -18,6 +18,6 @@
 
 ### Real Data Illustrations
 
-1. [Human Genome Diversity Project](#)
+1. [Human Genome Diversity Project](hgdp.md)
 2. [Peripheral Blood Mononuclear Cells](#)
 3. [Larval *C. elegans* Cells](#)
