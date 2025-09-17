@@ -103,6 +103,20 @@ hdbcl <- hdbscan(DATA, 5)
 plot(hdbcl, show_flat=T)
 
 ## Leiden
+prepare_seurat <- function(data) {
+  colnames(data) <- paste0("X", 1:ncol(data))
+  rownames(data) <- paste0("R", 1:nrow(data))  
+  seurat_obj <- SeuratObject::CreateSeuratObject(round(t(data)), assay="doot")
+  seurat_embed <- SeuratObject::CreateDimReducObject(
+    embeddings = data,
+    key = "PC_",
+    assay = "doot"
+  )
+  seurat_obj[["pca"]] <- seurat_embed
+  
+  seurat_obj
+}
+
 hgdp_seurat <- prepare_seurat(DATA)
 hgdp_seurat <- FindNeighbors(hgdp_seurat, dims = 1:ncol(DATA))
 hgdp_leiden <- FindClusters(hgdp_seurat, algorithm = 4) ## Leiden
@@ -121,15 +135,18 @@ phm_leiden <- PHM(paramsList = leiden_params,
 
 ```
 
-Visualize the results
+Helpers to visualize
 
 ```
-## Get everything on the same scale
+## Get all the visuals on the same scale
 matrix_range <- range(c(3.742256e-06, 6.311475e-02, 6.335561e-06, 3.553335e-02))
 matrix_range[1] <- matrix_range[1] * 0.9
 matrix_range[2] <- matrix_range[2] * 1.1
+```
 
-## GMM
+GMM results
+
+```
 colors <- RColorBrewer::brewer.pal(mcl$G, "Paired")
 dendro <- plotPHMDendrogram(phm_mcl, scaleHeights = "log10", colors=colors, suppressLabels = T)
 distruct <- plotPHMDistruct(phm_mcl, labels=geographic_labels, colors=colors)
@@ -144,8 +161,15 @@ hgdp_combined <- gridExtra::arrangeGrob(
     distruct + plot_theme + ggtitle("(c)"),
     layout_matrix = matrix(c(1, 1, 3, 2, 2, 3), ncol=2)
 )
+```
+<center>
+<img class="figure" src="figures/hgdp/hgdp_gmm_dendro_vis_9.png" alt="Alt Text">
+</center>
 
-## DensityCut
+
+DensityCut results
+
+```
 colors <- RColorBrewer::brewer.pal(length(dc_params), "Paired")
 dc_distruct <- plotPHMDistruct(phm_dc, 
                                 labels=geographic_labels, 
@@ -168,8 +192,15 @@ dc_phm_matrix <- plotPHMMatrix(phm_dc, colors=colors,
     dc_distruct2 + plot_theme + ggtitle("(d)"),
     layout_matrix = matrix(c(1, 1, 3, 4, 2, 2, 3, 4), ncol=2)
   )
+```
 
-## k-means
+<center>
+<img class="figure" src="figures/hgdp/hgdp_dc_dendro_vis_9.png" alt="Alt Text">
+</center>
+
+k-means results
+
+```
 colors <- RColorBrewer::brewer.pal(length(kcl_sil_params), "Paired")
 ksil_distruct <- plotPHMDistruct(phm_ksil,
                                 labels=geographic_labels,
@@ -194,8 +225,16 @@ ksil_hgdp_combined <- gridExtra::arrangeGrob(
     ksil_distruct2 + plot_theme + ggtitle("(d)"),
     layout_matrix = matrix(c(1, 1, 3, 4, 2, 2, 3, 4), ncol=2)
   )
+```
 
-## Hierarchical Clustering
+<center>
+<img class="figure" src="figures/hgdp/hgdp_ksil_dendro_vis_9.png" alt="Alt Text">
+</center>
+
+
+Hierarchical Clustering results
+
+```
 colors <- RColorBrewer::brewer.pal(length(hcl_sil_params), "Paired")
 hsil_distruct <- plotPHMDistruct(phm_hsil, 
                                 labels=geographic_labels, 
@@ -220,8 +259,15 @@ hsil_hgdp_combined <- gridExtra::arrangeGrob(
     hsil_distruct2 + plot_theme + ggtitle("(c)"),
     layout_matrix = matrix(c(1, 1, 3, 4, 2, 2, 3, 4), ncol=2)
   )
+```
 
-## Leiden
+<center>
+<img class="figure" src="figures/hgdp/hgdp_hsil_dendro_vis_9.png" alt="Alt Text">
+</center>
+
+Leiden results
+
+```
 colors <- RColorBrewer::brewer.pal(length(leiden_params), "Paired")
 leiden_distruct <- plotPHMDistruct(phm_leiden, 
                                 labels=geographic_labels, 
@@ -247,30 +293,6 @@ layout_matrix = matrix(c(1, 1, 3, 4, 2, 2, 3, 4), ncol=2)
 )
 ```
 
-GMM Results
-
-DensityCut results
-
-Hierarchical Clustering Results
-
-k-means results
-
-Leiden results
-
-Helper Functions
-
-```
-prepare_seurat <- function(data) {
-  colnames(data) <- paste0("X", 1:ncol(data))
-  rownames(data) <- paste0("R", 1:nrow(data))  
-  seurat_obj <- SeuratObject::CreateSeuratObject(round(t(data)), assay="doot")
-  seurat_embed <- SeuratObject::CreateDimReducObject(
-    embeddings = data,
-    key = "PC_",
-    assay = "doot"
-  )
-  seurat_obj[["pca"]] <- seurat_embed
-  
-  seurat_obj
-}
-```
+<center>
+<img class="figure" src="figures/hgdp/hgdp_leiden_dendro_vis_9.png" alt="Alt Text">
+</center>
