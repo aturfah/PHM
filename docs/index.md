@@ -19,5 +19,5 @@
 ### Real Data Illustrations
 
 1. [Human Genome Diversity Project](hgdp.md)
-2. [Peripheral Blood Mononuclear Cells](pbmc.mc)
-3. [Larval *C. elegans* Cells](#)
+2. [Peripheral Blood Mononuclear Cells](pbmc.md)
+3. [Larval *C. elegans* Cells](c_elegans.md)
