@@ -6,7 +6,7 @@
 
 ### Overview
 
-1. [Installation](#)
+1. [Installation](installation.md)
 2. [Parametrization Structure](#)
 
 ### Synthetic Data Examples
@@ -19,5 +19,5 @@
 ### Real Data Illustrations
 
 1. [Human Genome Diversity Project](hgdp.md)
-2. [Peripheral Blood Mononuclear Cells](#)
+2. [Peripheral Blood Mononuclear Cells](pbmc.mc)
 3. [Larval *C. elegans* Cells](#)
