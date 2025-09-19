@@ -29,7 +29,7 @@ plt_kcl_2 <- data_plot(double_ring, kcl_2$clusters, "Set1") + ggtitle("k-means")
 ```
 
 <center>
-<img class="figure" src="figures/double_ring/double_ring_2.png" alt="Alt Text">
+<img class="figure" src="figures/double_ring/double_ring_2.png" alt="Alt Text" width=750>
 </center>
 
 Fit the models to the data
@@ -129,7 +129,7 @@ ggarrange(
 ```
 
 <center>
-<img class="figure" src="figures/double_ring/double_ring_res.png" alt="Alt Text">
+<img class="figure" src="figures/double_ring/double_ring_res.png" alt="Alt Text",width=750>
 </center>
 
 

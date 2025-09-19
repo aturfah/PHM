@@ -163,7 +163,7 @@ hgdp_combined <- gridExtra::arrangeGrob(
 )
 ```
 <center>
-<img class="figure" src="figures/hgdp/hgdp_gmm_dendro_vis_9.png" alt="Alt Text">
+<img class="figure" src="figures/hgdp/hgdp_gmm_dendro_vis_9.png" alt="Alt Text" width=750>
 </center>
 
 
@@ -195,7 +195,7 @@ dc_phm_matrix <- plotPHMMatrix(phm_dc, colors=colors,
 ```
 
 <center>
-<img class="figure" src="figures/hgdp/hgdp_dc_dendro_vis_9.png" alt="Alt Text">
+<img class="figure" src="figures/hgdp/hgdp_dc_dendro_vis_9.png" alt="Alt Text" width=750>
 </center>
 
 k-means results
@@ -228,7 +228,7 @@ ksil_hgdp_combined <- gridExtra::arrangeGrob(
 ```
 
 <center>
-<img class="figure" src="figures/hgdp/hgdp_ksil_dendro_vis_9.png" alt="Alt Text">
+<img class="figure" src="figures/hgdp/hgdp_ksil_dendro_vis_9.png" alt="Alt Text" width=750>
 </center>
 
 
@@ -262,7 +262,7 @@ hsil_hgdp_combined <- gridExtra::arrangeGrob(
 ```
 
 <center>
-<img class="figure" src="figures/hgdp/hgdp_hsil_dendro_vis_9.png" alt="Alt Text">
+<img class="figure" src="figures/hgdp/hgdp_hsil_dendro_vis_9.png" alt="Alt Text" width=750>
 </center>
 
 Leiden results
