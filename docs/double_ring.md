@@ -129,7 +129,7 @@ ggarrange(
 ```
 
 <center>
-<img class="figure" src="figures/double_ring/double_ring_res.png" alt="Alt Text",width=750>
+<img class="figure" src="figures/double_ring/double_ring_res.png" alt="Alt Text" width=750>
 </center>
 
 

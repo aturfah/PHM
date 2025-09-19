@@ -294,5 +294,5 @@ layout_matrix = matrix(c(1, 1, 3, 4, 2, 2, 3, 4), ncol=2)
 ```
 
 <center>
-<img class="figure" src="figures/hgdp/hgdp_leiden_dendro_vis_9.png" alt="Alt Text">
+<img class="figure" src="figures/hgdp/hgdp_leiden_dendro_vis_9.png" alt="Alt Text" width=750>
 </center>
