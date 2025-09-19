@@ -73,7 +73,7 @@ kcl_params <- constructPmcParamsWeightedPartition(kcl_part, data=moons)
 ```
 
 <center>
-<img class="figure" src="figures/moons/moons_data.png" alt="Alt Text">
+<img class="figure" src="figures/moons/moons_data.png" alt="Alt Text" width=500>
 </center>
 
 
@@ -115,6 +115,10 @@ kcl_htmp <- plotPHMMatrix(kcl_phm,
                           fillScale = "pmcdist")
 ```
 
+<br>
+<br>
+<br>
+
 <center>
-<img src="figures/moons/moons_phm.png" alt="Alt Text" class="figure">
+<img src="figures/moons/moons_phm.png" alt="Alt Text" class="figure" width=500>
 </center>
