@@ -252,5 +252,5 @@ ggarrange(
 ```
 
 <center>
-<img class="figure" src="figures/pbmc/combined.png" alt="Alt Text">
+<img class="figure" src="figures/pbmc/combined.png" alt="Alt Text" width=750>
 </center>

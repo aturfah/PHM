@@ -54,7 +54,7 @@ params_f <- constructPmcParamsWeightedPartition(fcl_clust, dat, weights=fcl_weig
 In the plots below, the dashed lines correspond to the underlying cluster densities, while the solid red and blue lines are the estimated densities from each procedure. Looking to the unweighted density scheme, it tends to under-estimate the density in the tails of the distribution which understates the overlap between the clusters. The default weighting scheme tends to over-estimate the weights in the tails of the distributions. Finally, the density based on the $c$-means weights very closely matches the original clustering solution.
 
 <center>
-<img src="figures/weighted_density/gauss.png" alt="Alt Text" class="figure figure-50">
+<img src="figures/weighted_density/gauss.png" alt="Alt Text" class="figure figure-50" width=750>
 </center>
 
 
@@ -77,7 +77,7 @@ hcl_labels <- cutree(hcl, 10)
 ```
 
 <center>
-<img src="figures/weighted_density/data_plot.png" alt="Alt Text" class="figure figure-50" >
+<img src="figures/weighted_density/data_plot.png" alt="Alt Text" class="figure figure-50" width=750>
 </center>
 
 We use both the unweighted and weighted density estimation schemes to obtain cluster-specific density estimates. These densities are then uesd to compute $P_{\rm mc}$ of the given cluster density configurations. 
@@ -94,6 +94,6 @@ weighted_pmc <- computeMonteCarloPmc(hcl_weighted_dens)
 Below are the estimated cluster-specific densities, as well as the estimated $P_{\rm mc}$ values for each set of density estimates. We see that the value of $P_{mc}$ is significantly higher for the weighted density estimate that it is for the unweighted density.
 
 <center>
-<img src="figures/weighted_density/density_plot.png" alt="Alt Text" class="figure figure-50" >
+<img src="figures/weighted_density/density_plot.png" alt="Alt Text" class="figure figure-50" width=750>
 </center>
 
