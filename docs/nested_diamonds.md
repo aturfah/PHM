@@ -17,7 +17,10 @@ The nested diamonds dataset consists of 100 observations drawn from 64 clusters.
 - Each of four inner diamonds are arranged along the edges of a larger diamond ("outer diamonds"), for 4 outer diamonds
 - The outer diamonds are arranged along the corners of a square
 
-![](figures/nested_diamonds/nested_diamonds_data.png)
+
+<center>
+<img class="figure" src="figures/nested_diamonds/nested_diamonds_data.png" alt="Alt Text" width=750>
+</center>
 
 Here we recreate the results based on the GMM clustering, using the `Mclust` package's model-based hierarchical clustering initialization. We fit a 64-cluster model with spherical covariances shared across all clusters.
 
@@ -49,4 +52,6 @@ mcl_phm_mat <- plotPHMMatrix(mcl_phm,
                              legendPosition="none")
 ```
 
-![](figures/nested_diamonds/nested_diamonds_phm.png)
+<center>
+<img class="figure" src="figures/nested_diamonds/nested_diamonds_phm.png" alt="Alt Text" width=750>
+</center>
