@@ -1,12 +1,13 @@
 Package: PHM
 Title: The Distinguishability Criterion
-Version: 0.0.1.0000
+Version: 1.0.0
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
+    person("Ali", "Turfah", , "aturfah@umich.edu", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Xiaoquan", "Wen", , "xqwen@umich.edu", role = c("aut", "cre"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
 Description: Implements the Distinguishability Criterion and PHM algorithms.
-License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
-    license
+License: GNU General Public License
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2

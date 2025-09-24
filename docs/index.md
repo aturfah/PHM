@@ -7,7 +7,7 @@
 ### Overview
 
 1. [Installation](installation.md)
-2. [Parametrization Structure](PHM.pdf)
+2. [Parametrization Structure (see `constructPmcParamsMclust`)](PHM.pdf)
 
 ### Synthetic Data Examples
 
