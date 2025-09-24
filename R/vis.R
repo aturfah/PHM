@@ -203,8 +203,8 @@ constructPHMDendrogramData <- function(phm,
 #' 
 #' There are two options for the value for the \eqn{P_{\rm mc}} height for merging subtrees \eqn{\mathcal{S}_1, \mathcal{S}_2} (\eqn{m = |\mathcal{S}_1| + |\mathcal{S}_2|}):
 #' \itemize{
-#'  \item \code{"merge"}: \eqn{\binom{m}{2}^{-1} \DeltaP_{\rm mc}^{(\mathcal{S}_1, \mathcal{S}2)}}
-#'  \item \code{"min"}: \eqn{\min_{i \in \mathcal{S}_1,\, j \in \mathcal{S}_2} \DeltaP_{\rm mc}^{(i, j)}}
+#'  \item \code{"merge"}: \eqn{\binom{m}{2}^{-1} \Delta P_{\rm mc}^{(\mathcal{S}_1, \mathcal{S}2)}}
+#'  \item \code{"min"}: \eqn{\min_{i \in \mathcal{S}_1,\, j \in \mathcal{S}_2} \Delta P_{\rm mc}^{(i, j)}}
 #' }
 #' 
 #' Once the value for the tree height is obtained, there are three options to scale.
