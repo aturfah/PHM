@@ -9,9 +9,11 @@ PHM(
   paramsList = NULL,
   partition = NULL,
   data = NULL,
+  deltaPmc = NULL,
   verbose = T,
   computePosterior = T,
   partitionWeightedDensity = T,
+  storeDeltaPmc = T,
   partitionModel = "VVI",
   partitionMaxComponents = 10,
   mc = T,
@@ -30,6 +32,8 @@ PHM(
 \item{verbose}{Boolean whether to suppress debug statements}
 
 \item{computePosterior}{Boolean whether to compute the Posterior matrix for the merges}
+
+\item{storeDeltaPmc}{Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step}
 
 \item{partitionModel}{If no partition provided, the covariance structure to estimate the density for each partition using \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}}}
 
