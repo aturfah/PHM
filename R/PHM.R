@@ -47,6 +47,7 @@ mergeParams <- function(par1, par2) {
 #' @param partitionModel If no partition provided, the covariance structure to estimate the density for each partition using [constructPmcParamsPartition()]
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
+#' @param storeDeltaPmc Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' 
 #' @examples 
@@ -73,10 +74,13 @@ mergeParams <- function(par1, par2) {
 #' }
 #' 
 #' @export
-PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
+PHM <- function(mclustObj=NULL, 
+                paramsList=NULL, partition=NULL, data=NULL,
+                deltaPmc=NULL,
                 verbose=T,
                 computePosterior=T,
                 partitionWeightedDensity=T,
+                storeDeltaPmc=T,
                 partitionModel="VVI",
                 partitionMaxComponents=10,
                 mc=T, ...) {
@@ -181,7 +185,9 @@ PHM <- function(mclustObj=NULL, paramsList=NULL, partition=NULL, data=NULL,
       pmc_accum[i] <- pmc_accum[i] + output[[idx]]$pmc_change
       output[[idx]]$min_merge_pmc <- min_merge_pmc
     }
-    output[[idx]]$pmc_matrix <- tmp_delta
+    if (storeDeltaPmc || idx == K) {
+      output[[idx]]$pmc_matrix <- tmp_delta
+    }
     output[[idx]]$posterior_matrix <- posterior_matrix
 
     ## Identify the components to merge
