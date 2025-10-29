@@ -23,7 +23,6 @@ sampleDistbn <- function(distbn_params, num_samples) {
       Nk_vec[idx]
       )
     })
-    # return(Reduce(rbind, output))
     return(do.call(rbind, output))
   }
 
@@ -42,7 +41,6 @@ sampleMixture <- function(paramsList, num_samples) {
     sampleDistbn(distbn_params, Nk_vec[idx])
   })
 
-  # Reduce(rbind, output)
   do.call(rbind, output)
 }
 
@@ -92,7 +90,7 @@ generatePosteriorProbFunc <- function(paramsList, j) {
 computePosteriorProbMatrix <- function(paramsList, data) {
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
   K <- length(paramsList)
-  distbn.mat <- Reduce(cbind,
+  distbn.mat <- do.call(cbind,
                        lapply(1:K, function(j) {
                          densJ <- generateDistbnFunc(paramsList[[j]])
                          sum(paramsList[[j]]$prob) * densJ(data)
@@ -127,7 +125,6 @@ posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, ver
       computePosteriorProbMatrix(paramsList, submat)
     })
     if (verbose) cat("Consolidating chunked matrix\n")
-    # post_mat <- Reduce(rbind, temp)
     post_mat <- do.call(rbind, temp)
   }
 
