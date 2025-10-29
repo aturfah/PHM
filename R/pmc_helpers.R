@@ -104,6 +104,7 @@ posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, ver
   applyFunc <- lapply
   if (numCores > 1) applyFunc <- function(x, func) parallel::mclapply(x, func, mc.cores=numCores)
 
+  if (verbose) cat("Drawing MC Samples\n")
   mc_obs <- sampleMixture(paramsList, mcSamples)
   if (is.null(dim(mc_obs))) mc_obs <- matrix(mc_obs, ncol=1)
 
