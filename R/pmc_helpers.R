@@ -121,9 +121,11 @@ posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, ver
       v <- batch_idx[idx, ]
       mc_obs[v[1]:v[2], , drop=F]
     })
-    post_mat <- Reduce(rbind, applyFunc(chunked_matrix, function(submat) {
+    temp <- applyFunc(chunked_matrix, function(submat) {
       computePosteriorProbMatrix(paramsList, submat)
-    }))
+    })
+    if (verbose) cat("Consolidating chunked matrix\n")
+    post_mat <- Reduce(rbind, temp)
   }
 
   return(post_mat)
