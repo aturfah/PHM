@@ -150,6 +150,7 @@ PHM <- function(mclustObj=NULL,
     computeDeltaPmcMatrix(paramsList, ...)
   }
   diag(delta_pmc) <- 0
+  if (verbose) cat("Complete; Running PHM algorithm\n")
 
   ## Parameters/data to store
   output <- lapply(1:K, function(k) list(

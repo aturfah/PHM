@@ -111,10 +111,17 @@ posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, ver
   if (num_batches == 1) {
     post_mat <- computePosteriorProbMatrix(paramsList, mc_obs)
   } else {
-    post_mat <- Reduce(rbind, applyFunc(1:num_batches, function(idx) {
+    batch_idx <- t(sapply(1:num_batches, function(idx) {
       lb <- 1 + batchSize * (idx - 1)
       ub <- min(batchSize * idx, mcSamples)
-      computePosteriorProbMatrix(paramsList, mc_obs[lb:ub, , drop=F])
+      c(lb, ub)
+    }))
+    chunked_matrix <- lapply(1:nrow(batch_idx), function(idx) {
+      v <- batch_idx[idx, ]
+      mc_obs[v[1]:v[2], , drop=F]
+    })
+    post_mat <- Reduce(rbind, applyFunc(chunked_matrix, function(submat) {
+      computePosteriorProbMatrix(paramsList, submat)
     }))
   }
 
