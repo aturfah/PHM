@@ -269,19 +269,11 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=F) {
   K <- length(paramsList)
 
-  output <- matrix(0, K, K)
   post_mat <- posteriorMatrixMCPmc(paramsList, mcSamples, batchSize, numCores, verbose)
 
   if (verbose) cat("Evaluating Integral\n")
-  for (i in 1:(K-1)) {
-    for (j in (i+1):K) {
-      post_i <- post_mat[, i]
-      post_j <- post_mat[, j]
-
-      output[i, j] <- sum(post_i * post_j) / mcSamples
-      output[j, i] <- output[i, j]
-    }
-  }
+  output <- crossprod(post_mat) / mcSamples
+  diag(output) <- 0 ## No self-overlap
 
   output
 }
