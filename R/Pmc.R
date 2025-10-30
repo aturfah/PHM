@@ -273,7 +273,7 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 
   if (verbose) cat("Evaluating Integral\n")
   output <- crossprod(post_mat) / mcSamples
-  diag(output) <- 0 ## No self-overlap
+  diag(output) <- 0
 
   output
 }
