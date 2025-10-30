@@ -47,7 +47,8 @@ mergeParams <- function(par1, par2) {
 #' @param partitionModel If no partition provided, the covariance structure to estimate the density for each partition using [constructPmcParamsPartition()]
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
-#' @param storeDeltaPmc Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step
+#' @param storeDeltaPmc Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step. Initial \eqn{\Delta P_{\rm{mc}}} will be stored.
+#' @param storeParams Boolean whether to store the intermediate mixture parameters. Initial parameters will be stored.
 #' @param ... Parameters pased to either [computeDeltaPmcMatrix()] or [computeMonteCarloDeltaPmcMatrix()] to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
 #' 
 #' @examples 
@@ -81,6 +82,7 @@ PHM <- function(mclustObj=NULL,
                 computePosterior=T,
                 partitionWeightedDensity=T,
                 storeDeltaPmc=T,
+                storeParams=T,
                 partitionModel="VVI",
                 partitionMaxComponents=10,
                 mc=T, ...) {
@@ -178,7 +180,9 @@ PHM <- function(mclustObj=NULL,
     class_labels <- sapply(tmp_params, function(x) x$class)
     output[[idx]]$labels <- class_labels[data_labels]
     output[[idx]]$pmc <- sum(tmp_delta)
-    output[[idx]]$params <- tmp_params
+    if (storeParams || idx == K) {
+      output[[idx]]$params <- tmp_params
+    }
     output[[idx]]$pmc_components <- tmp_comp
     if (idx < K) {
       output[[idx]]$pmc_change <- output[[idx+1]]$pmc - output[[idx]]$pmc
