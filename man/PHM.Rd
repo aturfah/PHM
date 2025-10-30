@@ -14,6 +14,7 @@ PHM(
   computePosterior = T,
   partitionWeightedDensity = T,
   storeDeltaPmc = T,
+  storeParams = T,
   partitionModel = "VVI",
   partitionMaxComponents = 10,
   mc = T,
@@ -33,7 +34,9 @@ PHM(
 
 \item{computePosterior}{Boolean whether to compute the Posterior matrix for the merges}
 
-\item{storeDeltaPmc}{Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step}
+\item{storeDeltaPmc}{Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step. Initial \eqn{\Delta P_{\rm{mc}}} will be stored.}
+
+\item{storeParams}{Boolean whether to store the intermediate mixture parameters. Initial parameters will be stored.}
 
 \item{partitionModel}{If no partition provided, the covariance structure to estimate the density for each partition using \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}}}
 
