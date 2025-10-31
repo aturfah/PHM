@@ -2,7 +2,7 @@
 set.seed(2)
 Nk <- 100
 TOTAL <- 64
-nested_diamonds <- Reduce(
+nested_diamonds <- do.call(
   rbind,
   lapply((1:TOTAL)-1, function(idx) {
     OFFSET1 <- 8
