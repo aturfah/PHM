@@ -82,6 +82,9 @@ constructPHMDendrogramData <- function(phm,
     if (gprobs_unspec) {
       groupProbs_new <- rep(1, length(groupProbs_new) - 1)
     } else {
+      if (is.null(phm[[K - idx + 1]]$params)) {
+        phm[[K - idx + 1]]$params <- recoverPHMParams(phm, K - idx + 1, "prob")
+      }
       probs1 <- sum(phm[[K - idx + 1]]$params[[mcs[1]]]$prob)
       probs2 <- sum(phm[[K - idx + 1]]$params[[mcs[2]]]$prob)
       groupProbs_new[mcs[1]] <- (groupProbs_new[mcs[1]] * probs1 +

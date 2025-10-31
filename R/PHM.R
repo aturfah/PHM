@@ -318,7 +318,6 @@ recoverDeltaPmcMatrix <- function(phm, K) {
   tmp_delta <- phm[[min_idx]]$pmc_matrix
 
   for (idx in min_idx:(K+1)) {
-    if (idx %% 50 == 0) print(dim(tmp_delta))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
     
@@ -357,7 +356,6 @@ recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "clas
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$params)))
   min_idx <- min(valid_idx[which(valid_idx >= K)])
-  print(min_idx)
 
   if (!is.finite(min_idx)) stop("No valid parameters identified.")
 
@@ -373,7 +371,6 @@ recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "clas
   })
 
   for (idx in min_idx:(K+1)) {
-    if (idx %% 100 == 0) print(length(tmp_params))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
 
@@ -435,7 +432,6 @@ recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
   }
 
   for (idx in min_idx:(K+1)) {
-    if (idx %% 100 == 0) print(length(tmp_params))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
     
