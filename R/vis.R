@@ -690,7 +690,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
   fillScaleFunc <- log10
   if (fillScale == "pmcdist") {
     load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "distinguishabilityCriterion"))
+                     package = "PHM"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
   }
   matrix_long <- merge_matrix %>%
