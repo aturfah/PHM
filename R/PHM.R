@@ -414,7 +414,7 @@ recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
       ## Get the combined parameter and just recompute the posterior matrix
       params <- phm[[min_idx]]$params
       if (is.null(params)) {
-        warn("No parameters computed, reconstructing from PHM process to compute posterior")
+        warning("No parameters computed, reconstructing from PHM process to compute posterior")
         params <- recoverPHMParams(phm, K)
         if (is.null(data)) {
           stop("To compute matrix, must provide data")
