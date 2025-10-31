@@ -295,3 +295,154 @@ addPosteriorMatrix <- function(phm, data, initK=length(phm)) {
   return(phm)
 }
 
+#' Recover the posterior matrix based on PHM merging
+#'
+#' @details TODO: Fill me in
+#'
+#' @param phm Output from [PHM()]
+#' @param K Number of clusters for which to compute the deltaPmc Matrix
+#' 
+#' @return TODO
+#' @export
+recoverDeltaPmcMatrix <- function(phm, K) {
+  stopifnot(K < length(phm))
+  
+  ## Get the closest value in PHM from which we can construct K
+  valid_idx <- which(sapply(phm, function(x) !is.null(x$pmc_matrix)))
+  min_idx <- min(valid_idx[which(valid_idx > K)])
+  
+  if (!is.finite(min_idx)) stop("No valid deltaPmc matrix identified.")
+  
+
+  tmp_delta <- phm[[min_idx]]$pmc_matrix
+
+  for (idx in min_idx:K) {
+    if (idx %% 50 == 0) print(dim(tmp_delta))
+    i <- phm[[idx]]$merge_components[1]
+    j <- phm[[idx]]$merge_components[2]
+    
+    row_i <- tmp_delta[i, ]
+    row_j <- tmp_delta[j, ]
+    new_row_delta <- row_i + row_j
+    new_row_delta[i] <- 0
+    new_row_delta <- new_row_delta[-j]
+    
+    tmp_delta <- tmp_delta[-j, , drop=F]
+    tmp_delta <- tmp_delta[, -j, drop=F]
+    
+    ## Replace i terms with i+j
+    tmp_delta[i, ] <- new_row_delta
+    tmp_delta[, i] <- new_row_delta
+  }
+  
+  tmp_delta
+}
+
+#' Recover the parameters based on the PHM merging
+#'
+#' @details TODO: Fill me in
+#'
+#' @param phm Output from [PHM()]
+#' @param K Number of clusters for which to compute the deltaPmc Matrix
+#' @param paramsToKeep Parameters of interest
+#' 
+#' @return TODO
+#' @export
+recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "class")) {
+  stopifnot(K < length(phm))
+  
+  ## Get the closest value in PHM from which we can construct K
+  valid_idx <- which(sapply(phm, function(x) !is.null(x$params)))
+  min_idx <- min(valid_idx[which(valid_idx > K)])
+  
+  if (!is.finite(min_idx)) stop("No valid parameters identified.")
+  
+  ## Clear out names that we won't be using
+  tmp_params <- phm[[min_idx]]$params
+  tmp_params <- lapply(tmp_params, function(l) {
+    for (par_name in names(l)) {
+      if (!(par_name %in% paramsToKeep)) {
+        l[[par_name]] <- NULL
+      }
+    }
+    l
+  })
+
+  for (idx in min_idx:K) {
+    if (idx %% 100 == 0) print(length(tmp_params))
+    i <- phm[[idx]]$merge_components[1]
+    j <- phm[[idx]]$merge_components[2]
+
+    tmp_params[[i]] <- mergeParams(tmp_params[[i]], tmp_params[[j]])
+    tmp_params[[j]] <- NULL
+  }
+  
+  ## Once again clear out names introduced by mergeParams
+  tmp_params <- lapply(tmp_params, function(l) {
+    for (par_name in names(l)) {
+      if (!(par_name %in% paramsToKeep)) {
+        l[[par_name]] <- NULL
+      }
+    }
+    l
+  })
+
+  tmp_params
+}
+
+
+#' Recover the posterior matrix based on the PHM merging
+#'
+#' @details TODO: Fill me in
+#'
+#' @param phm Output from [PHM()]
+#' @param K Number of clusters for which to compute the deltaPmc Matrix
+#' @param data Matrix of observations for which to compute the posterior matrix
+#' @param computePosterior Whether to recompute the posterior matrix if not available
+#' 
+#' @return TODO
+#' @export
+recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
+  stopifnot(K < length(phm))
+
+  ## Get the closest value in PHM from which we can construct K
+  valid_idx <- which(sapply(phm, function(x) !is.null(x$posterior_matrix)))
+  min_idx <- min(valid_idx[which(valid_idx > K)])
+
+  if (!is.finite(min_idx)) {
+    if (computePosterior) {
+      ## Get the combined parameter and just recompute the posterior matrix
+      params <- phm[[min_idx]]$params
+      if (is.null(params)) {
+        warn("No parameters computed, reconstructing from PHM process to compute posterior")
+        params <- recoverPHMParams(phm, K)
+        if (is.null(data)) {
+          stop("To compute matrix, must provide data")
+        }
+        posterior_matrix <- computePosteriorProbMatrix(params, data)
+        return(posterior_matrix)
+      }
+    } else {
+      stop("No valid posterior matrix identified. Rerun with computePosterior=T to compute the posterior matrix.")
+    }
+  } else {
+    ## If we have the posterior matrix, grab it
+    posterior_matrix <- phm[[min_idx]]$posterior_matrix
+  }
+
+  for (idx in min_idx:K) {
+    if (idx %% 100 == 0) print(length(tmp_params))
+    i <- phm[[idx]]$merge_components[1]
+    j <- phm[[idx]]$merge_components[2]
+    
+    posterior_matrix[, i] <- posterior_matrix[, i] + posterior_matrix[, j]
+    posterior_matrix <- posterior_matrix[, -j, drop=F]
+  }
+
+  data_labels <- apply(posterior_matrix, 1, which.max)
+
+  list(
+    matrix=posterior_matrix,
+    labels=data_labels
+  )
+}
