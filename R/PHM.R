@@ -309,14 +309,14 @@ recoverDeltaPmcMatrix <- function(phm, K) {
   
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$pmc_matrix)))
-  min_idx <- min(valid_idx[which(valid_idx > K)])
+  min_idx <- min(valid_idx[which(valid_idx >= K)])
   
   if (!is.finite(min_idx)) stop("No valid deltaPmc matrix identified.")
   
 
   tmp_delta <- phm[[min_idx]]$pmc_matrix
 
-  for (idx in min_idx:K) {
+  for (idx in min_idx:(K+1)) {
     if (idx %% 50 == 0) print(dim(tmp_delta))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
@@ -353,10 +353,11 @@ recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "clas
   
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$params)))
-  min_idx <- min(valid_idx[which(valid_idx > K)])
-  
+  min_idx <- min(valid_idx[which(valid_idx >= K)])
+  print(min_idx)
+
   if (!is.finite(min_idx)) stop("No valid parameters identified.")
-  
+
   ## Clear out names that we won't be using
   tmp_params <- phm[[min_idx]]$params
   tmp_params <- lapply(tmp_params, function(l) {
@@ -368,7 +369,7 @@ recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "clas
     l
   })
 
-  for (idx in min_idx:K) {
+  for (idx in min_idx:(K+1)) {
     if (idx %% 100 == 0) print(length(tmp_params))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
@@ -407,7 +408,7 @@ recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
 
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$posterior_matrix)))
-  min_idx <- min(valid_idx[which(valid_idx > K)])
+  min_idx <- min(valid_idx[which(valid_idx >= K)])
 
   if (!is.finite(min_idx)) {
     if (computePosterior) {
@@ -430,7 +431,7 @@ recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
     posterior_matrix <- phm[[min_idx]]$posterior_matrix
   }
 
-  for (idx in min_idx:K) {
+  for (idx in min_idx:(K+1)) {
     if (idx %% 100 == 0) print(length(tmp_params))
     i <- phm[[idx]]$merge_components[1]
     j <- phm[[idx]]$merge_components[2]
