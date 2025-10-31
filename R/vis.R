@@ -11,7 +11,6 @@ constructPHMDendrogramData <- function(phm,
     groupProbs <- rep(1, K)
   }
 
-  print("Hi 1")
   pmc <- phm[[K]]$pmc
   pmc_remains <- sapply(K:2, function(k) phm[[k]]$pmc)
   pmc_change <- sapply((K-1):1, function(k) phm[[k]]$pmc_change)
@@ -107,7 +106,7 @@ constructPHMDendrogramData <- function(phm,
 
     component_id_map <- component_id_map[-mcs[2]]
   }
-    print("Hi 2")
+
   ## Figure out where everything goes relative to base node
   order_x <- function(merge_res) {
     if (typeof(merge_res) == "list") {
@@ -127,7 +126,6 @@ constructPHMDendrogramData <- function(phm,
   }
   output <- dplyr::mutate(output, x=ifelse(y==0, map_xposns(ID), NA))
 
-  print("Hi 3")
   while(any(is.na(output))) {
     output <- output %>%
       dplyr::left_join(output, by=c("y"="yend")) %>%
