@@ -306,6 +306,7 @@ addPosteriorMatrix <- function(phm, data, initK=length(phm)) {
 #' @export
 recoverDeltaPmcMatrix <- function(phm, K) {
   stopifnot(K < length(phm))
+  if (!is.null(phm[[K]]$pmc_matrix)) return(phm[[K]]$pmc_matrix)
   
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$pmc_matrix)))
@@ -350,7 +351,9 @@ recoverDeltaPmcMatrix <- function(phm, K) {
 #' @export
 recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "class")) {
   stopifnot(K < length(phm))
-  
+  ## We already have these values
+  if (!is.null(phm[[K]]$params)) return(phm[[K]]$params)
+
   ## Get the closest value in PHM from which we can construct K
   valid_idx <- which(sapply(phm, function(x) !is.null(x$params)))
   min_idx <- min(valid_idx[which(valid_idx >= K)])
