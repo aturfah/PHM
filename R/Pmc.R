@@ -197,6 +197,95 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 }
 
 
+#' Description
+#' 
+#' @description EEP
+#' 
+#' @details PEW
+#' 
+#' @param par1
+#' @param par2
+#' 
+#' @examples 
+#' set seed(1)
+#' 
+#' @returns DOOT
+#' 
+#' @export
+subAggMclust <- function(data,
+                         replicates,
+                         subsampSize,
+                         G=NULL,
+                         saveDir=NULL,
+                         prefix="subAggMclust_",
+                         models=c("VII", "VEI", "EII", "VEI"),
+                         verbose=F, mc=F, numCores=2, ...) {
+
+  ## If we want to save the results, set that up
+  if (!is.null(saveDir)) {
+    if (!dir.exists(saveDir)) dir.create(saveDir)
+  }
+
+  ## Default 10 components
+  if (is.null(G)) G <- 1:10
+
+  ## Multicore Processing if specified
+  apply_func <- function(X, FUN) lapply(X, FUN)
+  if (mc) apply_func <- function(X, FUN) {
+    parallel::mclapply(X, FUN, mc.cores=numCores)
+  }
+
+  ## Break down into replicates
+  subsamp_idx <- lapply(1:replicates, function(idx) {
+    sample.int(nrow(data), subsampSize, replace=T)
+  })
+  subsamp_dat <- lapply(1:replicates, function(idx) {
+    list(
+      idx=idx,
+      dat=data[subsamp_idx[[idx]], ]
+    )
+  })
+
+  ## Run the models of interest
+  gmm_res <- apply_func(subsamp_dat, function(sub_obj) {
+    idx <- sub_obj$idx
+    subsamp_dat <- sub_obj$dat
+
+    ## Generate filename
+    filename <- paste(prefix, "N", subsampSize, "G", max(G),
+                      "repl", idx, "f.RData", sep="_")
+    filename <- file.path(saveDir, filename)
+
+    ## Either this file exists or filename is empty because saveDir is NULL
+    need_to_run <- !file.exists(filename) || is.null(saveDir)
+
+    if (need_to_run) {
+      mcl <- mclust::Mclust(subsamp_dat, G=G,
+                            modelNames=models, verbose=verbose, ...)
+      params <- constructPmcParamsMclust(mcl)
+      for (g in 1:mcl$G) {
+        params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
+      }
+
+      if (!is.null(saveDir)) save(params, subsamp_dat, file=filename)
+    } else {
+      load(filename)
+    }
+
+    params
+  })
+
+  ## Average over all estimated densities
+  gmm_res <- do.call(c, gmm_res)
+  for (idx in 1:length(gmm_res)) {
+    gmm_res[[idx]]$prob <- gmm_res[[idx]]$prob / replicates
+  }
+
+  gmm_res
+}
+
+
+
 #' Monte Carlo \eqn{P_{\rm{mc}}} computation
 #'
 #' @description
