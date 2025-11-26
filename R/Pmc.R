@@ -114,7 +114,7 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 #' \deqn{w_{ij} = \frac{e^{-d(x_i, C_j)}}{\sum_{k=1}^K e^{-d(x_i, C_k)}}}
 #' [constructPmcParamsPartition()] is a special case of this procedure with weights of 1 if an observation is in a cluster and 0 otherwise.
 #' The weights are then passed to a weighted EM procedure to estimate the cluster-specific density via GMM.
-#' 
+#'
 #' See [constructPmcParamsMclust()] for a description of the output.
 #'
 #' @param partition Vector of labels for observations
@@ -183,7 +183,7 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
     w <- w[valid]
 
     if (verbose) {
-      cat("Estimating Cluster", which(label_ids == k), 
+      cat("Estimating Cluster", which(label_ids == k),
           "of", length(label_ids), "Nk =", nrow(dat), "\n")
       cat("\tWeights:", round(sum(w), 4), "\n")
     }
@@ -197,29 +197,38 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 }
 
 
-#' Description
-#' 
+#' Ensemble density estimation via Mclust
+#'
 #' @description EEP
-#' 
-#' @details PEW
-#' 
-#' @param par1
-#' @param par2
-#' 
-#' @examples 
+#'
+#' @details FILL ME IN
+#'
+#' @param data Numeric matrix for data
+#' @param G Number of components for each ensembled model
+#' @param modelNames Covariance structures for each ensembled moddel
+#' @param replicates Number of replicates over which to ensemble
+#' @param subSampSize Number of subsamples to draw in each replicate
+#' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving
+#' @param prefix Filename prefix for saving intermediate density estimates
+#' @param verbose Whether to print out logging messages
+#' @param numCores Number of cores over which to parallelize
+#'
+#' @examples
 #' set seed(1)
-#' 
-#' @returns DOOT
-#' 
+#'
+#' @returns List of lists where each sublist contains the
+#' proportion, mean, covariance matrix estimates
+#' for each component in the ensembled model.
+#'
 #' @export
-subAggMclust <- function(data,
+constructPmcParamsSubAggMclust <- function(data,
                          replicates,
                          subsampSize,
                          G=NULL,
                          saveDir=NULL,
                          prefix="subAggMclust_",
-                         models=c("VII", "VEI", "EII", "VEI"),
-                         verbose=F, mc=F, numCores=2, ...) {
+                         modelNames=c("VII", "VEI", "EII", "VEI"),
+                         verbose=F, numCores=2, ...) {
 
   ## If we want to save the results, set that up
   if (!is.null(saveDir)) {
@@ -230,8 +239,8 @@ subAggMclust <- function(data,
   if (is.null(G)) G <- 1:10
 
   ## Multicore Processing if specified
-  apply_func <- function(X, FUN) lapply(X, FUN)
-  if (mc) apply_func <- function(X, FUN) {
+  apply_func <- lapply
+  if (numCores > 1) apply_func <- function(X, FUN) {
     parallel::mclapply(X, FUN, mc.cores=numCores)
   }
 
@@ -261,7 +270,7 @@ subAggMclust <- function(data,
 
     if (need_to_run) {
       mcl <- mclust::Mclust(subsamp_dat, G=G,
-                            modelNames=models, verbose=verbose, ...)
+                            modelNames=modelNames, verbose=verbose, ...)
       params <- constructPmcParamsMclust(mcl)
       for (g in 1:mcl$G) {
         params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
@@ -284,6 +293,147 @@ subAggMclust <- function(data,
   gmm_res
 }
 
+#' Ensemble weighted density estimation for partitions
+#'
+#' @description EEP
+#'
+#' @details PEW
+#'
+#' @inheritParams constructPmcParamsWeightedPartition
+#' @param replicates Number of replicates over which to be ensembled
+#' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving
+#' @param prefix Filename prefix for saving intermediate density estimates
+#' @param verbose Whether to print out logging messages
+#' @param numCores Number of cores over which to parallelize
+#'
+#' @examples
+#' set seed(1)
+#'
+#' @returns List of lists where each sublist contains the
+#' proportion, mean, covariance matrix estimates
+#' for each cluster.
+#'
+#' @export
+constructPmcParamsSubAggPartition <- function(data,
+                            partition,
+                            replicates,
+                            subsampSize,
+                            linkFunc=min,
+                            threshold=1e-4,
+                            saveDir=NULL,
+                            prefix="subAggPartition_",
+                            numCores=1, 
+                            verbose=F,
+                            ...) {
+  ## Prepare for use across all cores
+  label_ids <- sort(unique(partition))
+  K <- length(label_ids)
+  clust_idx <- lapply(label_ids, function(x) {which(partition == x)})
+  clust_size <- sapply(clust_idx, length)
+  clust_prob <- clust_size / sum(clust_size)
+
+  apply_func <- if(numCores == 1) lapply else function(x) parallel::mclapply(x, mc.cores=numCores)
+
+  params_raw <- lapply(1:replicates, function(repl) {
+    if (verbose) cat("Replicate", repl, "\n")
+    ## Prepare subsamples from each cluster
+    subsamp_idx <- lapply(clust_idx, function(v) {
+      if (length(v) <= subsampSize) return(v)
+      sample(v, subsampSize)
+    })
+
+    subsamp_size <- sapply(subsamp_idx, length)
+
+    subsamp_reweights_K <- (clust_size) / (subsamp_size)
+    subsamp_reweights <- lapply(1:K, function(idx) rep(subsamp_reweights_K[idx], subsamp_size[idx]))
+    subsamp_reweights <- do.call(c, subsamp_reweights)
+    subsamp_labels <- lapply(1:K, function(idx) rep(label_ids[idx], subsamp_size[idx]))
+    subsamp_labels <- do.call(c, subsamp_labels)
+    subsamp_mat <- lapply(subsamp_idx, function(v) {
+      data[v, ]
+    })
+    subsamp_mat <- do.call(rbind, subsamp_mat)
+    if (verbose) cat("\tSubsampling Complete", repl, "\n")
+
+
+    ## Generate filename
+    filename_w <- paste(prefix, "N", subsampSize, "repl", repl, "weights.RData", sep="_")
+    filename_w <- file.path(saveDir, filename_w)
+
+    ## Either this file exists or filename is empty because saveDir is NULL
+    need_to_run <- !file.exists(filename_w) || is.null(saveDir)
+    if (need_to_run) {
+      ## Compute Weights for subsampled matrix
+      dist_to_clust <- apply_func(label_ids, function(k) {
+        clust_idx <- which(subsamp_labels == k)
+        clust_mat <- subsamp_mat[clust_idx, ]
+    
+        sapply(1:nrow(subsamp_mat), function(idx) {
+          clust_dist <- colSums((t(clust_mat) - subsamp_mat[idx, ])^2)
+          linkFunc(clust_dist[which(clust_dist > 0)])
+        })
+      })
+      dist_to_clust <- do.call(cbind, dist_to_clust)
+      mindist <- apply(dist_to_clust, 1, min)
+      weights <- exp(-1 * (dist_to_clust - mindist))
+      weights <- weights/rowSums(weights)
+      reweights <- apply(weights, 2, function(v) v * subsamp_reweights)
+
+      if (!is.null(saveDir)) save(weights, reweights, file=filename_w)
+    } else {
+      load(filename_w)
+    }
+    if (verbose) cat("\tWeighting Complete\n")
+
+    ## Now we estimate the cluster-specific densities
+    if (verbose) cat("\tParam Estimation Beginning\n")
+    pars <- apply_func(label_ids, function(k) {
+      filename_k <- paste(prefix, "N", subsampSize, "repl", repl, "cluster", k, "density.RData", sep="_")
+      filename_k <- file.path(saveDir, filename_w)
+      need_to_run <- !file.exists(filename_k) || is.null(saveDir)
+
+      if (need_to_run) {
+        ## Cluster-specific weights and observations
+        idx <- which(label_ids == k)
+        dat <- data[which(subsamp_labels == k), , drop=F]
+        w <- weights[, idx]
+        rw <- reweights[, idx]
+
+        ## Threshold observations with too small weights
+        valid <- which(w >= threshold)
+        data_valid <- data[valid, , drop=F]
+        w <- w[valid]
+        rw <- rw[valid]
+
+        wmcl <- reweightedMclust(data_valid, weights = w, reweights=rw,
+                                init_data = dat, ...)
+        if (!is.null(saveDir)) save(wmcl, file=filename_k)
+      } else {
+        load(filename_k)
+      }
+
+      if (verbose) cat("\t\tParam Estimation Cluster", k, "Complete\n")
+      ## Combine the parameters
+      pars_ <- constructPmcParamsMclust(wmcl, T)
+      pars_$class <- k
+      pars_$prob <- pars_$prob * clust_prob[idx] / replicates
+      pars_
+    })
+
+    pars
+  })
+  if (verbose) cat("\tParam Estimation Complete\n")
+
+  lapply(1:K, function(k) {
+    pars <- lapply(params_raw, function(x) x[[k]])
+
+    res <- Reduce(mergeParams, pars)
+    res$class <- k
+
+    res
+  })
+}
+
 
 
 #' Monte Carlo \eqn{P_{\rm{mc}}} computation
@@ -303,13 +453,13 @@ subAggMclust <- function(data,
 #' @param numCores Number of cores to use in parallel::mclapply call. Default is 1.
 #' @param verbose Boolean whether to print output messages
 #'
-#' @examples 
+#' @examples
 #' set.seed(1)
 #' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computeMonteCarloPmc(params, 1e5, verbose=T)
-#' 
+#'
 #' @return Monte Carlo estimate of \eqn{P_{\rm mc}}
 #' @export
 computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples, numCores=1, verbose=F) {
@@ -343,16 +493,16 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 #' \deqn{\Delta \hat P_{\rm mc}^{(j, k)} = \frac{1}{M} \sum_{i=1}^M \pi_j(x_i) \, \pi_k(x_i) }
 #' Where the \eqn{M} observations are sampled from the overall data density \eqn{P(x)}.
 #' Note that \eqn{\Delta \hat P_{\rm mc}^{(j, k)} = \Delta \hat P_{\rm mc}^{(k, j)}}
-#' 
+#'
 #' @inheritParams computeMonteCarloPmc
 #'
-#' @examples 
+#' @examples
 #' set.seed(1)
 #' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computeMonteCarloDeltaPmcMatrix(params, 1e5, verbose=T)
-#' 
+#'
 #' @return \eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 #' @export
 computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize=mcSamples, numCores=1, verbose=F) {
@@ -374,11 +524,11 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
 #' @param integralControl List specifying arguments to pass to [cubature::cubintegrate()]. See details.
-#' 
+#'
 #' @details
 #' For a given cluster configuration, the overall misclassification probability \eqn{P_{\rm mc}} can be evaluated as
 #' \deqn{P_{\rm mc} = \sum_{j=1}^K \int 2 \left(1 - \pi_j(x)\right) \, \pi_j(x) P(x) dx}
-#' 
+#'
 #' This integral is implemented using the `cubature` function. the `integralControl` variable accepts arguments to the [cubature::cubintegrate()] function
 #' The defaults for this function are:
 #' \itemize{
@@ -388,13 +538,13 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #'  \item \code{relTol}: Sets the convergence tolerance for the integration. Default is 1e-5
 #' }
 #'
-#' @examples 
+#' @examples
 #' set.seed(1)
 #' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computePmc(params)
-#' 
+#'
 #' @return Output from the `cubature::cubintegrate()` function.
 #' @export
 computePmc <- function(paramsList, integralControl=list()) {
@@ -499,22 +649,22 @@ computePmc <- function(paramsList, integralControl=list()) {
 #'
 #' @inheritParams computePmc
 #'
-#' @details 
+#' @details
 #' #' Each step of the PHM algorithm reduces the overall \eqn{P_{\rm mc}} by the \eqn{\Delta P_{\rm mc}} value of the merged clusters.
-#' For each pair of clusters \eqn{j, k}, \eqn{\Delta P_{\rm mc}} is 
+#' For each pair of clusters \eqn{j, k}, \eqn{\Delta P_{\rm mc}} is
 #' \deqn{\Delta P_{\rm mc}^{(j, k)} = \int \pi_j(x) \, \pi_k(x) P(x) dx}
 #' Where the relationship \eqn{P_{\rm mc} = \sum_{i < j} 2\Delta P_{\rm mc}^{(i, j)}}
 #' See [computePmc] for description of `integralControl` parameters.
-#' 
+#'
 #' @return \eqn{K \times K} matrix with each pair of clusters' contribution to \eqn{P_{\rm{mc}}}
-#' 
-#' @examples 
+#'
+#' @examples
 #' set.seed(1)
 #' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computeDeltaPmcMatrix(params)
-#' 
+#'
 #' @export
 computeDeltaPmcMatrix <- function(paramsList, integralControl=list()) {
   K <- length(paramsList)
