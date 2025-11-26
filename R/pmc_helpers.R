@@ -132,12 +132,12 @@ posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, ver
 }
 
 
-weightedMclust <- function(data, weights, 
+weightedMclust <- function(data, weights,
                            init_data=NULL, init_idx=NULL,
                            G=NULL, modelNames=NULL, ...) {
-  
+
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
-  
+
   if (is.null(init_data)) {
     if (is.null(init_idx)) {
       init_data <- data
@@ -145,11 +145,11 @@ weightedMclust <- function(data, weights,
       init_data <- data[init_idx, , drop=F]
     }
   }
-  
-  hc_init <- hc(data = init_data, 
-                modelName = mclust::mclust.options("hcModelName"), 
+
+  hc_init <- hc(data = init_data,
+                modelName = mclust::mclust.options("hcModelName"),
                 use = mclust::mclust.options("hcUse"))
-  
+
   ## Prepare the for loop
   if (is.null(G)) G <- 1:10
   if (is.null(modelNames)) {
@@ -164,7 +164,7 @@ weightedMclust <- function(data, weights,
       }
   }
 
-  
+
   ## For provided G, fit the baseline GMM and then tune with weights
   res <- expand.grid(G=G, mn=modelNames) %>%
     data.frame() %>%
@@ -176,7 +176,7 @@ weightedMclust <- function(data, weights,
       mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
       if (mcl_params > sum(weights)) {
         out <- list(bic=-Inf)
-        cat(paste("\tSkipping", g, mn, "insufficient samples", 
+        cat(paste("\tSkipping", g, mn, "insufficient samples",
             round(sum(weights), 4), "for params", mcl_params), "\n")
         attributes(out) <- list(returnCode=-342)
         return(out)
@@ -199,7 +199,7 @@ weightedMclust <- function(data, weights,
         mn <- gsub("X", "V", mcl$modelName)
       }
       # print(paste(g, mn_old, mn, mcl$modelName))
- 
+
       ## Get the Z matrix for data from mcl
       mcl$data <- data
       mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
@@ -207,6 +207,94 @@ weightedMclust <- function(data, weights,
       mcl$z <- mcl$z / rowSums(mcl$z)
 
       do.call("me.weighted", c(list(weights=weights), mcl))
+    })
+
+  maxBIC <- -Inf
+  model <- NULL
+  for (mcl in res) {
+    if (is.null(attributes(mcl)$returnCode) || attributes(mcl)$returnCode < 0) next
+
+    if (mcl$bic > maxBIC) model <- mcl
+    maxBIC <- max(maxBIC, mcl$bic)
+  }
+
+  model
+}
+
+reweightedMclust <- function(data, weights, reweights,
+                             init_data=NULL, init_idx=NULL,
+                             G=NULL, modelNames=NULL, ...) {
+
+  if (is.null(dim(data))) data <- matrix(data, ncol=1)
+
+  if (is.null(init_data)) {
+    if (is.null(init_idx)) {
+      init_data <- data
+    } else {
+      init_data <- data[init_idx, , drop=F]
+    }
+  }
+
+  hc_init <- hc(data = init_data,
+                modelName = mclust::mclust.options("hcModelName"),
+                use = mclust::mclust.options("hcUse"))
+
+  ## Prepare the for loop
+  if (is.null(G)) G <- 1:10
+  if (is.null(modelNames)) {
+    if (ncol(data) == 1) {
+      if (G == 1) {
+        modelNames <- "X"
+      } else {
+        modelNames <- c("E", "V")
+      }
+    } else {
+      modelNames <- mclust::mclust.options("emModelNames")
+    }
+  }
+
+  ## For provided G, fit the baseline GMM and then tune with weights
+  res <- expand.grid(G=G, mn=modelNames) %>%
+    data.frame() %>%
+    apply(1, function (id_vec) {
+      g <- as.numeric(id_vec["G"])
+      mn <- id_vec["mn"]
+
+      ## Don't allow models where number of params is > # of samples
+      mcl_params <- mclust::nMclustParams(mn, ncol(data), g)
+      if (mcl_params > sum(weights)) {
+        out <- list(bic=-Inf)
+        cat(paste("\tSkipping", g, mn, "insufficient samples",
+                  round(sum(weights), 4), "for params", mcl_params), "\n")
+        attributes(out) <- list(returnCode=-342)
+        return(out)
+      }
+
+      mcl <- mclust::Mclust(init_data,
+                            G=g, modelNames=mn,
+                            initialization=list(hcPairs=hc_init),
+                            verbose=F, ...)
+
+      ## Model fails to fit, automatically fail
+      if (is.null(mcl$parameters)) {
+        mcl$bic <- -Inf
+        return(mcl)
+      }
+
+      ## Model names don't align with estep
+      mn_old <- mn
+      if (g == 1) {
+        mn <- gsub("X", "V", mcl$modelName)
+      }
+      # print(paste(g, mn_old, mn, mcl$modelName))
+
+      ## Get the Z matrix for data from mcl
+      mcl$data <- data
+      mcl$z <- mclust::estep(data, mn, mcl$parameters)$z
+      mcl$z <- mcl$z + .Machine$double.eps^2
+      mcl$z <- mcl$z / rowSums(mcl$z)
+
+      do.call("me.weighted", c(list(weights=reweights), mcl))
     })
 
   maxBIC <- -Inf
