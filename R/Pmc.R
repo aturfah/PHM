@@ -389,12 +389,12 @@ constructPmcParamsSubAggPartition <- function(data,
     if (verbose) cat("\tParam Estimation Beginning\n")
     pars <- apply_func(label_ids, function(k) {
       filename_k <- paste(prefix, "N", subsampSize, "repl", repl, "cluster", k, "density.RData", sep="_")
-      filename_k <- file.path(saveDir, filename_w)
+      filename_k <- file.path(saveDir, filename_k)
       need_to_run <- !file.exists(filename_k) || is.null(saveDir)
 
+      idx <- which(label_ids == k)
       if (need_to_run) {
         ## Cluster-specific weights and observations
-        idx <- which(label_ids == k)
         dat <- data[which(subsamp_labels == k), , drop=F]
         w <- weights[, idx]
         rw <- reweights[, idx]
