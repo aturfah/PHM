@@ -20,4 +20,5 @@
 
 1. [Human Genome Diversity Project](hgdp.md)
 2. [Peripheral Blood Mononuclear Cells](pbmc.md)
-3. [Larval *C. elegans* Cells](c_elegans.md)
+3. [Human Immune Health Atlas](hiha.md)
+4. [Larval *C. elegans* Cells](c_elegans.md)
