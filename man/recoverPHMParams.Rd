@@ -11,10 +11,10 @@ recoverPHMParams(phm, K, paramsToKeep = c("prob", "mean", "var", "class"))
 
 \item{K}{Number of clusters for which to compute the deltaPmc Matrix}
 
-\item{paramsToKeep}{Parameters of interest}
+\item{paramsToKeep}{Parameters to preserve in merging.}
 }
 \value{
-TODO
+Parameter list.
 }
 \description{
 Recover the parameters based on the PHM merging

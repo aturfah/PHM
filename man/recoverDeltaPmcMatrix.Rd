@@ -12,7 +12,7 @@ recoverDeltaPmcMatrix(phm, K)
 \item{K}{Number of clusters for which to compute the deltaPmc Matrix}
 }
 \value{
-TODO
+deltaPmc matrix for PHM at step K
 }
 \description{
 Recover the posterior matrix based on PHM merging

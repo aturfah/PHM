@@ -16,7 +16,7 @@ recoverPosterior(phm, K, data = NULL, computePosterior = F)
 \item{computePosterior}{Whether to recompute the posterior matrix if not available}
 }
 \value{
-TODO
+Posterior matrix for PHM at K clusters
 }
 \description{
 Recover the posterior matrix based on the PHM merging

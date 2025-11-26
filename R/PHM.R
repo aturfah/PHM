@@ -302,7 +302,7 @@ addPosteriorMatrix <- function(phm, data, initK=length(phm)) {
 #' @param phm Output from [PHM()]
 #' @param K Number of clusters for which to compute the deltaPmc Matrix
 #' 
-#' @return TODO
+#' @return deltaPmc matrix for PHM at step K
 #' @export
 recoverDeltaPmcMatrix <- function(phm, K) {
   stopifnot(K < length(phm))
@@ -344,9 +344,9 @@ recoverDeltaPmcMatrix <- function(phm, K) {
 #'
 #' @param phm Output from [PHM()]
 #' @param K Number of clusters for which to compute the deltaPmc Matrix
-#' @param paramsToKeep Parameters of interest
+#' @param paramsToKeep Parameters to preserve in merging.
 #' 
-#' @return TODO
+#' @return Parameter list.
 #' @export
 recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "class")) {
   stopifnot(K < length(phm))
@@ -401,7 +401,7 @@ recoverPHMParams <- function(phm, K, paramsToKeep=c("prob", "mean", "var", "clas
 #' @param data Matrix of observations for which to compute the posterior matrix
 #' @param computePosterior Whether to recompute the posterior matrix if not available
 #' 
-#' @return TODO
+#' @return Posterior matrix for PHM at K clusters
 #' @export
 recoverPosterior <- function(phm, K, data=NULL, computePosterior=F) {
   stopifnot(K < length(phm))
