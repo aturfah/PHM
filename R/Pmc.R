@@ -332,7 +332,7 @@ constructPmcParamsSubAggPartition <- function(data,
   clust_size <- sapply(clust_idx, length)
   clust_prob <- clust_size / sum(clust_size)
 
-  apply_func <- if(numCores == 1) lapply else function(x) parallel::mclapply(x, mc.cores=numCores)
+ apply_func <- if(numCores == 1) lapply else function(x, f) parallel::mclapply(x, f, mc.cores=numCores)
 
   params_raw <- lapply(1:replicates, function(repl) {
     if (verbose) cat("Replicate", repl, "\n")
