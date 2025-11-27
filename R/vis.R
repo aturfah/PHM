@@ -887,7 +887,7 @@ plotPmc2D <- function(paramsList,
       x_fmt[x == logPmcThreshold] <- paste0("≤ ", logPmcThreshold)
       x_fmt
     }
-    plt <- plt + ggplot2::geom_point(aes(x=X, y=Y, color=pmc)) +
+    plt <- plt + ggplot2::geom_point(ggplot2::aes(x=X, y=Y, color=pmc)) +
       ggplot2::scale_color_gradient2(midpoint=logPmcMidpoint,
                             high=PmcColor, low="white",
                             limits=c(logPmcThreshold,
