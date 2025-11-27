@@ -32,11 +32,12 @@ cell_types <- unique(labels_layer1)
 
 ## Mclust subagging procedure
 
-Perform density estimation and run PHM
+Perform density estimation and run PHM. Use simplified covariance structures for high dimensional data.
 
 ```
 mclustParams <- constructPmcParamsSubAggMclust(
   hia_pca, 50, 10000, G=1:100, numCores=10,
+  modelNames=c("VII", "VEI", "EII", "VEI"),
   saveDir=mclustDir
 )
 

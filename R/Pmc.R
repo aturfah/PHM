@@ -212,6 +212,7 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @param prefix Filename prefix for saving intermediate density estimates
 #' @param verbose Whether to print out logging messages
 #' @param numCores Number of cores over which to parallelize
+#' @param ... Parameters to provide to Mclust
 #'
 #' @examples
 #' set seed(1)
@@ -227,8 +228,7 @@ constructPmcParamsSubAggMclust <- function(data,
                          G=NULL,
                          saveDir=NULL,
                          prefix="subAggMclust_",
-                         modelNames=c("VII", "VEI", "EII", "VEI"),
-                         verbose=F, numCores=2, ...) {
+                         verbose=F, numCores=1, ...) {
 
   ## If we want to save the results, set that up
   if (!is.null(saveDir)) {
