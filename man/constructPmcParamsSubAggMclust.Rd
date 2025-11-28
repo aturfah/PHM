@@ -11,9 +11,8 @@ constructPmcParamsSubAggMclust(
   G = NULL,
   saveDir = NULL,
   prefix = "subAggMclust_",
-  modelNames = c("VII", "VEI", "EII", "VEI"),
   verbose = F,
-  numCores = 2,
+  numCores = 1,
   ...
 )
 }
@@ -28,11 +27,13 @@ constructPmcParamsSubAggMclust(
 
 \item{prefix}{Filename prefix for saving intermediate density estimates}
 
-\item{modelNames}{Covariance structures for each ensembled moddel}
-
 \item{verbose}{Whether to print out logging messages}
 
 \item{numCores}{Number of cores over which to parallelize}
+
+\item{...}{Parameters to provide to Mclust}
+
+\item{modelNames}{Covariance structures for each ensembled moddel}
 
 \item{subSampSize}{Number of subsamples to draw in each replicate}
 }

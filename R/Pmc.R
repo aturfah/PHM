@@ -270,7 +270,7 @@ constructPmcParamsSubAggMclust <- function(data,
 
     if (need_to_run) {
       mcl <- mclust::Mclust(subsamp_dat, G=G,
-                            modelNames=modelNames, verbose=verbose, ...)
+                            verbose=verbose, ...)
       params <- constructPmcParamsMclust(mcl)
       for (g in 1:mcl$G) {
         params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
