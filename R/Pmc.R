@@ -395,13 +395,13 @@ constructPmcParamsSubAggPartition <- function(data,
       idx <- which(label_ids == k)
       if (need_to_run) {
         ## Cluster-specific weights and observations
-        dat <- data[which(subsamp_labels == k), , drop=F]
+        dat <- subsamp_mat[which(subsamp_labels == k), , drop=F]
         w <- weights[, idx]
         rw <- reweights[, idx]
 
         ## Threshold observations with too small weights
         valid <- which(w >= threshold)
-        data_valid <- data[valid, , drop=F]
+        data_valid <- subsamp_mat[valid, , drop=F]
         w <- w[valid]
         rw <- rw[valid]
 
