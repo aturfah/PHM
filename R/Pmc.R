@@ -895,3 +895,98 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
     elapsed=elapsed_total
   )
 }
+
+#' Consolidate redundant components
+#'
+#' @description TODO: FILL ME IN
+#'
+#' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
+#' @param pmcMatrix Pairwise Pmc matrix
+#' @param threshold Pmc threshold for component consolidation. Any pairs of components with Pmc > threshold will be combined.
+#'
+#' @return List of parameters with redundant components consolidated inso a single component.
+#'
+#' @export
+consolidateParams <- function(paramsList, pmcMatrix, threshold) {
+  merge_components <- list()
+  for (i in 1:nrow(pmcMatrix)) {
+    for (j in i:nrow(pmcMatrix)) {
+      if (i == j) next
+      if (pmcMatrix[i, j] > threshold) {
+        merge_components[[length(merge_components) + 1]] <- c(i, j)
+      }
+    }
+  }
+
+  merge_clusters <- list()
+  for (posn in merge_components) {
+    i <- posn[1]
+    j <- posn[2]
+    
+    if (length(merge_clusters) > 0) {
+      valid_clust <- sapply(merge_clusters, function(mc) {
+        i %in% mc || j %in% mc
+      })
+      valid_idx <- which(valid_clust)    
+    } else {
+      valid_idx <- numeric()
+    }
+    
+    
+    if (length(valid_idx) == 0) {
+      merge_clusters[[length(merge_clusters) + 1]] <- posn
+    } else if (length(valid_idx) == 1) {
+      merge_clusters[[valid_idx]] <- c(merge_clusters[[which(valid_clust)]], posn)
+      merge_clusters[[valid_idx]] <- unique(merge_clusters[[valid_idx]])
+    } else {
+      base_idx <- valid_idx[1]
+      merge_clusters[[base_idx]] <- do.call(c, merge_clusters[valid_idx])
+      for (idx in length(valid_idx):2) merge_clusters[[valid_idx[idx]]] <- NULL
+      
+      merge_clusters[[base_idx]] <- c(merge_clusters[[base_idx]], posn)
+      merge_clusters[[base_idx]] <- unique(merge_clusters[[base_idx]])
+    }
+  }
+  
+  ## Grab parameters to be consolidated
+  group_params <- lapply(merge_clusters, function(v) {
+    paramsList[v]
+  })
+  
+  for (idx in 1:length(paramsList)) {
+    to_be_merged <- any(sapply(merge_clusters, function(x) idx %in% x))
+    if (!to_be_merged) {
+      group_params[[length(group_params) + 1]] <- list(paramsList[[idx]])
+    }
+  }
+  
+  ## Consolidate parameters
+  consolidated_params <- lapply(group_params, function(v) {
+    if (length(v) == 1) return(v[[1]])
+    
+    probs <- sapply(v, function(vv) vv$prob)
+    means <- lapply(v, function(vv) vv$mean)
+    vars <- lapply(v, function(vv) vv$var)
+    
+    ## Combine means
+    mu <- lapply(1:length(probs), function(idx) {
+      probs[idx] * means[[idx]] / sum(probs)
+    })
+    mu <- Reduce(`+`, mu)
+    mu <- rowSums(mu)
+    mu <- matrix(mu, ncol=1)
+    
+    ## Combine variances
+    sigma <- lapply(1:length(probs), function(idx) {
+      probs[idx] * vars[[idx]] / sum(probs)
+    })
+    sigma <- Reduce('+', sigma)
+    
+    list(
+      prob=sum(probs),
+      mean=mu,
+      var=sigma,
+      class=paste(sapply(v, function(vv) vv$class), collapse="|")
+    )
+  })
+}
