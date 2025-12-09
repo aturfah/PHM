@@ -762,7 +762,11 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #' @description TODO: FILL ME IN
 #'
 #' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
-#' 
+#' @param mcSamples Monte Carlo Samples for Pmc calculation
+#' @param numCores Number of cores for computations
+#' @param equalProbs Whether to ignore prior weights for each component (i.e., Pmc based solely on mean/variance)
+#' @param threshold Pmc threshold for Pairwise Pmc, all values below threshold are treated as 0
+#' @param verbose Whether to print progress messages
 #' @param ... Additional parameters passed to [computePmc()] or [computeMonteCarloPmc()]
 #'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
@@ -770,11 +774,22 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #' export
 computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, equalProbs=F, threshold=0, verbose=T) {
   K <- length(paramsList)
-  mat <- expand.grid(i=1:K, j=1:K) %>%
-    filter(i > j)
-  
+  mat <- expand.grid(i=1:K, j=1:K)
+  mat <- mat[which(mat[, "i"] > mat[, "j"])]
+
+  ## Multicore functionality
   apply_func <- lapply
-  if (numCores > 1) apply_func <- function(x, func) mclapply(x, func, mc.cores=numCores)
+  if (numCores > 1) {
+    apply_func <- function(x, func) parallel::mclapply(x, func, mc.cores=numCores)
+  }
+
+  ## Equalize probabilities across all components
+  if (equalProbs) {
+    tgt_probs <- 1/K
+    for (idx in 1:length(paramsList)) {
+      paramsList[[idx]]$prob <- paramsList[[idx]]$prob * tgt_probs / sum(paramsList[[idx]]$prob)
+    }
+  }
 
   if (verbose) cat("Mahalanobis Beginning\r")
   elapsed_dist <- system.time({
