@@ -990,3 +990,28 @@ consolidateParams <- function(paramsList, pmcMatrix, threshold) {
     )
   })
 }
+
+#' Decompose cluster solutions
+#'
+#' @description TODO: FILL ME IN
+#'
+#' @param paramsList List containing lists with each component GMM parameters. See `generateDistbnFunc` for format of components.
+#'
+#' @return List of parameters with redundant components consolidated inso a single component.
+#'
+#' @export
+decomposeParams <- function(paramsList) {
+  params_decomp <- lapply(paramsList, function(par) {
+    lapply(1:length(par$prob), function(idx){
+      list(
+        prob=par$prob[idx],
+        mean=par$mean[, idx, drop=F],
+        var=par$var[, , idx, drop=F],
+        class=paste0(par$class, "_", idx)
+      )
+    })
+  })
+  
+  do.call(c, params_decomp)  
+}
+
