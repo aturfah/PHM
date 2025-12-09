@@ -797,7 +797,6 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
       v <- mat[idx, ]
       i <- as.numeric(v[1])
       j <- as.numeric(v[2])
-      cat(i, j, "\r")
 
       par_i <- paramsList[[i]]
       par_j <- paramsList[[j]]
@@ -819,7 +818,7 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
   if (verbose) cat("Mahalanobis Complete:", elapsed_dist[3], "secs\n")
 
 
-  if (verbose) cat("Search Beginning\r")
+  if (verbose) cat("Search Beginning\n")
   elapsed_search <- system.time({
     pmc <- 0
     index <- nrow(mat)
@@ -838,7 +837,7 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
       par_j$prob <- par_j$prob / total_prob
 
       pmc <- computeMonteCarloPmc(list(par_i, par_j), mcSamples)
-      cat("\t", index, round(pmc, 3), "\n")
+      if (verbose) cat("\t", index, round(pmc, 3), "\n")
       if (index == 1) break
     }
   })
