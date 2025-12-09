@@ -771,7 +771,7 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'
-#' export
+#' @export
 computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, equalProbs=F, threshold=0, verbose=T) {
   K <- length(paramsList)
   mat <- expand.grid(i=1:K, j=1:K)

@@ -30,8 +30,6 @@ computePairwisePmcMatrix(
 }
 \value{
 \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
-
-export
 }
 \description{
 TODO: FILL ME IN
