@@ -772,10 +772,10 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'
 #' @export
-computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, equalProbs=F, threshold=0, verbose=T) {
+computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshold=0, equalProbs=F, verbose=T) {
   K <- length(paramsList)
   mat <- expand.grid(i=1:K, j=1:K)
-  mat <- mat[which(mat[, "i"] > mat[, "j"])]
+  mat <- mat[which(mat[, 1] > mat[, 2]), , drop=F]
 
   ## Multicore functionality
   apply_func <- lapply
