@@ -8,8 +8,8 @@ computePairwisePmcMatrix(
   paramsList,
   mcSamples,
   numCores = 1,
-  equalProbs = F,
   threshold = 0,
+  equalProbs = F,
   verbose = T
 )
 }
@@ -20,9 +20,9 @@ computePairwisePmcMatrix(
 
 \item{numCores}{Number of cores for computations}
 
-\item{equalProbs}{Whether to ignore prior weights for each component (i.e., Pmc based solely on mean/variance)}
-
 \item{threshold}{Pmc threshold for Pairwise Pmc, all values below threshold are treated as 0}
+
+\item{equalProbs}{Whether to ignore prior weights for each component (i.e., Pmc based solely on mean/variance)}
 
 \item{verbose}{Whether to print progress messages}
 
