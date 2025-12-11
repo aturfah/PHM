@@ -800,10 +800,16 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
 
       par_i <- paramsList[[i]]
       par_j <- paramsList[[j]]
-      total_prob <- par_i$prob + par_j$prob
 
-      cov_pool <- par_i$prob * par_i$var + par_j$prob * par_j$var
-      cov_pool <- cov_pool[, , 1] / total_prob
+      if (equalProbs) {
+        cov_pool <- par_i$var + par_j$var
+        cov_pool <- cov_pool[, , 1] / 2
+      } else {
+        total_prob <- par_i$prob + par_j$prob
+
+        cov_pool <- par_i$prob * par_i$var + par_j$prob * par_j$var
+        cov_pool <- cov_pool[, , 1] / total_prob
+      }
 
       mah_dist <- mahalanobis(as.vector(par_i$mean), 
                               as.vector(par_j$mean), 
@@ -842,6 +848,7 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
     }
   })
   if (verbose) cat("Search complete:", elapsed_search[3], "secs\n")
+  if (verbose) cat("\tSearch Index:", prev_index, "/", nrow(mat), "\n")
 
   elapsed_sample <- system.time({
     mc_draws <- apply_func(paramsList, function(pars) {
