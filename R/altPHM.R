@@ -211,6 +211,8 @@ recoverDeltaPmcv2 <- function(phm, k) {
   })
   tmp_mat <- do.call(cbind, tmp_mat)
 
+  print(dim(tmp_mat))
+
   output <- lapply(grps, function(idx) {
     colSums(tmp_mat[idx, , drop=F])
   })
