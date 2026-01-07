@@ -152,9 +152,9 @@ convertToPHMv2 <- function(phm) {
   res$mergeComps[[1]] <- NA
   res$mergeValues <- sapply(phm, function(x) x$pmc_change)[1:(length(phm)-1)]
   res$mergeValues <- c(NA, res$mergeVals)
+  res$mergeDeltaPmc <- res$mergeValues
   res$mergeCriterion <- "unscaled"
   res$mergeDeltaPmc <- res$mergeVals
-
   res
 }
 
@@ -187,7 +187,7 @@ recoverGroupsv2 <- function(phm, k) {
 #' 
 #' @export 
 recoverPosteriorv2 <- function (phm, k, posterior) {
-  grps <- recoverGroups(phm, k)
+  grps <- recoverGroupsv2(phm, k)
 
   post <- lapply(grps, function (idx) {
     rowSums(posterior[, idx, drop=F])
@@ -200,7 +200,7 @@ recoverPosteriorv2 <- function (phm, k, posterior) {
 #' 
 #' @export 
 recoverDeltaPmcv2 <- function(phm, k) {
-  grps <- recoverGroups(phm, k)
+  grps <- recoverGroupsv2(phm, k)
   deltaPmc <- phm$deltaPmc
 
   tmp_mat <- lapply(grps, function(idx) {
@@ -215,6 +215,41 @@ recoverDeltaPmcv2 <- function(phm, k) {
 
   do.call(rbind, output)
 }
+
+#' Recover deltaPmc matrix at given value of \eqn{K}
+#' 
+#' @export 
+recoverParamsV2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class")) {
+  grps <- recoverGroupsv2(phm, k)
+  params <- phm$paramsList
+
+  ## Clear out parameters we won't need
+  params <- lapply(params, function(l) {
+    for (par_name in names(l)) {
+      if (!(par_name %in% paramsToKeep)) {
+        l[[par_name]] <- NULL
+      }
+    }
+    l
+  })
+
+  new_params <- lapply(grps, function(grp) {
+    Reduce(mergeParams,
+           lapply(grp, function(idx) params[[idx]]))
+  })
+
+  ## Once again clear out
+  lapply(new_params, function(l) {
+    for (par_name in names(l)) {
+      if (!(par_name %in% paramsToKeep)) {
+        l[[par_name]] <- NULL
+      }
+    }
+    l
+  })
+}
+
+
 
 #####################################
 #### Visualize New PHM Functions ####
