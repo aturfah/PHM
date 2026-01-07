@@ -201,10 +201,19 @@ recoverPosteriorv2 <- function (phm, k, posterior) {
 #' @export 
 recoverDeltaPmcv2 <- function(phm, k) {
   grps <- recoverGroups(phm, k)
+  deltaPmc <- phm$deltaPmc
 
-  new_mat <- lapply(grps, function(idx) {
-    rowSums()
+  tmp_mat <- lapply(grps, function(idx) {
+    tmp <- rowSums(deltaPmc[, idx, drop=F])
+    tmp[idx] <- 0
   })
+  tmp_mat <- do.call(cbind, tmp_mat)
+
+  output <- lapply(grps, function(idx) {
+    colSums(tmp_mat[idx, , drop=F])
+  })
+
+  do.call(rbind, output)
 }
 
 #####################################
