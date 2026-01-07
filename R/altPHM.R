@@ -232,11 +232,31 @@ constructVisData <- function(phmObj,
     gprobs_unspec <- TRUE
     groupProbs <- rep(1, K)
   }
-  
-  
-  ## Log10 Scaled Height
+
+  ## Which components are merged
+  merge_components <- phmObj$mergeComps[K:2]
+
+
+  ## For the original PHM scale the heights based 
+  ## Alternate scalings shouldn't need this to occur
   height <- phmObj$mergeValues[K:2]
-  ## Try this
+  if (phmObj$mergeCriterion == "unscaled") {
+    clust_sizes <- rep(list(1), K)
+    sizes <- numeric(K-1)
+
+    for (idx in 1:(K-1)) {
+      mc <- merge_components[[idx]]
+      print(mc)
+      mc1 <- mc[1]
+      mc2 <- mc[2]
+
+      clust_sizes[[mc1]] <- clust_sizes[[mc1]] + clust_sizes[[mc2]]
+      clust_sizes[[mc2]] <- NULL
+      sizes[idx] <- clust_sizes[[mc1]]
+    }
+    height <- height / sizes
+  }
+
   if (scaleHeights == "unscaled") {
     height <- 1 / height
   } else if (scaleHeights == "log10") {
@@ -249,8 +269,6 @@ constructVisData <- function(phmObj,
     height <- height + (1:length(height)) * 1e-6 ## Slight height offset
   }
   print(height)
-
-  merge_components <- phmObj$mergeComps[K:2]
 
   ## Track components merging
   output <- data.frame()
