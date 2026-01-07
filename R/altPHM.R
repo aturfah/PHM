@@ -1,6 +1,5 @@
-
-#' W
-#' PHM Algorithm with alternate scaling methods
+#' PHM Algorithm (supporting alternate merging strategies)
+#' 
 #' @description TODO: Fill me in 
 #' 
 #' @param par1
