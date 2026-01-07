@@ -163,7 +163,7 @@ convertToPHMv2 <- function(phm) {
 #############################
 
 #' Recover merged groups at given value of \eqn{K}
-#' 
+#' z
 #' @export 
 recoverGroupsv2 <- function(phm, k) {
   K <- ncol(phm$deltaPmc)
@@ -186,7 +186,7 @@ recoverGroupsv2 <- function(phm, k) {
 #' Recover posterior at given value of \eqn{K}
 #' 
 #' @export 
-recoverPosteriorv2 <- function (phm, k, posterior`) {
+recoverPosteriorv2 <- function (phm, k, posterior) {
   grps <- recoverGroups(phm, k)
 
   post <- lapply(grps, function (idx) {
