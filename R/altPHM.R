@@ -68,6 +68,7 @@ PHMv2 <- function(paramsList=NULL,
   ## Results
   if (verbose) cat("Commencing merging procedure\n")
   while (K > 1) {
+    ## Matrix for merging rule
     value_matrix <- 2 * deltaPmc
     if (scaling != "unscaled") {
         if (scaling == "average") {
@@ -75,16 +76,15 @@ PHMv2 <- function(paramsList=NULL,
             comp_size <- sapply(component_tracker, length)
             sz <- outer(comp_size, comp_size)
             value_matrix <- value_matrix / sz
-            value_matrix[lower.tri(value_matrix)] <- 0
         } else if (scaling == "alpha") {
             ## Scale by alpha_i * alpha_j
             alph <- outer(alpha_vec, alpha_vec)
             value_matrix <- value_matrix / alph
-            value_matrix[lower.tri(value_matrix)] <- 0
         } else {
             stop("Unsopported scaling provided")
         }
     }
+    value_matrix[lower.tri(value_matrix)] <- 0
 
     ## Get index of maximal element
     max_val <- max(value_matrix)
@@ -252,8 +252,6 @@ constructVisData <- function(phmObj,
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
   merge_components <- phmObj$mergeComps[K:2]
-
-  print(height)
 
   ## Track components merging
   output <- data.frame()
