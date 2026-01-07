@@ -253,10 +253,7 @@ constructVisData <- function(phmObj,
       clust_sizes[[mc2]] <- NULL
       sizes[idx] <- clust_sizes[[mc1]]
     }
-    print(height)
-    print(choose(sizes, 2))
     height <- height / choose(sizes, 2)
-    print(height)
   }
 
   if (scaleHeights == "unscaled") {
