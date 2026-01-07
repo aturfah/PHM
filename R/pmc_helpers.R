@@ -86,7 +86,15 @@ generatePosteriorProbFunc <- function(paramsList, j) {
   }
 }
 
-
+#' Compute Posterior Matrix for a set of parameteres
+#'
+#' @param paramsList List of mixture parameteres
+#' @param data Data matrix for which to compute posterior probabilities. Rows are observations
+#'
+#' @description Compute the posterior probability matrix
+#'
+#' @return An \eqn{N\times K} matrix
+#' export
 computePosteriorProbMatrix <- function(paramsList, data) {
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
   K <- length(paramsList)
