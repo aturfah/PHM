@@ -222,7 +222,7 @@ recoverDeltaPmcv2 <- function(phm, k) {
 #' Recover deltaPmc matrix at given value of \eqn{K}
 #' 
 #' @export 
-recoverParamsV2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class")) {
+recoverParamsv2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class")) {
   grps <- recoverGroupsv2(phm, k)
   params <- phm$paramsList
 
