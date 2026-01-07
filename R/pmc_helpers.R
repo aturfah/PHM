@@ -94,7 +94,7 @@ generatePosteriorProbFunc <- function(paramsList, j) {
 #' @description Compute the posterior probability matrix
 #'
 #' @return An \eqn{N\times K} matrix
-#' export
+#' @export
 computePosteriorProbMatrix <- function(paramsList, data) {
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
   K <- length(paramsList)
