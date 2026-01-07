@@ -267,7 +267,6 @@ constructVisData <- function(phmObj,
     height <- height^2
     height <- height + (1:length(height)) * 1e-6 ## Slight height offset
   }
-  print(height)
 
   ## Track components merging
   output <- data.frame()
