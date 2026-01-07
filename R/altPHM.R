@@ -22,7 +22,8 @@ PHMv2 <- function(paramsList=NULL,
   scaling <- match.arg(scaling)
 
   if (is.null(paramsList) && is.null(deltaPmc)) stop("One of paramsList or deltaPmc must be specified")
-  
+  if (scaling == "alpha" && is.null(paramsList)) stop("alpha scaling requires paramsList to be specified")
+
   ## Verify paramsList has prob, mean, and var
   if (!is.null(paramsList)) {
     tmp <- lapply(paramsList, function(x) x$prob)
@@ -61,8 +62,9 @@ PHMv2 <- function(paramsList=NULL,
   merge_components <- list(NA)
   merge_deltaPmc <- numeric(K)
   merge_value <- numeric(K)
-  alpha_vec <- sapply(params, function(x) sum(x$prob))
-  
+  alpha_vec <- NULL
+  if (scaling == "alpha") alpha_vec <- sapply(paramsList, function(x) sum(x$prob))
+
   orig_deltaPmc <- deltaPmc
 
   ## Results
