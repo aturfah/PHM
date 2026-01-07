@@ -246,7 +246,6 @@ constructVisData <- function(phmObj,
 
     for (idx in 1:(K-1)) {
       mc <- merge_components[[idx]]
-      print(mc)
       mc1 <- mc[1]
       mc2 <- mc[2]
 
@@ -254,6 +253,8 @@ constructVisData <- function(phmObj,
       clust_sizes[[mc2]] <- NULL
       sizes[idx] <- clust_sizes[[mc1]]
     }
+    print(height)
+    print(sizes)
     height <- height / sizes
   }
 
