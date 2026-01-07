@@ -225,7 +225,7 @@ constructVisData <- function(phmObj,
                              groupProbs=NULL) {
   K <- ncol(phmObj$deltaPmc)
   alpha_vec <- sapply(phmObj$paramsList, function(x) sum(x$prob))
-  
+
   ## Whether or not we track groupProbs
   gprobs_unspec <- FALSE
   if (is.null(groupProbs)) {
@@ -236,8 +236,6 @@ constructVisData <- function(phmObj,
   
   ## Log10 Scaled Height
   height <- phmObj$mergeValues[K:2]
-  
-  
   ## Try this
   if (scaleHeights == "unscaled") {
     height <- 1 / height
@@ -248,8 +246,8 @@ constructVisData <- function(phmObj,
                      package = "PHM"))
     height <- inv_log10(log10(height))
     height <- height^2
+    height <- height + (1:length(height)) * 1e-6 ## Slight height offset
   }
-  height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
   merge_components <- phmObj$mergeComps[K:2]
 
