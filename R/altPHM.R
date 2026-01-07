@@ -255,7 +255,7 @@ constructVisData <- function(phmObj,
     }
     print(height)
     print(sizes)
-    height <- height / sizes
+    height <- height / choose(sizes, 2)
   }
 
   if (scaleHeights == "unscaled") {
