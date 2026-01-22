@@ -171,6 +171,8 @@ recoverGroupsv2 <- function(phm, k) {
   K <- ncol(phm$deltaPmc)
   ct <- lapply(1:K, function(x) x)
 
+  if (K == k) return(ct)
+
   for (idx in K:(k+1)) {
     res <- phm$mergeComp[[idx]]
     i <- res[1]
@@ -259,11 +261,10 @@ recoverParamsv2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class
 #####################################
 
 constructVisData <- function(phmObj,
+                             K=NULL,
                              scaleHeights="unscaled",
                              groupProbs=NULL) {
-  K <- ncol(phmObj$deltaPmc)
-  alpha_vec <- sapply(phmObj$paramsList, function(x) sum(x$prob))
-
+  alpha_vec <- unlist(do.call(c, recoverParamsv2(phmObj, K, "prob")))
   if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
     stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
   }
@@ -413,6 +414,7 @@ constructVisData <- function(phmObj,
   
   print("Beginning Aligning Points")
   while(any(is.na(output))) {
+    print(sum(is.na(output)))
     output <- output %>%
       dplyr::left_join(output, by=c("y"="yend")) %>%
       dplyr::rename(x=x.x,
@@ -460,6 +462,7 @@ constructVisData <- function(phmObj,
 #' 
 #' @export 
 plotPHMv2Dendrogram <- function(phmObj,
+                             initK=NULL,
                              scaleHeights=c("log10", "unscaled", "pmcdist"),
                              colors=NULL,
                              displayAxis=c("box", "label", "index", "none"),
@@ -472,8 +475,13 @@ plotPHMv2Dendrogram <- function(phmObj,
   displayAxis <- match.arg(displayAxis)
   scaleHeights <- match.arg(scaleHeights)
   K <- ncol(phmObj$deltaPmc)
+  if (!is.null(initK)) {
+    if (initK > K) stop("initK cannot be greater than K")
+    K <- initK
+  }
 
   phm_dendro_data <- constructVisData(phmObj,
+                                      K=K,
                                       scaleHeights=scaleHeights,
                                       groupProbs=groupProbs)
   
@@ -555,6 +563,7 @@ plotPHMv2Dendrogram <- function(phmObj,
 #' 
 #' @export 
 plotPHMv2Heatmap <- function(phmObj,
+                          initK=NULL,
                           colors=NULL,
                           displayAxis=c("box", "label", "index", "none"),
                           displayAxisSize=NULL,
@@ -563,10 +572,15 @@ plotPHMv2Heatmap <- function(phmObj,
                           fillLimits=NULL,
                           fillScale=c("log10", "pmcdist"),
                           legendPosition="none") {
-  K <- ncol(phmObj$deltaPmc)
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
   
+  K <- ncol(phmObj$deltaPmc)
+  if (!is.null(initK)) {
+    if (initK > K) stop("initK cannot be greater than K")
+    K <- initK
+  }
+
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
@@ -594,7 +608,7 @@ plotPHMv2Heatmap <- function(phmObj,
       displayAxisSize <- 10
     }
   }
-  phm_dendro_data <- constructVisData(phmObj)
+  phm_dendro_data <- constructVisData(phmObj, K=K)
   displayAxisFmt <- ggtext::element_markdown(
     color=unname(colors[phm_dendro_data$xlab]),
     size=displayAxisSize)
