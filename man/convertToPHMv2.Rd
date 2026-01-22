@@ -9,6 +9,9 @@ convertToPHMv2(phm)
 \arguments{
 \item{phm}{Output from \code{\link[=PHM]{PHM()}} function}
 }
+\value{
+PHM output in the form of the \code{\link[=PHMv2]{PHMv2()}} function.
+}
 \description{
 Convert an original PHM object to the new PHM format
 }

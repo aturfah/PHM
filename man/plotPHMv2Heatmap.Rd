@@ -6,6 +6,7 @@
 \usage{
 plotPHMv2Heatmap(
   phmObj,
+  initK = NULL,
   colors = NULL,
   displayAxis = c("box", "label", "index", "none"),
   displayAxisSize = NULL,
@@ -15,6 +16,27 @@ plotPHMv2Heatmap(
   fillScale = c("log10", "pmcdist"),
   legendPosition = "none"
 )
+}
+\arguments{
+\item{phmObj}{Output from \code{\link[=PHMv2]{PHMv2()}}}
+
+\item{initK}{Number of clusters from which to initialize the visualization}
+
+\item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
+
+\item{displayAxis}{String indicating what label to place along the axis (corresponding to clusters). See Details for more information.}
+
+\item{displayAxisSize}{Text size for the axis labels}
+
+\item{colorAxis}{Whether or not to color the axis labels}
+
+\item{gridColor}{What color to make the heatmap grid}
+
+\item{fillLimits}{Optional vector to manually set limits of the fill scaling. Default is to use the min and max \eqn{\Delta P_{\rm mc}} values from \code{phm}}
+
+\item{fillScale}{Whether to use \eqn{\log_{10} \Delta P_{\rm mc}} or the spline scaling for the heatmap color}
+
+\item{legendPosition}{Where to put the legend for the heatmap colors. Default is to suppress.}
 }
 \description{
 Plot PHM Matrix (for v2)

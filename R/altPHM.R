@@ -1,14 +1,34 @@
 #' PHM Algorithm (supporting alternate merging strategies)
 #' 
-#' @description TODO: Fill me in 
+#' @description Implements the PHM algorithm which constructs a clustering hierarchy by successively merging clusters with the largest \eqn{\Delta P_{\rm mc}} values.
 #' 
-#' @param par1
+#' In addition to using raw \eqn{\Delta P_{\rm mc}} values, this supports merging two subtrees \eqn{S_1, S_2} based on the following quantities.
+#' \itemize{
+#'  \item "average": Takes the average \eqn{\Delta P_{\rm mc}} value across the original clusters; i.e., \eqn{\Delta P_{\rm mc}/|S_1|\times|S_2|}
+#'  \item "alpha": Scales \eqn{\Delta P_{\rm mc}} based on the size of the subtrees; i.e., \eqn{\Delta P_{\rm mc} / \alpha_{S_1}\alpha_{S_2}}
+#' }
+#' 
+#' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates. Used to compute \eqn{\Delta P_{\rm mc}}
+#' @param deltaPmc A precomputed \eqn{\Delta P_{\rm mc}} matrix. Will 
+#' @param scaling How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. `unscaled` is the default
+#' @param monteCarlo Whether to use monte carlo integration to compute \eqn{\Delta P_{\rm mc}}
+#' @param numCores Number of cores used for \eqn{\Delta P_{\rm mc}} computation
+#' @param verbose Whether to print
+#' @param ... Additional parameters passed to [computeMonteCarloDeltaPmcMatrix()] or [computeDeltaPmcMatrix()]
 #' 
 #' @examples 
 #' set.seed(1)
 #' 
 #' @return
-#' What is the return object
+#' A list with the following elements
+#' \itemize{
+#'  \item \code{deltaPmc}: The \eqn{\Delta P_{\rm mc}} matrix for the original parameters
+#'  \item \code{paramsList}: The \code{paramsList} object used for the merging (if provided)
+#'  \item \code{mergeComps}: List of components merged at successive PHM steps
+#'  \item \code{mergeValues}: The (potentially scaled) \eqn{\Delta P_{\rm mc}} value for each merge
+#'  \item \code{mergeDeltaPmc}: The \eqn{\Delta P_{\rm mc}} value for each merge
+#'  \item \code{mergeCriterion}: Which \code{scaling} was used for this PHM run
+#' }
 #' 
 #' @export
 PHMv2 <- function(paramsList=NULL,
@@ -143,6 +163,7 @@ PHMv2 <- function(paramsList=NULL,
 #' 
 #' @param phm Output from [PHM()] function
 #' 
+#' @return PHM output in the form of the [PHMv2()] function.
 #' @export 
 convertToPHMv2 <- function(phm) {
   ## Convert an original PHM to the new format
@@ -164,9 +185,15 @@ convertToPHMv2 <- function(phm) {
 #### Recover X Functions ####
 #############################
 
-#' Recover merged groups at given value of \eqn{K}
-#' z
-#' @export 
+#' Recover outputs for a given cut of the PHM tree
+#' @name recover...v2
+#' 
+#' @param phm Output from the [PHMv2()] function.
+#' @param k Number of clusters at which to recover the group structure
+#' @param posterior Original posterior matrix from which to combine clusters
+#' @param paramsToKeep Fields from \code{phm$paramsList} to preserve
+#' 
+#' @export
 recoverGroupsv2 <- function(phm, k) {
   K <- ncol(phm$deltaPmc)
   ct <- lapply(1:K, function(x) x)
@@ -189,6 +216,8 @@ recoverGroupsv2 <- function(phm, k) {
 
 #' Recover posterior at given value of \eqn{K}
 #' 
+#' @rdname recover...v2
+#' 
 #' @export 
 recoverPosteriorv2 <- function (phm, k, posterior) {
   grps <- recoverGroupsv2(phm, k)
@@ -201,6 +230,8 @@ recoverPosteriorv2 <- function (phm, k, posterior) {
 }
 
 #' Recover deltaPmc matrix at given value of \eqn{K}
+#' 
+#' @rdname recover...v2
 #' 
 #' @export 
 recoverDeltaPmcv2 <- function(phm, k) {
@@ -222,6 +253,7 @@ recoverDeltaPmcv2 <- function(phm, k) {
 }
 
 #' Recover deltaPmc matrix at given value of \eqn{K}
+#' @rdname recover...v2
 #' 
 #' @export 
 recoverParamsv2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class")) {
@@ -452,7 +484,11 @@ constructVisData <- function(phmObj,
   )
 }
 
-#' Plot PHM Dendrogram (for v2)
+#' Plot \code{PHMv2} Dendrogram
+#' 
+#' @param phmObj Output from [PHMv2()]
+#' @param initK Number of clusters from which to initialize the visualization
+#' @inheritParams plotPHMDendrogram
 #' 
 #' @export 
 plotPHMv2Dendrogram <- function(phmObj,
@@ -554,6 +590,10 @@ plotPHMv2Dendrogram <- function(phmObj,
 }
 
 #' Plot PHM Matrix (for v2)
+#' 
+#' @param phmObj Output from [PHMv2()]
+#' @param initK Number of clusters from which to initialize the visualization
+#' @inheritParams plotPHMMatrix
 #' 
 #' @export 
 plotPHMv2Heatmap <- function(phmObj,

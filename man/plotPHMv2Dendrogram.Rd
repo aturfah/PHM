@@ -2,10 +2,11 @@
 % Please edit documentation in R/altPHM.R
 \name{plotPHMv2Dendrogram}
 \alias{plotPHMv2Dendrogram}
-\title{Plot PHM Dendrogram (for v2)}
+\title{Plot \code{PHMv2} Dendrogram}
 \usage{
 plotPHMv2Dendrogram(
   phmObj,
+  initK = NULL,
   scaleHeights = c("log10", "unscaled", "pmcdist"),
   colors = NULL,
   displayAxis = c("box", "label", "index", "none"),
@@ -16,6 +17,27 @@ plotPHMv2Dendrogram(
   groupColorMin = "lightgray"
 )
 }
+\arguments{
+\item{phmObj}{Output from \code{\link[=PHMv2]{PHMv2()}}}
+
+\item{initK}{Number of clusters from which to initialize the visualization}
+
+\item{scaleHeights}{String specifying how to set the heights in the dendrogram. See Details for more information.}
+
+\item{colors}{Vector of \eqn{K} hex codes to color the leaf node labels}
+
+\item{displayAxis}{String indicating what label to place on the leaf nodes of the dendrogram. See Details for more information.}
+
+\item{displayAxisSize}{Text size for the leaf node labels}
+
+\item{colorAxis}{Whether or not to color the labels on the leaf nodes}
+
+\item{groupProbs}{Vector of class probability conditional on base group membership}
+
+\item{groupColorMax}{Color of lines corresponding to high group probability}
+
+\item{groupColorMin}{Color of lines corresponding to low group probability}
+}
 \description{
-Plot PHM Dendrogram (for v2)
+Plot \code{PHMv2} Dendrogram
 }

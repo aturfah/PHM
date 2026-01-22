@@ -15,13 +15,39 @@ PHMv2(
 )
 }
 \arguments{
-\item{par1}{}
+\item{paramsList}{A list generated from \code{\link[=constructPmcParamsMclust]{constructPmcParamsMclust()}}, \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}}, \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} providing the initial cluster parameter estimates. Used to compute \eqn{\Delta P_{\rm mc}}}
+
+\item{deltaPmc}{A precomputed \eqn{\Delta P_{\rm mc}} matrix. Will}
+
+\item{scaling}{How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. \code{unscaled} is the default}
+
+\item{monteCarlo}{Whether to use monte carlo integration to compute \eqn{\Delta P_{\rm mc}}}
+
+\item{numCores}{Number of cores used for \eqn{\Delta P_{\rm mc}} computation}
+
+\item{verbose}{Whether to print}
+
+\item{...}{Additional parameters passed to \code{\link[=computeMonteCarloDeltaPmcMatrix]{computeMonteCarloDeltaPmcMatrix()}} or \code{\link[=computeDeltaPmcMatrix]{computeDeltaPmcMatrix()}}}
 }
 \value{
-What is the return object
+A list with the following elements
+\itemize{
+\item \code{deltaPmc}: The \eqn{\Delta P_{\rm mc}} matrix for the original parameters
+\item \code{paramsList}: The \code{paramsList} object used for the merging (if provided)
+\item \code{mergeComps}: List of components merged at successive PHM steps
+\item \code{mergeValues}: The (potentially scaled) \eqn{\Delta P_{\rm mc}} value for each merge
+\item \code{mergeDeltaPmc}: The \eqn{\Delta P_{\rm mc}} value for each merge
+\item \code{mergeCriterion}: Which \code{scaling} was used for this PHM run
+}
 }
 \description{
-TODO: Fill me in
+Implements the PHM algorithm which constructs a clustering hierarchy by successively merging clusters with the largest \eqn{\Delta P_{\rm mc}} values.
+
+In addition to using raw \eqn{\Delta P_{\rm mc}} values, this supports merging two subtrees \eqn{S_1, S_2} based on the following quantities.
+\itemize{
+\item "average": Takes the average \eqn{\Delta P_{\rm mc}} value across the original clusters; i.e., \eqn{\Delta P_{\rm mc}/|S_1|\times|S_2|}
+\item "alpha": Scales \eqn{\Delta P_{\rm mc}} based on the size of the subtrees; i.e., \eqn{\Delta P_{\rm mc} / \alpha_{S_1}\alpha_{S_2}}
+}
 }
 \examples{
 set.seed(1)
