@@ -13,7 +13,6 @@ computePosteriorProbMatrix(paramsList, data)
 }
 \value{
 An \eqn{N\times K} matrix
-export
 }
 \description{
 Compute the posterior probability matrix
