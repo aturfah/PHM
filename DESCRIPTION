@@ -1,11 +1,11 @@
 Package: PHM
 Title: The Distinguishability Criterion
-Version: 1.0.0
+Version: 1.1.0
 Authors@R: 
     person("Ali", "Turfah", , "aturfah@umich.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0009-0004-4762-9671"))
     person("Xiaoquan", "Wen", , "xqwen@umich.edu", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+           comment = c(ORCID = "0000-0001-8990-2737"))
 Description: Implements the Distinguishability Criterion and PHM algorithms.
 License: GNU General Public License
 Encoding: UTF-8
