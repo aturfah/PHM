@@ -315,10 +315,8 @@ constructVisData <- function(phmObj,
   }
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
-  print("Height set")
 
   ## Track components merging
-  print("Beginning Merge Tree")
   output <- data.frame()
   groupProbs_new <- groupProbs
   merge_tree <- as.list(1:K)
@@ -391,7 +389,6 @@ constructVisData <- function(phmObj,
     
     component_id_map <- component_id_map[-mcs[2]]
   }
-  print("Merge Tree Complete")
   
   order_x <- function(merge_res) {
     if (typeof(merge_res) == "list") {
@@ -412,9 +409,7 @@ constructVisData <- function(phmObj,
   output <- dplyr::mutate(output, 
                           x=ifelse(y==0, map_xposns(ID), NA))
   
-  print("Beginning Aligning Points")
   while(any(is.na(output))) {
-    print(sum(is.na(output)))
     output <- output %>%
       dplyr::left_join(output, by=c("y"="yend")) %>%
       dplyr::rename(x=x.x,
@@ -432,8 +427,7 @@ constructVisData <- function(phmObj,
       dplyr::arrange(-yend) %>%
       dplyr::select(-dplyr::ends_with(".y"))
   }
-  print("Points aligned")
-  
+
   ## Add horizontal components
   horiz_comps <- output %>%
     dplyr::group_by(yend, #pmc, pmc_change, pmc_pct
@@ -449,10 +443,10 @@ constructVisData <- function(phmObj,
     output,
     horiz_comps
   )
-  print("Complete")
 
   list(
     df=output,
+    height=height,
     xlab=x_posns,
     display_names=sapply(phmObj$paramsList, function(x) x$class)[x_posns]
   )
@@ -584,7 +578,7 @@ plotPHMv2Heatmap <- function(phmObj,
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
-  
+
   ## Default is the paired pallette; only if K < 12
   if (colorAxis && is.null(colors)) {
     if (K > 12) {
@@ -623,6 +617,9 @@ plotPHMv2Heatmap <- function(phmObj,
   }
   
   ## Construct the merging matrix
+  merge_vals <- phmObj$mergeValues
+  if (phmObj$mergeCriterion == "alpha") merge_vals <- merge_vals / max(merge_vals)
+
   label_map <- as.list(1:K)
   merge_matrix <- matrix(NA, nrow=K, ncol=K)
   for (x in K:2) {
@@ -630,8 +627,8 @@ plotPHMv2Heatmap <- function(phmObj,
     grid <- expand.grid(label_map[[mc[1]]],
                         label_map[[mc[2]]])
     
-    merge_matrix[grid[, 1], grid[, 2]] <- phmObj$mergeValues[x]
-    merge_matrix[grid[, 2], grid[, 1]] <- phmObj$mergeValues[x]
+    merge_matrix[grid[, 1], grid[, 2]] <- merge_vals[x]
+    merge_matrix[grid[, 2], grid[, 1]] <- merge_vals[x]
     
     label_map[[mc[1]]] <- c(label_map[[mc[1]]], label_map[[mc[2]]])
     label_map[[mc[2]]] <- NULL
@@ -644,7 +641,7 @@ plotPHMv2Heatmap <- function(phmObj,
                      package = "PHM"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
   }
-  
+
   matrix_long <- merge_matrix %>%
     dplyr::as_tibble(.name_repair = "unique") %>%
     tibble::rowid_to_column(var = "X") %>%
