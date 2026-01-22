@@ -107,7 +107,7 @@ PHMv2 <- function(paramsList=NULL,
     deltaPmc <- deltaPmc[-j, , drop=F]
     deltaPmc[i, ] <- new_row
     deltaPmc[, i] <- new_row
-    
+
     ## Track which components are part of which component
     component_tracker[[i]] <- c(
       component_tracker[[i]],
@@ -264,6 +264,10 @@ constructVisData <- function(phmObj,
   K <- ncol(phmObj$deltaPmc)
   alpha_vec <- sapply(phmObj$paramsList, function(x) sum(x$prob))
 
+  if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
+    stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
+  }
+
   ## Whether or not we track groupProbs
   gprobs_unspec <- FALSE
   if (is.null(groupProbs)) {
@@ -296,15 +300,19 @@ constructVisData <- function(phmObj,
 
   if (scaleHeights == "unscaled") {
     height <- 1 / height
-  } else if (scaleHeights == "log10") {
+  } else if (scaleHeights == "log10" && phmObj$mergeCriterion != "alpha") {
     height <- -log10(height)
   } else if (scaleHeights %in% c("pmcdist")) {
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "PHM"))
     height <- inv_log10(log10(height))
     height <- height^2
-    height <- height + (1:length(height)) * 1e-6 ## Slight height offset
+  } else if (scaleHeights == "log10") {
+    ## For alpha PHM scaling we need to standardize so maximum is 1
+    height <- height / max(height)
+    height <- -log10(height)
   }
+  height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
   ## Track components merging
   output <- data.frame()
