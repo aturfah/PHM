@@ -33,7 +33,7 @@ PHMv2 <- function(paramsList=NULL,
     tmp <- lapply(paramsList, function(x) x$var)
     if (any(sapply(tmp, is.null))) stop("Missing $var in at least one element of paramsList")    
   }
-  
+
   ## Compute deltaPmc if not provided
   if (is.null(deltaPmc)) {
     if (verbose) cat("Computing deltaPmc matrix...\n")
@@ -50,12 +50,12 @@ PHMv2 <- function(paramsList=NULL,
   } else {
     ## If provided do some validation
     if (ncol(deltaPmc) != nrow(deltaPmc)) stop("deltaPmc must be a square matrix")
-    
+
     if (!is.null(paramsList)) {
       if (length(paramsList) != ncol(deltaPmc)) stop("paramsList mismatch with deltaPmc")
     }
   }
-  
+
   ## Set up merging procedure
   K <- ncol(deltaPmc)
   component_tracker <- lapply(1:K, function(x) x)
@@ -94,7 +94,7 @@ PHMv2 <- function(paramsList=NULL,
     i <- max_ind[1, 1]
     j <- max_ind[1, 2]
     max_pmc <- 2 * deltaPmc[i, j]
-    
+
     ## Update Pmc Matrix
     row_i <- deltaPmc[i, ]
     row_j <- deltaPmc[j, ]
@@ -102,7 +102,7 @@ PHMv2 <- function(paramsList=NULL,
     new_row <- row_i + row_j
     new_row[i] <- 0
     new_row <- new_row[-j]
-    
+
     deltaPmc <- deltaPmc[, -j, drop=F]
     deltaPmc <- deltaPmc[-j, , drop=F]
     deltaPmc[i, ] <- new_row
@@ -118,7 +118,7 @@ PHMv2 <- function(paramsList=NULL,
     ## Update component probability matrix
     alpha_vec[i] <- alpha_vec[i] + alpha_vec[j]
     alpha_vec <- alpha_vec[-j]
-    
+
     ## Construct output
     merge_components[[K]] <- c(i=i, j=j)
     merge_deltaPmc[K] <- max_pmc
@@ -126,7 +126,7 @@ PHMv2 <- function(paramsList=NULL,
 
     K <- K-1
   }
-  
+
   if (verbose) cat("Complete!\n")
   list(
     deltaPmc=orig_deltaPmc,
@@ -147,7 +147,7 @@ PHMv2 <- function(paramsList=NULL,
 convertToPHMv2 <- function(phm) {
   ## Convert an original PHM to the new format
   res <- list()
-  
+
   res$deltaPmc <- phm[[length(phm)]]$pmc_matrix
   res$paramsList <- phm[[length(phm)]]$params
   res$mergeComps <- lapply(phm, function(x) x$merge_components)
@@ -183,7 +183,7 @@ recoverGroupsv2 <- function(phm, k) {
     )
     ct[[j]] <- NULL
   }
-  
+
   ct
 }
 
@@ -196,7 +196,7 @@ recoverPosteriorv2 <- function (phm, k, posterior) {
   post <- lapply(grps, function (idx) {
     rowSums(posterior[, idx, drop=F])
   })
-  
+
   do.call(cbind, post)
 }
 
@@ -333,7 +333,7 @@ constructVisData <- function(phmObj,
 
     ## Set new minimum height
     for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt
-    
+
     ## Get the new rows
     new_rows <- rbind(
       c(
@@ -349,30 +349,30 @@ constructVisData <- function(phmObj,
         gprob=groupProbs_new[mcs[[2]]]
       )
     )
-    
+
     if (nrow(output) == 0) {
       output <- data.frame(new_rows)
     } else {
       output <- rbind(output, new_rows)
     }
-    
+
     ## Update groupProbs post-merge
     if (gprobs_unspec) {
       groupProbs_new <- groupProbs_new[-1] ## These are all 1 so just remove first element
     } else {
       probs1 <- alpha_vec[mcs[[1]]]
       probs2 <- alpha_vec[mcs[[2]]]
-      
+
       ## Update alpha and groupProbs
       groupProbs_new[mcs[1]] <- (
         groupProbs_new[mcs[1]] * probs1 + groupProbs_new[mcs[2]] * probs2
       ) / (probs1 + probs2)
       groupProbs_new <- groupProbs_new[-mcs[2]]
-      
+
       alpha_vec[mcs[[1]]] <- alpha_vec[mcs[[1]]] + alpha_vec[mcs[[2]]]
       alpha_vec <- alpha_vec[-mcs[[2]]]
     }
-    
+
     ## Make note of the combined merge nodes so we have the merges stored somewhere
     merge_tree[[mcs[1]]] <- list(
       left=merge_tree[[mcs[1]]],
@@ -380,16 +380,16 @@ constructVisData <- function(phmObj,
       order=idx
     )
     merge_tree[[mcs[2]]] <- NULL
-    
+
     ## Remove the component and re-map
     base_height <-  hgt
     height_tracker[[mcs[2]]] <- NULL
     height_tracker[[mcs[1]]]$base <- base_height
-    
+
     
     component_id_map <- component_id_map[-mcs[2]]
   }
-  
+
   order_x <- function(merge_res) {
     if (typeof(merge_res) == "list") {
       if (length(merge_res) == 1) {
@@ -402,13 +402,13 @@ constructVisData <- function(phmObj,
     }
   }
   x_posns <- order_x(merge_tree)
-  
+
   map_xposns <- function(vec) {
     sapply(vec, function(x) which(x_posns == x))
   }
   output <- dplyr::mutate(output, 
                           x=ifelse(y==0, map_xposns(ID), NA))
-  
+
   while(any(is.na(output))) {
     output <- output %>%
       dplyr::left_join(output, by=c("y"="yend")) %>%
@@ -465,7 +465,7 @@ plotPHMv2Dendrogram <- function(phmObj,
                              groupProbs=NULL,
                              groupColorMax="black",
                              groupColorMin="lightgray") {
-  
+
   displayAxis <- match.arg(displayAxis)
   scaleHeights <- match.arg(scaleHeights)
   K <- ncol(phmObj$deltaPmc)
@@ -478,13 +478,13 @@ plotPHMv2Dendrogram <- function(phmObj,
                                       K=K,
                                       scaleHeights=scaleHeights,
                                       groupProbs=groupProbs)
-  
-  
+
+
   ## Visualization params
   if (is.null(colorAxis)) {
     colorAxis <- displayAxis == "box" || !is.null(colors)
   }
-  
+
   ## Default is the paired pallette; only if K < 12
   if (colorAxis && is.null(colors)) {
     if (K > 12) {
@@ -499,7 +499,7 @@ plotPHMv2Dendrogram <- function(phmObj,
   } else if (!colorAxis) {
     colors <- rep("#000000", K)
   }
-  
+
   ## Set axis theme
   if (is.null(displayAxisSize)) {
     if (displayAxis == "box") {
@@ -520,10 +520,10 @@ plotPHMv2Dendrogram <- function(phmObj,
   } else {
     NULL
   }
-  
-  
+
+
   scale_func <- ggplot2::scale_y_continuous
-  
+
   plt <- ggplot2::ggplot(phm_dendro_data$df,
                          ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
     # ggplot2::geom_segment(ggplot2::aes(color=gprob),
@@ -549,7 +549,7 @@ plotPHMv2Dendrogram <- function(phmObj,
                    panel.border=ggplot2::element_blank(),
                    legend.position="none"
     )
-  
+
   plt
 }
 
@@ -568,7 +568,7 @@ plotPHMv2Heatmap <- function(phmObj,
                           legendPosition="none") {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
-  
+
   K <- ncol(phmObj$deltaPmc)
   if (!is.null(initK)) {
     if (initK > K) stop("initK cannot be greater than K")
@@ -593,7 +593,7 @@ plotPHMv2Heatmap <- function(phmObj,
   } else if (!colorAxis) {
     colors <- rep("#000000", K)
   }
-  
+
   ## Set axis theme
   if (is.null(displayAxisSize)) {
     if (displayAxis == "box") {
@@ -615,7 +615,7 @@ plotPHMv2Heatmap <- function(phmObj,
   } else {
     NULL
   }
-  
+
   ## Construct the merging matrix
   merge_vals <- phmObj$mergeValues
   if (phmObj$mergeCriterion == "alpha") merge_vals <- merge_vals / max(merge_vals)
@@ -626,15 +626,15 @@ plotPHMv2Heatmap <- function(phmObj,
     mc <- phmObj$mergeComps[[x]]
     grid <- expand.grid(label_map[[mc[1]]],
                         label_map[[mc[2]]])
-    
+
     merge_matrix[grid[, 1], grid[, 2]] <- merge_vals[x]
     merge_matrix[grid[, 2], grid[, 1]] <- merge_vals[x]
-    
+
     label_map[[mc[1]]] <- c(label_map[[mc[1]]], label_map[[mc[2]]])
     label_map[[mc[2]]] <- NULL
   }
   colnames(merge_matrix) <- paste0("V", 1:K)
-  
+
   fillScaleFunc <- log10
   if (fillScale == "pmcdist") {
     load(system.file("extdata", "pmc_scale_function.RData", 
@@ -659,15 +659,15 @@ plotPHMv2Heatmap <- function(phmObj,
   } else if (is.na(fillLimits[2])) {
     plot_lims[2] <- max(matrix_long$Z.old, na.rm=T)
   }
-  
+
   if (fillScale == "log10") {
     plot_lims <- log10(plot_lims)
   } else {
     plot_lims <- -inv_log10(log10(plot_lims))
   }
-  
+
   mid_point <- mean(plot_lims)
-  
+
   matrix_long %>%
     dplyr::mutate(Z=Z,
                   Z.mod = Z,
