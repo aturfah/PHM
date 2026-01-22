@@ -314,7 +314,10 @@ constructVisData <- function(phmObj,
   }
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
+  print("Height set")
+
   ## Track components merging
+  print("Beginning Merge Tree")
   output <- data.frame()
   groupProbs_new <- groupProbs
   merge_tree <- as.list(1:K)
@@ -387,6 +390,7 @@ constructVisData <- function(phmObj,
     
     component_id_map <- component_id_map[-mcs[2]]
   }
+  print("Merge Tree Complete")
   
   order_x <- function(merge_res) {
     if (typeof(merge_res) == "list") {
@@ -407,6 +411,7 @@ constructVisData <- function(phmObj,
   output <- dplyr::mutate(output, 
                           x=ifelse(y==0, map_xposns(ID), NA))
   
+  print("Beginning Aligning Points")
   while(any(is.na(output))) {
     output <- output %>%
       dplyr::left_join(output, by=c("y"="yend")) %>%
@@ -425,6 +430,7 @@ constructVisData <- function(phmObj,
       dplyr::arrange(-yend) %>%
       dplyr::select(-dplyr::ends_with(".y"))
   }
+  print("Points aligned")
   
   ## Add horizontal components
   horiz_comps <- output %>%
@@ -441,6 +447,7 @@ constructVisData <- function(phmObj,
     output,
     horiz_comps
   )
+  print("Complete")
 
   list(
     df=output,
@@ -631,7 +638,7 @@ plotPHMv2Heatmap <- function(phmObj,
     dplyr::mutate(Y = as.numeric(gsub("V", "", Y)),
                   Z.old=Z,
                   Z=fillScaleFunc(Z))
-  
+
   plot_lims <- fillLimits
   if (is.null(fillLimits)) {
     plot_lims <- c(min(matrix_long$Z.old, na.rm=T),
