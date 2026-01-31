@@ -106,7 +106,9 @@ PHMv2 <- function(paramsList=NULL,
             stop("Unsopported scaling provided")
         }
     }
+
     value_matrix[lower.tri(value_matrix)] <- 0
+    diag(value_matrix) <- -Inf # Ensure no self-merges
 
     ## Get index of maximal element
     max_val <- max(value_matrix)
@@ -308,13 +310,16 @@ constructVisData <- function(phmObj,
     groupProbs <- rep(1, K)
   }
 
-  ## Which components are merged
-  merge_components <- phmObj$mergeComps[K:2]
+  ## Terminate merging procedure once we get to threshold
+  stop_idx <- which.max(phmObj$mergeValues > 0)
+  premature_stop <- stop_idx > 2 
 
+  ## Which components are merged
+  merge_components <- phmObj$mergeComps[K:stop_idx]
 
   ## For the original PHM scale the heights based 
   ## Alternate scalings shouldn't need this to occur
-  height <- phmObj$mergeValues[K:2]
+  height <- phmObj$mergeValues[K:stop_idx]
   if (phmObj$mergeCriterion == "unscaled") {
     clust_sizes <- rep(list(1), K)
     sizes <- numeric(K-1)
@@ -355,71 +360,81 @@ constructVisData <- function(phmObj,
   height_tracker <- rep(list(list(base=0, height=0)), K)
   component_id_map <- 1:K
   base_height <- 0
-  for (idx in 1:(K-1)) {
-    mcs <- unname(merge_components[[idx]])
-    hgt <- height[idx]
-    ## Verify that height doesn't decrease
-    for (posn in mcs) {
-      hgt <- max(hgt, height_tracker[[posn]]$base + 1e-6)
-    }
+  ## There are no merges
+  if (K == (stop_idx-1)) {
+    output <- do.call(rbind, lapply(component_id_map, function(id) {
+      c(ID=id,
+        y=0,
+        yend=1 + id*1e-6,
+        gprob=groupProbs_new[id])
+    }))
+    output <- data.frame(output)
+  } else {
+      for (idx in 1:(K-stop_idx+1)) {
+        mcs <- unname(merge_components[[idx]])
+        hgt <- height[idx]
+        ## Verify that height doesn't decrease
+        for (posn in mcs) {
+          hgt <- max(hgt, height_tracker[[posn]]$base + 1e-6)
+        }
 
-    ## Set new minimum height
-    for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt
+        ## Set new minimum height
+        for (posn in 1:length(height_tracker)) height_tracker[[posn]]$height <- hgt
 
-    ## Get the new rows
-    new_rows <- rbind(
-      c(
-        ID=component_id_map[mcs[1]],
-        y=height_tracker[[mcs[1]]]$base,
-        yend=height_tracker[[mcs[1]]]$height,
-        gprob=groupProbs_new[mcs[[1]]]
-      ),
-      c(
-        ID=component_id_map[mcs[2]],
-        y=height_tracker[[mcs[2]]]$base,
-        yend=height_tracker[[mcs[2]]]$height,
-        gprob=groupProbs_new[mcs[[2]]]
-      )
-    )
+        ## Get the new rows
+        new_rows <- rbind(
+          c(
+            ID=component_id_map[mcs[1]],
+            y=height_tracker[[mcs[1]]]$base,
+            yend=height_tracker[[mcs[1]]]$height,
+            gprob=groupProbs_new[mcs[[1]]]
+          ),
+          c(
+            ID=component_id_map[mcs[2]],
+            y=height_tracker[[mcs[2]]]$base,
+            yend=height_tracker[[mcs[2]]]$height,
+            gprob=groupProbs_new[mcs[[2]]]
+          )
+        )
 
-    if (nrow(output) == 0) {
-      output <- data.frame(new_rows)
-    } else {
-      output <- rbind(output, new_rows)
-    }
+        if (nrow(output) == 0) {
+          output <- data.frame(new_rows)
+        } else {
+          output <- rbind(output, new_rows)
+        }
 
-    ## Update groupProbs post-merge
-    if (gprobs_unspec) {
-      groupProbs_new <- groupProbs_new[-1] ## These are all 1 so just remove first element
-    } else {
-      probs1 <- alpha_vec[mcs[[1]]]
-      probs2 <- alpha_vec[mcs[[2]]]
+        ## Update groupProbs post-merge
+        if (gprobs_unspec) {
+          groupProbs_new <- groupProbs_new[-1] ## These are all 1 so just remove first element
+        } else {
+          probs1 <- alpha_vec[mcs[[1]]]
+          probs2 <- alpha_vec[mcs[[2]]]
 
-      ## Update alpha and groupProbs
-      groupProbs_new[mcs[1]] <- (
-        groupProbs_new[mcs[1]] * probs1 + groupProbs_new[mcs[2]] * probs2
-      ) / (probs1 + probs2)
-      groupProbs_new <- groupProbs_new[-mcs[2]]
+          ## Update alpha and groupProbs
+          groupProbs_new[mcs[1]] <- (
+            groupProbs_new[mcs[1]] * probs1 + groupProbs_new[mcs[2]] * probs2
+          ) / (probs1 + probs2)
+          groupProbs_new <- groupProbs_new[-mcs[2]]
 
-      alpha_vec[mcs[[1]]] <- alpha_vec[mcs[[1]]] + alpha_vec[mcs[[2]]]
-      alpha_vec <- alpha_vec[-mcs[[2]]]
-    }
+          alpha_vec[mcs[[1]]] <- alpha_vec[mcs[[1]]] + alpha_vec[mcs[[2]]]
+          alpha_vec <- alpha_vec[-mcs[[2]]]
+        }
 
-    ## Make note of the combined merge nodes so we have the merges stored somewhere
-    merge_tree[[mcs[1]]] <- list(
-      left=merge_tree[[mcs[1]]],
-      right=merge_tree[[mcs[2]]],
-      order=idx
-    )
-    merge_tree[[mcs[2]]] <- NULL
+        ## Make note of the combined merge nodes so we have the merges stored somewhere
+        merge_tree[[mcs[1]]] <- list(
+          left=merge_tree[[mcs[1]]],
+          right=merge_tree[[mcs[2]]],
+          order=idx
+        )
+        merge_tree[[mcs[2]]] <- NULL
 
-    ## Remove the component and re-map
-    base_height <-  hgt
-    height_tracker[[mcs[2]]] <- NULL
-    height_tracker[[mcs[1]]]$base <- base_height
+        ## Remove the component and re-map
+        base_height <-  hgt
+        height_tracker[[mcs[2]]] <- NULL
+        height_tracker[[mcs[1]]]$base <- base_height
 
-    
-    component_id_map <- component_id_map[-mcs[2]]
+        component_id_map <- component_id_map[-mcs[2]]
+      }
   }
 
   order_x <- function(merge_res) {
@@ -433,7 +448,16 @@ constructVisData <- function(phmObj,
       return(merge_res)
     }
   }
-  x_posns <- order_x(merge_tree)
+  if (premature_stop) {
+    ## Potentially many binary trees
+    x_posn_list <- lapply(merge_tree, order_x)
+    x_posns <- do.call(c, x_posn_list)
+  } else {
+    ## We have a single binary tree
+    x_posns <- order_x(merge_tree)
+  }
+  print(x_posns)
+  print(length(x_posns))
 
   map_xposns <- function(vec) {
     sapply(vec, function(x) which(x_posns == x))
@@ -475,6 +499,10 @@ constructVisData <- function(phmObj,
     output,
     horiz_comps
   )
+
+  ## "Verticl components" added in have proper xend defined
+  output <- dplyr::mutate(output, 
+                          xend=ifelse(is.na(xend), x, xend))
 
   list(
     df=output,
@@ -560,6 +588,8 @@ plotPHMv2Dendrogram <- function(phmObj,
 
   scale_func <- ggplot2::scale_y_continuous
 
+  print(phm_dendro_data$df)
+
   plt <- ggplot2::ggplot(phm_dendro_data$df,
                          ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
     # ggplot2::geom_segment(ggplot2::aes(color=gprob),
@@ -573,6 +603,7 @@ plotPHMv2Dendrogram <- function(phmObj,
     ggplot2::xlab("") +
     ggplot2::ylab("") +
     ggplot2::scale_x_continuous(breaks=1:K,
+                                limits=c(1, K),
                                 labels=displayAxisLabels) +
     ggplot2::scale_color_gradient(low=groupColorMin, high=groupColorMax) +
     scale_func(expand=ggplot2::expansion(mult=c(0, 0.05))) +
