@@ -313,9 +313,7 @@ constructVisData <- function(phmObj,
   ## Terminate merging procedure once we get to threshold
   stop_idx <- which.max(phmObj$mergeValues > 0)
   premature_stop <- stop_idx > 2 
-
-  ## Which components are merged
-  merge_components <- phmObj$mergeComps[K:stop_idx]
+  no_valid_merges <- K <= (stop_idx-1)
 
   ## For the original PHM scale the heights based 
   ## Alternate scalings shouldn't need this to occur
@@ -352,6 +350,8 @@ constructVisData <- function(phmObj,
   }
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
+  ## Which components are merged
+  merge_components <- phmObj$mergeComps[K:stop_idx]
 
   ## Track components merging
   output <- data.frame()
@@ -361,7 +361,7 @@ constructVisData <- function(phmObj,
   component_id_map <- 1:K
   base_height <- 0
   ## There are no merges
-  if (K == (stop_idx-1)) {
+  if (no_valid_merges) {
     output <- do.call(rbind, lapply(component_id_map, function(id) {
       c(ID=id,
         y=0,
@@ -369,6 +369,7 @@ constructVisData <- function(phmObj,
         gprob=groupProbs_new[id])
     }))
     output <- data.frame(output)
+    output$linetype <- "dashed"
   } else {
       for (idx in 1:(K-stop_idx+1)) {
         mcs <- unname(merge_components[[idx]])
@@ -435,6 +436,7 @@ constructVisData <- function(phmObj,
 
         component_id_map <- component_id_map[-mcs[2]]
       }
+      output$linetype <- "solid"
   }
 
   order_x <- function(merge_res) {
@@ -448,16 +450,35 @@ constructVisData <- function(phmObj,
       return(merge_res)
     }
   }
+
   if (premature_stop) {
     ## Potentially many binary trees
     x_posn_list <- lapply(merge_tree, order_x)
     x_posns <- do.call(c, x_posn_list)
+
+    max_height <- max(output$yend)
+    unmerged_ids <- do.call(c, lapply(merge_tree, function(x) {
+      if (typeof(x) == "list") return(NULL)
+      return(x)
+    }))
+    unmerged_ids <- setdiff(unmerged_ids, output$ID)
+    unmerged_rows <- do.call(rbind, lapply(unmerged_ids, function(id) {
+        c(ID=id,
+          y=0,
+          yend=max_height + id*(1e-6*max_height),
+          gprob=groupProbs[id])
+      }))
+    unmerged_rows <- data.frame(unmerged_rows)
+    if (nrow(unmerged_rows) > 0) {
+      unmerged_rows$linetype <- "dashed"
+    }
+
+    output <- rbind(output, unmerged_rows)
+
   } else {
     ## We have a single binary tree
     x_posns <- order_x(merge_tree)
   }
-  print(x_posns)
-  print(length(x_posns))
 
   map_xposns <- function(vec) {
     sapply(vec, function(x) which(x_posns == x))
@@ -470,11 +491,12 @@ constructVisData <- function(phmObj,
       dplyr::left_join(output, by=c("y"="yend")) %>%
       dplyr::rename(x=x.x,
                     ID=ID.x,
+                    linetype=linetype.x,
                     # pmc=pmc.x,
                     # pmc_pct=pmc_pct.x,
                     # pmc_change=pmc_change.x,
                     gprob=gprob.x) %>%
-      dplyr::group_by(ID, y, yend, x, gprob, 
+      dplyr::group_by(ID, y, yend, x, gprob, linetype,
                       #pmc, pmc_change, pmc_pct
                       ) %>%
       dplyr::summarize(x=ifelse(all(is.na(x)), mean(x.y), mean(x)),
@@ -494,7 +516,8 @@ constructVisData <- function(phmObj,
       gprob=mean(gprob),
       .groups="keep"
     ) %>%
-    dplyr::mutate(y=yend)
+    dplyr::mutate(y=yend,
+      linetype="solid")
   output <- dplyr::bind_rows(
     output,
     horiz_comps
@@ -588,17 +611,15 @@ plotPHMv2Dendrogram <- function(phmObj,
 
   scale_func <- ggplot2::scale_y_continuous
 
-  print(phm_dendro_data$df)
-
   plt <- ggplot2::ggplot(phm_dendro_data$df,
                          ggplot2::aes(x=x, y=y, xend=xend, yend=yend)) +
-    # ggplot2::geom_segment(ggplot2::aes(color=gprob),
-    #                       data=dplyr::filter(phm_dendro_data$df, linetype=="dashed"),
-    #                       linetype="dashed") +
-    # ggplot2::geom_segment(ggplot2::aes(color=gprob),
-    #                       data=dplyr::filter(phm_dendro_data$df, linetype=="solid"),
-    #                       linetype="solid") +
-    ggplot2::geom_segment(ggplot2::aes(color=gprob)) +
+    ggplot2::geom_segment(ggplot2::aes(color=gprob),
+                          data=dplyr::filter(phm_dendro_data$df, linetype=="dashed"),
+                          linetype="dashed") +
+    ggplot2::geom_segment(ggplot2::aes(color=gprob),
+                          data=dplyr::filter(phm_dendro_data$df, linetype=="solid"),
+                          linetype="solid") +
+    # ggplot2::geom_segment(ggplot2::aes(color=gprob)) +
     # xlab("Mixture Component ID") +
     ggplot2::xlab("") +
     ggplot2::ylab("") +
