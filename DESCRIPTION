@@ -23,7 +23,8 @@ Imports:
     RColorBrewer,
     ggtext,
     magrittr,
-    ggnewscale
+    ggnewscale,
+    stringr
 Depends: 
     R (>= 3.5)
 LazyData: true

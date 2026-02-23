@@ -772,10 +772,11 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'
 #' @export
-computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshold=0, equalProbs=F, verbose=T) {
+computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshold=0, thresholdTol=1e-2, equalProbs=F, verbose=T) {
   K <- length(paramsList)
   mat <- expand.grid(i=1:K, j=1:K)
   mat <- mat[which(mat[, 1] > mat[, 2]), , drop=F]
+  display_digits <- 1+floor(-log10(thresholdTol))
 
   ## Multicore functionality
   apply_func <- lapply
@@ -827,12 +828,14 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
   if (verbose) cat("Search Beginning\n")
   elapsed_search <- system.time({
     pmc <- 0
-    index <- nrow(mat)
-    prev_index <- index
+    lbound <- nrow(mat)
+    ubound <- 1
+    index <- lbound
+    delta <- threshold
 
-    while(pmc < threshold) {
+    while(abs(delta) > thresholdTol && threshold != 0) {
       prev_index <- index
-      index <- ceiling(index / 2)
+      index <- ceiling((lbound + ubound) / 2)
       vals <- mat[index, ]
 
       par_i <- paramsList[[as.numeric(vals[1])]]
@@ -843,10 +846,23 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
       par_j$prob <- par_j$prob / total_prob
 
       pmc <- computeMonteCarloPmc(list(par_i, par_j), mcSamples)
-      if (verbose) cat("\t", index, round(pmc, 3), "\n")
+      delta <- threshold - pmc
+      if (verbose) cat("\tIndex:", 
+                        stringr::str_pad(index, ceiling(log10(nrow(mat))), "left"),
+                        "| Pmc (delta):", round(pmc, display_digits),
+                        "(",round(delta, display_digits), ")", "\n")
+
       if (index == 1) break
+
+      if (delta > 0) {
+        lbound <- index
+      } else (
+        ubound <- index
+      )
     }
   })
+  prev_index <- index
+
   if (verbose) cat("Search complete:", elapsed_search[3], "secs\n")
   if (verbose) cat("\tSearch Index:", prev_index, "/", nrow(mat), "\n")
 
