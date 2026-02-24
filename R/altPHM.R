@@ -107,8 +107,9 @@ PHMv2 <- function(paramsList=NULL,
         }
     }
 
-    value_matrix[lower.tri(value_matrix)] <- 0
-    diag(value_matrix) <- -Inf # Ensure no self-merges
+    ## Ensure i < j and no self-merges
+    value_matrix[lower.tri(value_matrix)] <- -Inf
+    diag(value_matrix) <- -Inf
 
     ## Get index of maximal element
     max_val <- max(value_matrix)
@@ -297,7 +298,8 @@ recoverParamsv2 <- function(phm, k, paramsToKeep=c("prob", "mean", "var", "class
 constructVisData <- function(phmObj,
                              K=NULL,
                              scaleHeights="unscaled",
-                             groupProbs=NULL) {
+                             groupProbs=NULL,
+                             threshold=0) {
   alpha_vec <- unlist(do.call(c, recoverParamsv2(phmObj, K, "prob")))
   if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
     stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
@@ -311,27 +313,35 @@ constructVisData <- function(phmObj,
   }
 
   ## Terminate merging procedure once we get to threshold
-  stop_idx <- which.max(phmObj$mergeValues > 0)
+  suppressWarnings({
+    ## Code expects the Inf here
+    stop_idx <- min(which(phmObj$mergeValues > threshold))
+  })
   premature_stop <- stop_idx > 2 
   no_valid_merges <- K <= (stop_idx-1)
 
   ## For the original PHM scale the heights based 
   ## Alternate scalings shouldn't need this to occur
-  height <- phmObj$mergeValues[K:stop_idx]
-  if (phmObj$mergeCriterion == "unscaled") {
-    clust_sizes <- rep(list(1), K)
-    sizes <- numeric(K-1)
+  if (no_valid_merges == F) {
+    height <- phmObj$mergeValues[K:stop_idx]
+    if (phmObj$mergeCriterion == "unscaled") {
+      clust_sizes <- rep(list(1), K)
+      sizes <- numeric(K)
 
-    for (idx in 1:(K-1)) {
-      mc <- merge_components[[idx]]
-      mc1 <- mc[1]
-      mc2 <- mc[2]
+      for (idx in stop_idx:K) {
+        mc <- phmObj$mergeComps[[idx]]
+        mc1 <- mc[1]
+        mc2 <- mc[2]
 
-      clust_sizes[[mc1]] <- clust_sizes[[mc1]] + clust_sizes[[mc2]]
-      clust_sizes[[mc2]] <- NULL
-      sizes[idx] <- clust_sizes[[mc1]]
+        clust_sizes[[mc1]] <- clust_sizes[[mc1]] + clust_sizes[[mc2]]
+        clust_sizes[[mc2]] <- NULL
+        sizes[idx] <- clust_sizes[[mc1]]
+      }
+      sizes <- sizes[which(sizes != 0)]
+      height <- height / choose(sizes, 2)
     }
-    height <- height / choose(sizes, 2)
+  } else {
+    height <- rep(1, K)
   }
 
   if (scaleHeights == "unscaled") {
@@ -349,9 +359,6 @@ constructVisData <- function(phmObj,
     height <- -log10(height)
   }
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
-
-  ## Which components are merged
-  merge_components <- phmObj$mergeComps[K:stop_idx]
 
   ## Track components merging
   output <- data.frame()
@@ -371,6 +378,9 @@ constructVisData <- function(phmObj,
     output <- data.frame(output)
     output$linetype <- "dashed"
   } else {
+      ## Which components are merged
+      merge_components <- phmObj$mergeComps[K:stop_idx]
+
       for (idx in 1:(K-stop_idx+1)) {
         mcs <- unname(merge_components[[idx]])
         hgt <- height[idx]
@@ -539,12 +549,14 @@ constructVisData <- function(phmObj,
 #' 
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
+#' @param stopThreshold Merge criterion value at which to terminate merging
 #' @inheritParams plotPHMDendrogram
 #' 
 #' @export 
 plotPHMv2Dendrogram <- function(phmObj,
                              initK=NULL,
                              scaleHeights=c("log10", "unscaled", "pmcdist"),
+                             threshold=0,
                              colors=NULL,
                              displayAxis=c("box", "label", "index", "none"),
                              displayAxisSize=NULL,
@@ -564,7 +576,8 @@ plotPHMv2Dendrogram <- function(phmObj,
   phm_dendro_data <- constructVisData(phmObj,
                                       K=K,
                                       scaleHeights=scaleHeights,
-                                      groupProbs=groupProbs)
+                                      groupProbs=groupProbs,
+                                      threshold = threshold)
 
 
   ## Visualization params
