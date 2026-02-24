@@ -549,7 +549,7 @@ constructVisData <- function(phmObj,
 #' 
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
-#' @param stopThreshold Merge criterion value at which to terminate merging
+#' @param stopThreshold Merge criterion value at which to stop agglomerating, taken from `phmObj$mergeValues`
 #' @inheritParams plotPHMDendrogram
 #' 
 #' @export 
