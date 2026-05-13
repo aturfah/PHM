@@ -331,7 +331,7 @@ constructVisData <- function(phmObj,
       clust_sizes <- rep(list(1), K)
       sizes <- numeric(K)
 
-      for (idx in stop_idx:K) {
+      for (idx in K:stop_idx) {
         mc <- phmObj$mergeComps[[idx]]
         mc1 <- mc[1]
         mc2 <- mc[2]
@@ -341,6 +341,7 @@ constructVisData <- function(phmObj,
         sizes[idx] <- clust_sizes[[mc1]]
       }
       sizes <- sizes[which(sizes != 0)]
+      sizes <- rev(sizes)
       height <- height / choose(sizes, 2)
     }
   } else {
