@@ -304,7 +304,7 @@ constructVisData <- function(phmObj,
   if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
     stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
   }
-  if (phmObj$mergeCriterion != "alpha" && scaleHeights == "dstar") {
+  if (phmObj$mergeCriterion != "alpha" && scaleHeights == "d*") {
     stop("d scaling only makes sense with alpha criterion")
   }
 
@@ -361,7 +361,7 @@ constructVisData <- function(phmObj,
     ## Could not allow this to happen
     height <- height / max(height)
     height <- -log10(height)
-  } else if (scaleHeights == "dstar") {
+  } else if (scaleHeights == "d*") {
     ## As described in the paper
     height <- log1p(1/height)
   }
@@ -575,7 +575,7 @@ constructVisData <- function(phmObj,
 #' @export 
 plotPHMv2Dendrogram <- function(phmObj,
                              initK=NULL,
-                             scaleHeights=c("dstar", "log10", "unscaled", "pmcdist"),
+                             scaleHeights=c("d*", "log10", "unscaled", "pmcdist"),
                              threshold=0,
                              colors=NULL,
                              displayAxis=c("box", "label", "index", "none"),
@@ -705,7 +705,7 @@ plotPHMv2Heatmap <- function(phmObj,
                           colorAxis=NULL,
                           gridColor="black",
                           fillLimits=NULL,
-                          fillScale=c("dstar", "log10", "pmcdist"),
+                          fillScale=c("d*", "log10", "pmcdist"),
                           legendPosition="none") {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
@@ -759,7 +759,7 @@ plotPHMv2Heatmap <- function(phmObj,
 
   ## Construct the merging matrix
   merge_vals <- phmObj$mergeValues
-  if (phmObj$mergeCriterion == "alpha" && fillScale != "dstar") merge_vals <- merge_vals / max(merge_vals)
+  if (phmObj$mergeCriterion == "alpha" && fillScale != "d*") merge_vals <- merge_vals / max(merge_vals)
 
   label_map <- as.list(1:K)
   merge_matrix <- matrix(NA, nrow=K, ncol=K)
@@ -781,7 +781,7 @@ plotPHMv2Heatmap <- function(phmObj,
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "PHM"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
-  } else if (fillScale == "dstar") {
+  } else if (fillScale == "d*") {
     ## We multiply by negative 1 here because large height => far distance
     fillScaleFunc <- function(x) -1 * log1p(1/x)
   }
