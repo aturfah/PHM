@@ -304,6 +304,9 @@ constructVisData <- function(phmObj,
   if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
     stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
   }
+  if (phmObj$mergeCriterion != "alpha" && scaleHeights == "dstar") {
+    stop("d scaling only makes sense with alpha criterion")
+  }
 
   ## Whether or not we track groupProbs
   gprobs_unspec <- FALSE
@@ -354,9 +357,13 @@ constructVisData <- function(phmObj,
     height <- inv_log10(log10(height))
     height <- height^2
   } else if (scaleHeights == "log10") {
-    ## For alpha PHM scaling we need to standardize so maximum is 1
+    ## For alpha PHM scaling we need to standardize because can be > 1
+    ## Could not allow this to happen
     height <- height / max(height)
     height <- -log10(height)
+  } else if (scaleHeights == "dstar") {
+    ## As described in the paper
+    height <- log1p(1/height)
   }
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
@@ -364,9 +371,10 @@ constructVisData <- function(phmObj,
   output <- data.frame()
   groupProbs_new <- groupProbs
   merge_tree <- as.list(1:K)
-  height_tracker <- rep(list(list(base=0, height=0)), K)
+  min_hgt = min(0, min(height))
+  height_tracker <- rep(list(list(base=min_hgt, height=min_hgt)), K)
   component_id_map <- 1:K
-  base_height <- 0
+  base_height <- min_hgt
   ## There are no merges
   if (no_valid_merges) {
     output <- do.call(rbind, lapply(component_id_map, function(id) {
@@ -494,7 +502,7 @@ constructVisData <- function(phmObj,
     sapply(vec, function(x) which(x_posns == x))
   }
   output <- dplyr::mutate(output, 
-                          x=ifelse(y==0, map_xposns(ID), NA))
+                          x=ifelse(y==min_hgt, map_xposns(ID), NA))
 
   while(any(is.na(output))) {
     output <- output %>%
@@ -537,8 +545,20 @@ constructVisData <- function(phmObj,
   output <- dplyr::mutate(output, 
                           xend=ifelse(is.na(xend), x, xend))
 
+
+  ## Labels for display
+  labels <- output %>%
+    dplyr::filter(is.na(ID)) %>%
+    dplyr::mutate(xposn=(x+xend)/2,
+           lab=ifelse(
+             abs(height) < 1e-3,
+             formatC(height, format = "e", digits = 2),
+             round(height, 4)
+           ))
+
   list(
     df=output,
+    labels=labels,
     height=height,
     xlab=x_posns,
     display_names=sapply(phmObj$paramsList, function(x) x$class)[x_posns]
@@ -555,11 +575,13 @@ constructVisData <- function(phmObj,
 #' @export 
 plotPHMv2Dendrogram <- function(phmObj,
                              initK=NULL,
-                             scaleHeights=c("log10", "unscaled", "pmcdist"),
+                             scaleHeights=c("dstar", "log10", "unscaled", "pmcdist"),
                              threshold=0,
                              colors=NULL,
                              displayAxis=c("box", "label", "index", "none"),
                              displayAxisSize=NULL,
+                             displayValue=F,
+                             displayValueSize=NULL,
                              colorAxis=NULL,
                              groupProbs=NULL,
                              groupColorMax="black",
@@ -621,6 +643,10 @@ plotPHMv2Dendrogram <- function(phmObj,
     NULL
   }
 
+  ## Merge Value display
+  if (is.null(displayValueSize)) {
+    displayValueSize <- 2
+  }
 
   scale_func <- ggplot2::scale_y_continuous
 
@@ -651,6 +677,16 @@ plotPHMv2Dendrogram <- function(phmObj,
                    legend.position="none"
     )
 
+  if (displayValue) {
+    plt <- plt + ggplot2::geom_label(data=phm_dendro_data$labels,
+                            ggplot2::aes(x=xposn, y=y, label=lab, alpha=NULL),
+                            # label.size=mergeLabelsBorderSize,
+                            # label.padding = ggplot2::unit(mergeLabelsPadding, "lines"),
+                            # label.r = ggplot2::unit(mergeLabelsR, "lines"),
+                            size=displayValueSize
+                            )
+  }
+
   plt
 }
 
@@ -669,7 +705,7 @@ plotPHMv2Heatmap <- function(phmObj,
                           colorAxis=NULL,
                           gridColor="black",
                           fillLimits=NULL,
-                          fillScale=c("log10", "pmcdist"),
+                          fillScale=c("dstar", "log10", "pmcdist"),
                           legendPosition="none") {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
@@ -723,7 +759,7 @@ plotPHMv2Heatmap <- function(phmObj,
 
   ## Construct the merging matrix
   merge_vals <- phmObj$mergeValues
-  if (phmObj$mergeCriterion == "alpha") merge_vals <- merge_vals / max(merge_vals)
+  if (phmObj$mergeCriterion == "alpha" && fillScale != "dstar") merge_vals <- merge_vals / max(merge_vals)
 
   label_map <- as.list(1:K)
   merge_matrix <- matrix(NA, nrow=K, ncol=K)
@@ -745,6 +781,9 @@ plotPHMv2Heatmap <- function(phmObj,
     load(system.file("extdata", "pmc_scale_function.RData", 
                      package = "PHM"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
+  } else if (fillScale == "dstar") {
+    ## We multiply by negative 1 here because large height => far distance
+    fillScaleFunc <- function(x) -1 * log1p(1/x)
   }
 
   matrix_long <- merge_matrix %>%
@@ -767,8 +806,10 @@ plotPHMv2Heatmap <- function(phmObj,
 
   if (fillScale == "log10") {
     plot_lims <- log10(plot_lims)
-  } else {
+  } else if (fillScale == "pmcdist") {
     plot_lims <- -inv_log10(log10(plot_lims))
+  } else {
+    plot_lims = fillScaleFunc(plot_lims)
   }
 
   mid_point <- mean(plot_lims)
