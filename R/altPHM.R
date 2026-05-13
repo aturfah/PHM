@@ -33,7 +33,7 @@
 #' @export
 PHMv2 <- function(paramsList=NULL,
                   deltaPmc=NULL,
-                  scaling=c("unscaled", "average", "alpha"),
+                  scaling=c("alpha", "unscaled", "average"),
                   monteCarlo=T,
                   numCores=1,
                   verbose=F,
@@ -571,6 +571,7 @@ constructVisData <- function(phmObj,
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
 #' @param threshold Value at which to stop merging subtrees, taken from `phmObj$mergeValues`
+#' @param scaleHeights How the merge criterion values should be translated into dendrogram heights. d* is default for alpha-scaled Pmc.
 #' @inheritParams plotPHMDendrogram
 #' 
 #' @export 
@@ -695,6 +696,7 @@ plotPHMv2Dendrogram <- function(phmObj,
 #' 
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
+#' @param Fillscale How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.
 #' @inheritParams plotPHMMatrix
 #' 
 #' @export 
