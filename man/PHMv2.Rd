@@ -7,7 +7,7 @@
 PHMv2(
   paramsList = NULL,
   deltaPmc = NULL,
-  scaling = c("unscaled", "average", "alpha"),
+  scaling = c("alpha", "unscaled", "average"),
   monteCarlo = T,
   numCores = 1,
   verbose = F,

@@ -696,7 +696,7 @@ plotPHMv2Dendrogram <- function(phmObj,
 #' 
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
-#' @param Fillscale How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.
+#' @param fillScale How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.
 #' @inheritParams plotPHMMatrix
 #' 
 #' @export 
