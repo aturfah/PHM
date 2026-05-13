@@ -9,6 +9,7 @@ computePairwisePmcMatrix(
   mcSamples,
   numCores = 1,
   threshold = 0,
+  thresholdTol = 0.01,
   equalProbs = F,
   verbose = T
 )

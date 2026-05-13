@@ -13,7 +13,7 @@ plotPHMv2Heatmap(
   colorAxis = NULL,
   gridColor = "black",
   fillLimits = NULL,
-  fillScale = c("log10", "pmcdist"),
+  fillScale = c("d*", "log10", "pmcdist"),
   legendPosition = "none"
 )
 }
@@ -34,7 +34,7 @@ plotPHMv2Heatmap(
 
 \item{fillLimits}{Optional vector to manually set limits of the fill scaling. Default is to use the min and max \eqn{\Delta P_{\rm mc}} values from \code{phm}}
 
-\item{fillScale}{Whether to use \eqn{\log_{10} \Delta P_{\rm mc}} or the spline scaling for the heatmap color}
+\item{fillScale}{How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.}
 
 \item{legendPosition}{Where to put the legend for the heatmap colors. Default is to suppress.}
 }

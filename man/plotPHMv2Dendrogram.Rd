@@ -7,11 +7,13 @@
 plotPHMv2Dendrogram(
   phmObj,
   initK = NULL,
-  scaleHeights = c("log10", "unscaled", "pmcdist"),
+  scaleHeights = c("d*", "log10", "unscaled", "pmcdist"),
   threshold = 0,
   colors = NULL,
   displayAxis = c("box", "label", "index", "none"),
   displayAxisSize = NULL,
+  displayValue = F,
+  displayValueSize = NULL,
   colorAxis = NULL,
   groupProbs = NULL,
   groupColorMax = "black",
@@ -23,7 +25,7 @@ plotPHMv2Dendrogram(
 
 \item{initK}{Number of clusters from which to initialize the visualization}
 
-\item{scaleHeights}{String specifying how to set the heights in the dendrogram. See Details for more information.}
+\item{scaleHeights}{How the merge criterion values should be translated into dendrogram heights. d* is default for alpha-scaled Pmc.}
 
 \item{threshold}{Value at which to stop merging subtrees, taken from \code{phmObj$mergeValues}}
 
