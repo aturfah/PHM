@@ -785,7 +785,7 @@ plotPHMv2Heatmap <- function(phmObj,
                      package = "PHM"))
     fillScaleFunc <- function(x) -inv_log10(log10(x))
   } else if (fillScale == "d*") {
-    ## We multiply by negative 1 here because large height => far distance
+    ## We multiply by negative 1 here because large value => small distance
     fillScaleFunc <- function(x) -1 * log1p(1/x)
   }
 
