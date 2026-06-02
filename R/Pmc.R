@@ -207,11 +207,12 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @param G Number of components for each ensembled model
 #' @param modelNames Covariance structures for each ensembled moddel
 #' @param replicates Number of replicates over which to ensemble
-#' @param subSampSize Number of subsamples to draw in each replicate
+#' @param subSampSize Number of subsamples to draw in each replicate. If NULL use entire dataset in each replicate
 #' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving
 #' @param prefix Filename prefix for saving intermediate density estimates
 #' @param verbose Whether to print out logging messages
 #' @param numCores Number of cores over which to parallelize
+#' @param seeds List of seeds to use across replicates
 #' @param ... Parameters to provide to Mclust
 #'
 #' @examples
@@ -224,11 +225,15 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @export
 constructPmcParamsSubAggMclust <- function(data,
                          replicates,
-                         subsampSize,
+                         subsampSize=NULL,
                          G=NULL,
                          saveDir=NULL,
                          prefix="subAggMclust_",
-                         verbose=F, numCores=1, ...) {
+                         verbose=F, numCores=1, 
+                         seeds=NULL,
+                         ...) {
+
+  if (!is.null(seeds)) stopifnot(length(seeds) == replicates)
 
   ## If we want to save the results, set that up
   if (!is.null(saveDir)) {
@@ -245,20 +250,37 @@ constructPmcParamsSubAggMclust <- function(data,
   }
 
   ## Break down into replicates
-  subsamp_idx <- lapply(1:replicates, function(idx) {
-    sample.int(nrow(data), subsampSize, replace=T)
-  })
-  subsamp_dat <- lapply(1:replicates, function(idx) {
-    list(
-      idx=idx,
-      dat=data[subsamp_idx[[idx]], ]
-    )
-  })
+  if (is.null(seeds)) {
+    seeds <- rep(NULL, replicates)
+  }
+  if (is.null(subsampSize)) {
+    subsamp_dat <- lapply((1:replicates), function(idx) {
+      list(
+        idx=idx,
+        dat=data,
+        seed=seeds[idx]
+      )
+    })
+  } else {
+    subsamp_idx <- lapply(1:replicates, function(idx) {
+      sample.int(nrow(data), subsampSize, replace=T)
+    })
+    subsamp_dat <- lapply(1:replicates, function(idx) {
+      list(
+        idx=idx,
+        dat=data[subsamp_idx[[idx]], ],
+        seed=seeds[idx]
+      )
+    })
+  }
+
 
   ## Run the models of interest
   gmm_res <- apply_func(subsamp_dat, function(sub_obj) {
     idx <- sub_obj$idx
     subsamp_dat <- sub_obj$dat
+    seed <- sub_obj$seed
+    if (!is.null(seed)) set.seed(seed)
 
     ## Generate filename
     filename <- paste(prefix, "N", subsampSize, "G", max(G),
