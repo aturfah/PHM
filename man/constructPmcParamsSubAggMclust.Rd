@@ -7,12 +7,13 @@
 constructPmcParamsSubAggMclust(
   data,
   replicates,
-  subsampSize,
+  subsampSize = NULL,
   G = NULL,
   saveDir = NULL,
   prefix = "subAggMclust_",
   verbose = F,
   numCores = 1,
+  seeds = NULL,
   ...
 )
 }
@@ -31,11 +32,13 @@ constructPmcParamsSubAggMclust(
 
 \item{numCores}{Number of cores over which to parallelize}
 
+\item{seeds}{List of seeds to use across replicates}
+
 \item{...}{Parameters to provide to Mclust}
 
 \item{modelNames}{Covariance structures for each ensembled moddel}
 
-\item{subSampSize}{Number of subsamples to draw in each replicate}
+\item{subSampSize}{Number of subsamples to draw in each replicate. If NULL use entire dataset in each replicate}
 }
 \value{
 List of lists where each sublist contains the
