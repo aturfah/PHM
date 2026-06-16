@@ -14,7 +14,8 @@ plotPHMv2Heatmap(
   gridColor = "black",
   fillLimits = NULL,
   fillScale = c("d*", "log10", "pmcdist"),
-  legendPosition = "none"
+  legendPosition = "none",
+  scaleAxis = F
 )
 }
 \arguments{
