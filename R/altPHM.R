@@ -300,7 +300,8 @@ constructVisData <- function(phmObj,
                              scaleHeights="unscaled",
                              groupProbs=NULL,
                              threshold=0) {
-  alpha_vec <- unlist(do.call(c, recoverParamsv2(phmObj, K, "prob")))
+  # alpha_vec <- unlist(do.call(c, recoverParamsv2(phmObj, K, "prob")))
+  alpha_vec <- sapply(recoverParamsv2(phmObj, K, "prob"), function(x) sum(x$prob))
   if (phmObj$mergeCriterion == "alpha" && scaleHeights == "pmcdist") {
     stop("PHM with the alpha criterion only supports `log10` and `unscaled`")
   }
@@ -369,6 +370,7 @@ constructVisData <- function(phmObj,
   height <- height + (1:length(height)) * 1e-6 ## Slight height offset
 
   ## Track components merging
+  orig_alpha <- alpha_vec
   output <- data.frame()
   groupProbs_new <- groupProbs
   merge_tree <- as.list(1:K)
@@ -559,6 +561,7 @@ constructVisData <- function(phmObj,
 
   list(
     df=output,
+    alpha=orig_alpha[x_posns],
     labels=labels,
     height=height,
     xlab=x_posns,
@@ -709,7 +712,8 @@ plotPHMv2Heatmap <- function(phmObj,
                           gridColor="black",
                           fillLimits=NULL,
                           fillScale=c("d*", "log10", "pmcdist"),
-                          legendPosition="none") {
+                          legendPosition="none",
+                          scaleAxis=F) {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
 
@@ -791,9 +795,9 @@ plotPHMv2Heatmap <- function(phmObj,
 
   matrix_long <- merge_matrix %>%
     dplyr::as_tibble(.name_repair = "unique") %>%
-    tibble::rowid_to_column(var = "X") %>%
+    tibble::rowid_to_column(var = "Xraw") %>%
     tidyr::gather(key = "Y", value = "Z", -1) %>%
-    dplyr::mutate(Y = as.numeric(gsub("V", "", Y)),
+    dplyr::mutate(Yraw = as.numeric(gsub("V", "", Y)),
                   Z.old=Z,
                   Z=fillScaleFunc(Z))
 
@@ -817,14 +821,54 @@ plotPHMv2Heatmap <- function(phmObj,
 
   mid_point <- mean(plot_lims)
 
-  matrix_long %>%
-    dplyr::mutate(Z=Z,
-                  Z.mod = Z,
-                  Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
-    dplyr::mutate(X=factor(X, levels=phm_dendro_data$xlab, ordered=T),
-                  Y=factor(Y, levels=phm_dendro_data$xlab, ordered=T)) %>%
-    ggplot2::ggplot(ggplot2::aes(X, Y, fill = Z)) +
-    ggplot2::geom_tile(color = gridColor) +
+  plt_base <- if (!scaleAxis) {
+    matrix_long %>%
+      dplyr::mutate(Z=Z,
+                    Z.mod = Z,
+                    Z.mod = ifelse(Xraw == Yraw, "--", Z.mod)) %>%
+      dplyr::mutate(X=factor(Xraw, levels=phm_dendro_data$xlab, ordered=T),
+                    Y=factor(Yraw, levels=phm_dendro_data$xlab, ordered=T)) %>%
+      ggplot2::ggplot(ggplot2::aes(X, Y, fill = Z)) +
+      ggplot2::geom_tile(color = gridColor) +
+      ggplot2::scale_x_discrete(labels=displayAxisLabels) +
+      ggplot2::scale_y_discrete(labels=displayAxisLabels)
+
+  } else {
+    weight <- phm_dendro_data$alpha / sum(phm_dendro_data$alpha)
+    cumul_posn <- c(0, cumsum(weight))
+    matrix_long$X <- cumul_posn[match(matrix_long$Xraw, phm_dendro_data$xlab)]
+    matrix_long$Xmax <- cumul_posn[1+match(matrix_long$Xraw, phm_dendro_data$xlab)]
+    matrix_long$Xwidth <- (matrix_long$Xmax - matrix_long$X)
+    matrix_long$Xcenter <- (matrix_long$Xmax + matrix_long$X) / 2
+    matrix_long$Y <- cumul_posn[match(matrix_long$Yraw, phm_dendro_data$xlab)]
+    matrix_long$Ymax <- cumul_posn[1+match(matrix_long$Yraw, phm_dendro_data$xlab)]
+    matrix_long$Ywidth <- (matrix_long$Ymax - matrix_long$Y)
+    matrix_long$Ycenter <- (matrix_long$Ymax + matrix_long$Y) / 2
+
+    centers <- (cumul_posn[-1] + cumul_posn[-length(cumul_posn)]) / 2
+
+    matrix_long %>%
+      dplyr::mutate(Z=Z, Z.mod = Z, Z.mod = ifelse(Xraw == Yraw, "--", Z.mod)) %>%
+      ggplot2::ggplot(ggplot2::aes(
+        # xmin=X, xmax=Xmax, ymin=Y, ymax=Ymax, ## geom_rect
+        x=Xcenter, y=Ycenter, width=Xwidth, height=Ywidth, ## geom_tile
+        fill=Z)) +
+      # ggplot2::geom_rect(color=gridColor) +
+      ggplot2::geom_tile(color=gridColor) +
+      ggplot2::scale_x_continuous(
+        limits=c(0, 1),
+        breaks=centers,
+        labels=displayAxisLabels,
+        expand = ggplot2::expansion(mult = 0)
+      ) +
+      ggplot2::scale_y_continuous(
+        limits=c(0, 1),
+        breaks=centers,
+        labels=displayAxisLabels,
+        expand = ggplot2::expansion(mult = 0)
+      )
+  }
+  plt_base + 
     ggplot2::scale_fill_gradient2(limits = plot_lims,
                                   low = "blue",
                                   # mid="white",
@@ -838,8 +882,6 @@ plotPHMv2Heatmap <- function(phmObj,
     ggplot2::theme_bw() +
     ggplot2::coord_flip() +
     ggplot2::xlab("") + ggplot2::ylab("") +
-    ggplot2::scale_x_discrete(labels=displayAxisLabels) +
-    ggplot2::scale_y_discrete(labels=displayAxisLabels) +
     ggplot2::theme(legend.position = legendPosition,
                    panel.grid = ggplot2::element_blank(),
                    axis.text.x = displayAxisFmt,
