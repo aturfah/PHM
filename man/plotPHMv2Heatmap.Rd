@@ -15,6 +15,7 @@ plotPHMv2Heatmap(
   fillLimits = NULL,
   fillScale = c("d*", "log10", "pmcdist"),
   legendPosition = "none",
+  subsetClusters = NULL,
   scaleAxis = F
 )
 }
@@ -38,6 +39,8 @@ plotPHMv2Heatmap(
 \item{fillScale}{How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.}
 
 \item{legendPosition}{Where to put the legend for the heatmap colors. Default is to suppress.}
+
+\item{subsetClusters}{Which clusters to show on the heatmap. Allows to examine substructures of the tree.}
 }
 \description{
 Plot PHM Matrix (for v2)
