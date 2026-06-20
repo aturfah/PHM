@@ -561,11 +561,11 @@ constructVisData <- function(phmObj,
 
   list(
     df=output,
-    alpha=orig_alpha[x_posns],
+    alpha=orig_alpha,
     labels=labels,
     height=height,
     xlab=x_posns,
-    display_names=sapply(phmObj$paramsList, function(x) x$class)[x_posns]
+    display_names=sapply(phmObj$paramsList, function(x) x$class)
   )
 }
 
@@ -641,7 +641,7 @@ plotPHMv2Dendrogram <- function(phmObj,
   displayAxisLabels <- if (displayAxis == "box") {
     rep("\U25A0", K)
   } else if (displayAxis == "label") {
-    phm_dendro_data$display_names
+    phm_dendro_data$display_names[phm_dendro_data$xlab]
   } else if (displayAxis == "index") {
     phm_dendro_data$xlab
   } else {
@@ -700,6 +700,7 @@ plotPHMv2Dendrogram <- function(phmObj,
 #' @param phmObj Output from [PHMv2()]
 #' @param initK Number of clusters from which to initialize the visualization
 #' @param fillScale How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.
+#' @param subsetClusters Which clusters to show on the heatmap. Allows to examine substructures of the tree.
 #' @inheritParams plotPHMMatrix
 #' 
 #' @export 
@@ -713,6 +714,7 @@ plotPHMv2Heatmap <- function(phmObj,
                           fillLimits=NULL,
                           fillScale=c("d*", "log10", "pmcdist"),
                           legendPosition="none",
+                          subsetClusters=NULL,
                           scaleAxis=F) {
   displayAxis <- match.arg(displayAxis)
   fillScale <- match.arg(fillScale)
@@ -721,6 +723,9 @@ plotPHMv2Heatmap <- function(phmObj,
   if (!is.null(initK)) {
     if (initK > K) stop("initK cannot be greater than K")
     K <- initK
+  }
+  if (is.null(subsetClusters)) {
+    subsetClusters <- 1:K
   }
 
   if (is.null(colorAxis)) {
@@ -750,7 +755,12 @@ plotPHMv2Heatmap <- function(phmObj,
       displayAxisSize <- 10
     }
   }
+  ## Limit us to what we're looking at
   phm_dendro_data <- constructVisData(phmObj, K=K)
+  phm_dendro_data$xlab <- intersect(phm_dendro_data$xlab, subsetClusters)
+  phm_dendro_data$display_names <- phm_dendro_data$display_names[phm_dendro_data$xlab]
+  phm_dendro_data$alpha <- phm_dendro_data$alpha[phm_dendro_data$xlab]
+
   displayAxisFmt <- ggtext::element_markdown(
     color=unname(colors[phm_dendro_data$xlab]),
     size=displayAxisSize)
@@ -801,33 +811,17 @@ plotPHMv2Heatmap <- function(phmObj,
                   Z.old=Z,
                   Z=fillScaleFunc(Z))
 
-  plot_lims <- fillLimits
-  if (is.null(fillLimits)) {
-    plot_lims <- c(min(matrix_long$Z.old, na.rm=T),
-                   max(matrix_long$Z.old, na.rm=T))
-  } else if (is.na(fillLimits[1])) {
-    plot_lims[1] <- min(matrix_long$Z.old, na.rm=T)
-  } else if (is.na(fillLimits[2])) {
-    plot_lims[2] <- max(matrix_long$Z.old, na.rm=T)
-  }
-
-  if (fillScale == "log10") {
-    plot_lims <- log10(plot_lims)
-  } else if (fillScale == "pmcdist") {
-    plot_lims <- -inv_log10(log10(plot_lims))
-  } else {
-    plot_lims = fillScaleFunc(plot_lims)
-  }
-
-  mid_point <- mean(plot_lims)
-
-  plt_base <- if (!scaleAxis) {
-    matrix_long %>%
+  if (!scaleAxis) {
+    matrix_long <- matrix_long %>%
       dplyr::mutate(Z=Z,
                     Z.mod = Z,
                     Z.mod = ifelse(Xraw == Yraw, "--", Z.mod)) %>%
+      dplyr::filter(Yraw %in% subsetClusters &
+                    Xraw %in% subsetClusters) %>%
       dplyr::mutate(X=factor(Xraw, levels=phm_dendro_data$xlab, ordered=T),
-                    Y=factor(Yraw, levels=phm_dendro_data$xlab, ordered=T)) %>%
+                    Y=factor(Yraw, levels=phm_dendro_data$xlab, ordered=T))
+
+    plt_base <- matrix_long %>%
       ggplot2::ggplot(ggplot2::aes(X, Y, fill = Z)) +
       ggplot2::geom_tile(color = gridColor) +
       ggplot2::scale_x_discrete(labels=displayAxisLabels) +
@@ -847,8 +841,12 @@ plotPHMv2Heatmap <- function(phmObj,
 
     centers <- (cumul_posn[-1] + cumul_posn[-length(cumul_posn)]) / 2
 
-    matrix_long %>%
+    matrix_long <- matrix_long %>%
       dplyr::mutate(Z=Z, Z.mod = Z, Z.mod = ifelse(Xraw == Yraw, "--", Z.mod)) %>%
+      dplyr::filter(Yraw %in% subsetClusters &
+                    Xraw %in% subsetClusters)
+
+    plt_base <- matrix_long %>%
       ggplot2::ggplot(ggplot2::aes(
         # xmin=X, xmax=Xmax, ymin=Y, ymax=Ymax, ## geom_rect
         x=Xcenter, y=Ycenter, width=Xwidth, height=Ywidth, ## geom_tile
@@ -868,6 +866,27 @@ plotPHMv2Heatmap <- function(phmObj,
         expand = ggplot2::expansion(mult = 0)
       )
   }
+  ## Plot based on matrix
+  plot_lims <- fillLimits
+  if (is.null(fillLimits)) {
+    plot_lims <- c(min(matrix_long$Z.old, na.rm=T),
+                  max(matrix_long$Z.old, na.rm=T))
+  } else if (is.na(fillLimits[1])) {
+    plot_lims[1] <- min(matrix_long$Z.old, na.rm=T)
+  } else if (is.na(fillLimits[2])) {
+    plot_lims[2] <- max(matrix_long$Z.old, na.rm=T)
+  }
+
+  if (fillScale == "log10") {
+    plot_lims <- log10(plot_lims)
+  } else if (fillScale == "pmcdist") {
+    plot_lims <- -inv_log10(log10(plot_lims))
+  } else {
+    plot_lims = fillScaleFunc(plot_lims)
+  }
+
+  mid_point <- mean(plot_lims)
+
   plt_base + 
     ggplot2::scale_fill_gradient2(limits = plot_lims,
                                   low = "blue",
