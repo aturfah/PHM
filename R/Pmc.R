@@ -393,7 +393,7 @@ constructPmcParamsLocalizedEnsemble <- function(data,
 
     if (need_to_run) {
       partition = clustFunc(subsamp_dat)
-      
+
       params <- density_func(subsamp_dat, partition, G=G, ...)
       for (g in seq_along(params)) {
         params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
