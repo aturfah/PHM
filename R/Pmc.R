@@ -315,13 +315,16 @@ constructPmcParamsSubAggMclust <- function(data,
   gmm_res
 }
 
+#' E
+#' 
 constructPmcParamsLocalizedEnsemble <- function(data,
+                         clustFunc,
                          replicates,
                          subsampSize=NULL,
-                         clustFunc=NULL,
                          G=NULL,
                          saveDir=NULL,
                          prefix="localizedEnsemble_",
+                         weighted=T,
                          verbose=F, numCores=1, 
                          seeds=NULL,
                          ...) {
@@ -339,6 +342,13 @@ constructPmcParamsLocalizedEnsemble <- function(data,
   apply_func <- lapply
   if (numCores > 1) apply_func <- function(X, FUN) {
     parallel::mclapply(X, FUN, mc.cores=numCores)
+  }
+
+  ## Whether to do weighted or naive density
+  density_func <- if (weighted) {
+    constructPmcParamsWeightedPartition
+  } else {
+    constructPmcParamsPartition
   }
 
   ## Break down into replicates
@@ -382,10 +392,10 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     need_to_run <- !file.exists(filename) || is.null(saveDir)
 
     if (need_to_run) {
-      mcl <- mclust::Mclust(subsamp_dat, G=G,
-                            verbose=verbose, ...)
-      params <- constructPmcParamsMclust(mcl)
-      for (g in 1:mcl$G) {
+      partition = clustFunc(subsamp_dat)
+      
+      params <- density_func(subsamp_dat, partition, G=G, ...)
+      for (g in seq_along(params)) {
         params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
       }
 
