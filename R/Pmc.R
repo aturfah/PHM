@@ -318,16 +318,16 @@ constructPmcParamsSubAggMclust <- function(data,
 #' E
 #' 
 constructPmcParamsLocalizedEnsemble <- function(data,
-                         clustFunc,
-                         replicates,
-                         subsampSize=NULL,
-                         G=NULL,
-                         saveDir=NULL,
-                         prefix="localizedEnsemble_",
-                         weighted=T,
-                         verbose=F, numCores=1, 
-                         seeds=NULL,
-                         ...) {
+                                                clustFunc,
+                                                replicates,
+                                                subsampSize=NULL,
+                                                G=NULL,
+                                                saveDir=NULL,
+                                                prefix="localizedEnsemble_",
+                                                weighted=T,
+                                                verbose=F, numCores=1, 
+                                                seeds=NULL,
+                                                ...) {
   if (!is.null(seeds)) stopifnot(length(seeds) == replicates)
 
   ## If we want to save the results, set that up
@@ -384,7 +384,8 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     if (!is.null(seed)) set.seed(seed)
 
     ## Generate filename
-    filename <- paste(prefix, "N", subsampSize, "G", max(G),
+    filename <- paste(prefix, ifelse(weighted, "_Weighted_", "_Naive_"),
+                      "N", subsampSize, "G", max(G),
                       "repl", idx, "f.RData", sep="_")
     filename <- file.path(saveDir, filename)
 
@@ -394,9 +395,9 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     if (need_to_run) {
       partition = clustFunc(subsamp_dat)
 
-      params <- density_func(subsamp_dat, partition, G=G, ...)
+      params <- density_func(partition, subsamp_dat, G=G, ...)
       for (g in seq_along(params)) {
-        params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
+        params[[g]]$class <- paste(idx, params[[g]]$class, sep="_")
       }
 
       if (!is.null(saveDir)) save(params, subsamp_dat, file=filename)
@@ -413,8 +414,7 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     ensemble[[idx]]$prob <- ensemble[[idx]]$prob / replicates
   }
 
-  ensemble
-
+  decomposeParams(ensemble)
 }
 
 
@@ -451,7 +451,7 @@ constructPmcParamsSubAggPartition <- function(data,
                             numCores=1, 
                             verbose=F,
                             ...) {
-  stop("This method does not work")
+  stop("This method does not work; use constructPmcParamsLocalizedEnsemble")
   ## Prepare for use across all cores
   label_ids <- sort(unique(partition))
   K <- length(label_ids)
@@ -494,7 +494,7 @@ constructPmcParamsSubAggPartition <- function(data,
       dist_to_clust <- apply_func(label_ids, function(k) {
         clust_idx <- which(subsamp_labels == k)
         clust_mat <- subsamp_mat[clust_idx, ]
-    
+
         sapply(1:nrow(subsamp_mat), function(idx) {
           clust_dist <- colSums((t(clust_mat) - subsamp_mat[idx, ])^2)
           linkFunc(clust_dist[which(clust_dist > 0)])
@@ -1072,17 +1072,17 @@ consolidateParams <- function(paramsList, pmcMatrix, threshold) {
   for (posn in merge_components) {
     i <- posn[1]
     j <- posn[2]
-    
+
     if (length(merge_clusters) > 0) {
       valid_clust <- sapply(merge_clusters, function(mc) {
         i %in% mc || j %in% mc
       })
-      valid_idx <- which(valid_clust)    
+      valid_idx <- which(valid_clust)
     } else {
       valid_idx <- numeric()
     }
-    
-    
+
+
     if (length(valid_idx) == 0) {
       merge_clusters[[length(merge_clusters) + 1]] <- posn
     } else if (length(valid_idx) == 1) {
@@ -1092,32 +1092,32 @@ consolidateParams <- function(paramsList, pmcMatrix, threshold) {
       base_idx <- valid_idx[1]
       merge_clusters[[base_idx]] <- do.call(c, merge_clusters[valid_idx])
       for (idx in length(valid_idx):2) merge_clusters[[valid_idx[idx]]] <- NULL
-      
+
       merge_clusters[[base_idx]] <- c(merge_clusters[[base_idx]], posn)
       merge_clusters[[base_idx]] <- unique(merge_clusters[[base_idx]])
     }
   }
-  
+
   ## Grab parameters to be consolidated
   group_params <- lapply(merge_clusters, function(v) {
     paramsList[v]
   })
-  
+
   for (idx in 1:length(paramsList)) {
     to_be_merged <- any(sapply(merge_clusters, function(x) idx %in% x))
     if (!to_be_merged) {
       group_params[[length(group_params) + 1]] <- list(paramsList[[idx]])
     }
   }
-  
+
   ## Consolidate parameters
   consolidated_params <- lapply(group_params, function(v) {
     if (length(v) == 1) return(v[[1]])
-    
+
     probs <- sapply(v, function(vv) vv$prob)
     means <- lapply(v, function(vv) vv$mean)
     vars <- lapply(v, function(vv) vv$var)
-    
+
     ## Combine means
     mu <- lapply(1:length(probs), function(idx) {
       probs[idx] * means[[idx]] / sum(probs)
@@ -1125,13 +1125,13 @@ consolidateParams <- function(paramsList, pmcMatrix, threshold) {
     mu <- Reduce(`+`, mu)
     mu <- rowSums(mu)
     mu <- matrix(mu, ncol=1)
-    
+
     ## Combine variances
     sigma <- lapply(1:length(probs), function(idx) {
       probs[idx] * vars[[idx]] / sum(probs)
     })
     sigma <- Reduce('+', sigma)
-    
+
     list(
       prob=sum(probs),
       mean=mu,
@@ -1161,7 +1161,7 @@ decomposeParams <- function(paramsList) {
       )
     })
   })
-  
-  do.call(c, params_decomp)  
+
+  do.call(c, params_decomp)
 }
 
