@@ -315,6 +315,100 @@ constructPmcParamsSubAggMclust <- function(data,
   gmm_res
 }
 
+constructPmcParamsLocalizedEnsemble <- function(data,
+                         replicates,
+                         subsampSize=NULL,
+                         clustFunc=NULL,
+                         G=NULL,
+                         saveDir=NULL,
+                         prefix="localizedEnsemble_",
+                         verbose=F, numCores=1, 
+                         seeds=NULL,
+                         ...) {
+  if (!is.null(seeds)) stopifnot(length(seeds) == replicates)
+
+  ## If we want to save the results, set that up
+  if (!is.null(saveDir)) {
+    if (!dir.exists(saveDir)) dir.create(saveDir)
+  }
+
+  ## Default 10 components
+  if (is.null(G)) G <- 1:10
+
+  ## Multicore Processing if specified
+  apply_func <- lapply
+  if (numCores > 1) apply_func <- function(X, FUN) {
+    parallel::mclapply(X, FUN, mc.cores=numCores)
+  }
+
+  ## Break down into replicates
+  if (is.null(seeds)) {
+    seeds <- rep(NULL, replicates)
+  }
+  if (is.null(subsampSize)) {
+    subsamp_dat <- lapply((1:replicates), function(idx) {
+      list(
+        idx=idx,
+        dat=data,
+        seed=seeds[idx]
+      )
+    })
+  } else {
+    subsamp_idx <- lapply(1:replicates, function(idx) {
+      sample.int(nrow(data), subsampSize, replace=T)
+    })
+    subsamp_dat <- lapply(1:replicates, function(idx) {
+      list(
+        idx=idx,
+        dat=data[subsamp_idx[[idx]], ],
+        seed=seeds[idx]
+      )
+    })
+  }
+
+  ## From here do the thing
+  ensemble <- apply_func(subsamp_dat, function(sub_obj) {
+    idx <- sub_obj$idx
+    subsamp_dat <- sub_obj$dat
+    seed <- sub_obj$seed
+    if (!is.null(seed)) set.seed(seed)
+
+    ## Generate filename
+    filename <- paste(prefix, "N", subsampSize, "G", max(G),
+                      "repl", idx, "f.RData", sep="_")
+    filename <- file.path(saveDir, filename)
+
+    ## Either this file exists or filename is empty because saveDir is NULL
+    need_to_run <- !file.exists(filename) || is.null(saveDir)
+
+    if (need_to_run) {
+      mcl <- mclust::Mclust(subsamp_dat, G=G,
+                            verbose=verbose, ...)
+      params <- constructPmcParamsMclust(mcl)
+      for (g in 1:mcl$G) {
+        params[[g]]$class <- paste(params[[g]]$class, idx, sep="_")
+      }
+
+      if (!is.null(saveDir)) save(params, subsamp_dat, file=filename)
+    } else {
+      load(filename)
+    }
+
+    params
+  })
+
+  ## Average over all estimated densities
+  ensemble <- do.call(c, ensemble)
+  for (idx in 1:length(ensemble)) {
+    ensemble[[idx]]$prob <- ensemble[[idx]]$prob / replicates
+  }
+
+  ensemble
+
+}
+
+
+
 #' Ensemble weighted density estimation for partitions
 #'
 #' @description EEP
@@ -347,6 +441,7 @@ constructPmcParamsSubAggPartition <- function(data,
                             numCores=1, 
                             verbose=F,
                             ...) {
+  stop("This method does not work")
   ## Prepare for use across all cores
   label_ids <- sort(unique(partition))
   K <- length(label_ids)
