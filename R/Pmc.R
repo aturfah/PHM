@@ -10,7 +10,7 @@
 #' cluster distribution (default is a single Gaussian component, K = 1).
 #'
 #' If `singleElement = TRUE`, then all components will be combined into a single
-#' list.
+#' list. 
 #'
 #' The parameters in each sublist are
 #' - `mean` should be a `DxK` matrix where each column corresponds to a component mean
