@@ -180,7 +180,6 @@ convertToPHMv2 <- function(phm) {
   res$mergeValues <- c(NA, res$mergeVals)
   res$mergeDeltaPmc <- res$mergeValues
   res$mergeCriterion <- "unscaled"
-  res$mergeDeltaPmc <- res$mergeVals
   res
 }
 
