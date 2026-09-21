@@ -444,7 +444,7 @@ plotPHMDistruct <- function(phm, K=length(phm),
     ggplot2::geom_bar(position="stack", stat="identity") +
     ggplot2::xlab("") + ggplot2::ylab("") +
     ggplot2::geom_segment(data=vert_lines,
-                 aes(x=value, xend=value, y=y, yend=yend, fill=NULL),
+                 ggplot2::aes(x=value, xend=value, y=y, yend=yend, fill=NULL),
                  linetype="dashed", linewidth=0.3) +
     ggplot2::scale_fill_manual(values=colors) +
     ggplot2::scale_x_continuous(expand=c(0, 0),
@@ -870,7 +870,7 @@ plotPmc2D <- function(paramsList,
   class_labels <- sapply(paramsList, function(x) x$class)
   names(colors) <- class_labels
   dens_df <- data.frame(mat, dens=density_mat) %>%
-    tidyr::pivot_longer(cols=starts_with("dens")) %>%
+    tidyr::pivot_longer(cols=dplyr::starts_with("dens")) %>%
     dplyr::mutate(name=stringr::str_remove(name, "dens."),
            name=as.numeric(name),
            name=class_labels[name],
@@ -899,7 +899,7 @@ plotPmc2D <- function(paramsList,
   }
   if (!suppressObservations) {
     plt <- plt + ggplot2::geom_point(
-        aes(x=X1,
+        ggplot2::aes(x=X1,
             y=X2,
             color=g),
         size=pointSize,
@@ -920,9 +920,9 @@ plotPmc2D <- function(paramsList,
   plt <- plt + 
     ## Cluster labels
     ggplot2::geom_label(
-      aes(x=X1, y=X2, label=g),
+      ggplot2::aes(x=X1, y=X2, label=g),
       size=labelSize,
-      data=data_df %>% group_by(g) %>% dplyr::summarize(X1=mean(X1), X2=mean(X2))
+      data=data_df %>% dplyr::group_by(g) %>% dplyr::summarize(X1=mean(X1), X2=mean(X2))
     ) +
     ## Formatting
     ggplot2::scale_x_continuous(limits=xlim) +

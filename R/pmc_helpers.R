@@ -154,7 +154,7 @@ weightedMclust <- function(data, weights,
     }
   }
 
-  hc_init <- hc(data = init_data,
+  hc_init <- mclust::hc(data = init_data,
                 modelName = mclust::mclust.options("hcModelName"),
                 use = mclust::mclust.options("hcUse"))
 
@@ -214,7 +214,7 @@ weightedMclust <- function(data, weights,
       mcl$z <- mcl$z + .Machine$double.eps^2
       mcl$z <- mcl$z / rowSums(mcl$z)
 
-      do.call("me.weighted", c(list(weights=weights), mcl))
+      do.call("mclust::me.weighted", c(list(weights=weights), mcl))
     })
 
   maxBIC <- -Inf
@@ -243,7 +243,7 @@ reweightedMclust <- function(data, weights, reweights,
     }
   }
 
-  hc_init <- hc(data = init_data,
+  hc_init <- mclust::hc(data = init_data,
                 modelName = mclust::mclust.options("hcModelName"),
                 use = mclust::mclust.options("hcUse"))
 
@@ -302,7 +302,7 @@ reweightedMclust <- function(data, weights, reweights,
       mcl$z <- mcl$z + .Machine$double.eps^2
       mcl$z <- mcl$z / rowSums(mcl$z)
 
-      do.call("me.weighted", c(list(weights=reweights), mcl))
+      do.call("mclust::me.weighted", c(list(weights=reweights), mcl))
     })
 
   maxBIC <- -Inf
