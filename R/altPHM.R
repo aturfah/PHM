@@ -10,7 +10,7 @@
 #' 
 #' @param paramsList A list generated from [constructPmcParamsMclust()], [constructPmcParamsPartition()], [constructPmcParamsPartition()] providing the initial cluster parameter estimates. Used to compute \eqn{\Delta P_{\rm mc}}
 #' @param deltaPmc A precomputed \eqn{\Delta P_{\rm mc}} matrix. Will 
-#' @param scaling How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. `unscaled` is the default
+#' @param scaling How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. `alpha` is the default
 #' @param monteCarlo Whether to use monte carlo integration to compute \eqn{\Delta P_{\rm mc}}
 #' @param numCores Number of cores used for \eqn{\Delta P_{\rm mc}} computation
 #' @param verbose Whether to print
