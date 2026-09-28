@@ -562,9 +562,9 @@ plotPmcMatrix <- function(phm, K=length(phm), colors=NULL,
       Z.mod = ifelse(X == Y, "--", Z.mod)) %>%
     dplyr::filter(X <= Y) %>%
     # Viz
-    ggplot2::ggplot(aes(X, Y, fill=Z)) +
+    ggplot2::ggplot(ggplot2::aes(X, Y, fill=Z)) +
     ggplot2::geom_tile(color="black") +
-    ggplot2::geom_text(aes(label=Z.mod, fill=NULL),
+    ggplot2::geom_text(ggplot2::aes(label=Z.mod, fill=NULL),
               size=visSize) +
     ggplot2::scale_fill_gradient(limits=c(0, plotLimits),
                         low="white", high="red",
@@ -911,9 +911,11 @@ plotPmc2D <- function(paramsList,
       ggnewscale::new_scale_color()
   }
   if (!suppressDensity) {
-    plt <- plt + ggplot2::geom_contour(aes(x=X, y=Y, color=name, group=name, z=value), 
-                 breaks = densityLevels,
-                 linewidth=densityLevelWidth, data=dens_df) +
+    plt <- plt + ggplot2::geom_contour(
+                    ggplot2::aes(x=X, y=Y, 
+                    color=name, group=name, z=value), 
+                  breaks = densityLevels,
+                  linewidth=densityLevelWidth, data=dens_df) +
       ggplot2::scale_color_manual(values=colors,
                                   guide="none")
   }
