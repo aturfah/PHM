@@ -263,7 +263,8 @@ constructPmcParamsSubAggMclust <- function(data,
     })
   } else {
     subsamp_idx <- lapply(1:replicates, function(idx) {
-      sample.int(nrow(data), subsampSize, replace=T)
+      set.seed(seeds[idx])
+      sample.int(nrow(data), subsampSize, replace=F)
     })
     subsamp_dat <- lapply(1:replicates, function(idx) {
       list(
@@ -328,7 +329,12 @@ constructPmcParamsLocalizedEnsemble <- function(data,
                                                 verbose=F, numCores=1, 
                                                 seeds=NULL,
                                                 ...) {
-  if (!is.null(seeds)) stopifnot(length(seeds) == replicates)
+  if (is.null(seeds)) {
+
+    seeds = 1:replicates
+  } else {
+    stopifnot(length(seeds) == replicates)
+  }
 
   ## If we want to save the results, set that up
   if (!is.null(saveDir)) {
@@ -365,7 +371,8 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     })
   } else {
     subsamp_idx <- lapply(1:replicates, function(idx) {
-      sample.int(nrow(data), subsampSize, replace=T)
+      set.seed(seeds[idx])
+      sample.int(nrow(data), subsampSize, replace=F)
     })
     subsamp_dat <- lapply(1:replicates, function(idx) {
       list(
@@ -393,7 +400,7 @@ constructPmcParamsLocalizedEnsemble <- function(data,
     need_to_run <- !file.exists(filename) || is.null(saveDir)
 
     if (need_to_run) {
-      partition = clustFunc(subsamp_dat)
+      partition = clustFunc(subsamp_dat, seed=seed)
 
       params <- density_func(partition, subsamp_dat, G=G, ...)
       for (g in seq_along(params)) {
