@@ -19,7 +19,7 @@ PHMv2(
 
 \item{deltaPmc}{A precomputed \eqn{\Delta P_{\rm mc}} matrix. Will}
 
-\item{scaling}{How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. \code{unscaled} is the default}
+\item{scaling}{How to scale \eqn{\Delta P_{\rm mc}} values for the merging process. \code{alpha} is the default}
 
 \item{monteCarlo}{Whether to use monte carlo integration to compute \eqn{\Delta P_{\rm mc}}}
 
