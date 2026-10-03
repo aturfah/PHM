@@ -83,9 +83,6 @@ globalDensityEstimation <- function(X,
 
     ## Iterate over seeds
     results <- apply_func(1:M, function(idx) {
-        seed <- seeds[idx]
-        set.seed(seed)
-
         ## Whether this replicate has already been run; check in saveDir if specified
         filename <- paste(prefix, 
             "ssize", subsampleSize,
@@ -96,7 +93,9 @@ globalDensityEstimation <- function(X,
         need_to_run <- !file.exists(filename) || backup_replicates || overwrite
 
         if (need_to_run) {
-            if (verbose) cat("..Running Replicate", idx, "\n")
+            seed <- seeds[idx]
+            set.seed(seed)
+            if (verbose) cat("..Running Replicate", idx, "| Seed:", seed, "\n")
 
             ## Subset the observations OR use entire dataset
             if (subsamp) {
@@ -363,7 +362,7 @@ distanceWeightFunc <- function(X, partition, removeSelfDistance=F, scaling=1, ag
     ## Identity: ||a - b||^2 = ||a||^2 + ||b||^2 - 2<a, b>
     dist_to_k <- outer(row_sq, row_sq[clust_idx], "+")
     dist_to_k <- dist_to_k - 2 * (X %*% t(X[clust_idx, , drop = FALSE]))
-    
+
     ## Allow Self-Distance?
     if (removeSelfDistance) {
       for (j in seq_along(clust_idx)) {
@@ -390,4 +389,128 @@ distanceWeightFunc <- function(X, partition, removeSelfDistance=F, scaling=1, ag
   colnames(weights) <- unique_clusters
   
   weights
+}
+
+
+plotDensity2D <- function(paramsList,
+                          X=NULL,
+                          partition=NULL,
+                          colors=RColorBrewer::brewer.pal(12, "Paired"),
+                          xlim=NULL,
+                          ylim=NULL,
+                          gridResolution=200,
+                          densityLevels=c(5e-2, 1e-1),
+                          densityLevelWidth=0.5,
+                          colorDensity=F,
+                          textSize=8,
+                          legendPosition="none") {
+
+  ## Get component names
+  density_classes <- sapply(paramsList, function(x) x$class)
+
+  ## Verify data is 2D / Prepare X
+  if (!is.null(X)) {
+    if (ncol(X) != 2) stop("X must be 2D")
+    X <- data.frame(X)
+    colnames(X) <- c("X1", "X2")
+
+    if (!is.null(partition)) {
+      X$part <- factor(partition)
+    } else {
+      X$part <- rep(1, nrow(X))
+    }
+  }
+  
+  ## Set limits properly; default is 10% margin
+  if (!is.null(X)) {
+    if (is.null(xlim)) {
+      xlim <- c( min(X[, 1]), max(X[, 1]) )
+      xlim[1] <- xlim[1] - abs(xlim[1] * 0.1)
+      xlim[2] <- xlim[2] + abs(xlim[2] * 0.1)
+    }
+    if (is.null(ylim)) {
+      ylim <- c( min(X[, 2]), max(X[, 2]) )
+      ylim[1] <- ylim[1] - abs(ylim[1] * 0.1)
+      ylim[2] <- ylim[2] + abs(ylim[2] * 0.1)
+    }    
+  } else {
+    if (is.null(xlim) || is.null(ylim))
+      stop("If X not specified then xlim and ylim must be specified!")
+  }
+
+  ## Construct Grid for Evaluation
+  mat <- expand.grid(X=seq(min(xlim), max(xlim), length.out=gridResolution),
+                     Y=seq(min(ylim), max(ylim), length.out=gridResolution)) %>%
+    as.matrix()
+  
+  ## Density Matrix
+  density_mat <- sapply(paramsList, function(x) {
+    K <- length(x$prob)
+    
+    tmp <- sapply(1:K, function(idx) {
+      x$prob[idx] * mvtnorm::dmvnorm(mat, x$mean[, idx], x$var[, , idx]) # / sum(x$prob)
+    })
+    rowSums(tmp)
+  })
+  colnames(density_mat) <- density_classes
+
+  dens_df <- data.frame(mat, dens=density_mat) %>%
+    tidyr::pivot_longer(cols=dplyr::starts_with("dens")) %>%
+    dplyr::mutate(name=stringr::str_remove(name, "dens."),
+                  name=factor(name, levels=density_classes))
+
+  if (colorDensity) {
+    if (length(density_classes) > length(colors)) {
+        cat("Suppressing, not enough colors provided.\n")
+        dens_df <- dplyr::mutate(dens_df, col="One")
+        density_colors <- rep("#000", length(density_classes))
+    } else {
+        dens_df <- dplyr::mutate(dens_df, col=name)
+        density_colors <- colors
+    }
+  } else {
+    dens_df <- dplyr::mutate(dens_df, col="One")
+    density_colors <- rep("#000", length(density_classes))
+  }
+
+  ## Generate Plot
+  plt <- ggplot2::ggplot()
+  
+  ## Draw observations
+  if (!is.null(X)) {
+    plt <- plt + ggplot2::geom_point(
+      ggplot2::aes(x=X1,
+          y=X2,
+          color=part),
+      alpha=0.5,
+      data=X
+    ) +
+    ggplot2::scale_color_manual(values=colors) + 
+    ggnewscale::new_scale_color()
+  }
+  
+  ## Draw Density
+  plt <- plt + ggplot2::geom_contour(
+    ggplot2::aes(x=X, y=Y, group=name, z=value, color=col), 
+    breaks = densityLevels,
+    linewidth=densityLevelWidth, 
+    data=dens_df) +
+    ggplot2::scale_color_manual(values=density_colors) + 
+    ggnewscale::new_scale_color()
+  
+  ## Formatting
+  plt <- plt +
+    
+    ggplot2::scale_x_continuous(limits=xlim) +
+    ggplot2::scale_y_continuous(limits=ylim) +
+    ggplot2::xlab("") + ggplot2::ylab("") +
+    ggplot2::theme_bw() + 
+    ggplot2::theme(legend.position=legendPosition,
+                   panel.grid.major.x = ggplot2::element_blank(),
+                   panel.grid.minor.x = ggplot2::element_blank(),
+                   panel.grid.major.y = ggplot2::element_blank(),
+                   panel.grid.minor.y = ggplot2::element_blank(),
+                   text=ggplot2::element_text(size=textSize))
+
+  plt
 }
