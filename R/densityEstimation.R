@@ -90,7 +90,8 @@ globalDensityEstimation <- function(X,
             "f.RDS", sep="_"
         )
         filename <- file.path(saveDir, filename)
-        need_to_run <- !file.exists(filename) || backup_replicates || overwrite
+        # need_to_run <- !file.exists(filename) || backup_replicates || overwrite
+        need_to_run <- (!file.exists(filename) && backup_replicates) || overwrite
 
         if (need_to_run) {
             seed <- seeds[idx]
@@ -225,7 +226,7 @@ localizedDensityEstimation <- function(X,
             "f.RDS", sep="_"
         )
         filename <- file.path(saveDir, filename)
-        need_to_run <- !file.exists(filename) || backup_replicates || overwrite
+        need_to_run <- (!file.exists(filename) && backup_replicates) || overwrite
 
         if (need_to_run) {
             if (verbose) cat("..Running Replicate", idx, "\n")
