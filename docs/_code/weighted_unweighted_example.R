@@ -7,6 +7,8 @@ devtools::load_all("~/projects/dissertation/PHM")
 
 # rm(list=ls())
 
+data("density_example", package="PHM")
+
 kmeansClusterFunc <- function(X, K=10, seed=1, ...) {
   clust <- KMeans_rcpp(X, K, seed = seed)
   clust$clusters
