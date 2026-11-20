@@ -7,14 +7,14 @@ The PHM package implements two methods for density estimation:
 
 ## Global Density Estimation
 
-The PHM package implements the global density estimation via the `globalDensityEstimation()` function. This is a wrapper around the `Mclust` function which fits a GMM to the observations. All parameters to this function can be specified as arguments to be passed for density estimation. 
+The PHM package implements the global density estimation via the `globalDensityEstimation()` function. Each replicate is fit by `fitDensityReplicate()`, the same function used by the PHM ensemble pipeline (see [Running a PHM Ensemble](ensemble.md)): it selects a covariance model and number of components `G` by BIC with `Mclust`, and widens the `G` range automatically when the best `G` is the largest one tried. Arguments such as `G`, `modelNames`, `GStep`, `GMax` and `stage2Init` are passed through to `fitDensityReplicate()`.
 
-This function also implements the ensemble density estimation procedure (via subagging). The number of ensemble replicates is controlled by the parameter `M`. Specifying either the `rho` or `subsampleSize` parameters control the number of samples used to estimate the density in the ensemble replicates.
+This function also implements the ensemble density estimation procedure (via subagging). The number of ensemble replicates is controlled by the parameter `M`. Specifying either the `rho` or `subsampleSize` parameters control the number of samples used to estimate the density in the ensemble replicates; each replicate uses `round(rho * N)` rows. The replicates are pooled with equal weights. With the default seeds, `globalDensityEstimation(X, M, rho)` returns the same components as `fitPHMEnsemble(X, M, rho)$paramsList`.
 
 Some example function calls are provided below. For a more detailed description of the function and its arguments, please see the package documentation.
 
 ```
-## Equivalent to constructPmcParamsMclust(Mclust(example_data))
+## A single mixture fit to all of example_data (G = 1:25 to start, widened if needed)
 globalDensityEstimation(X=example_data)
 
 ## Control the number of components and only consider spherical covariance structure

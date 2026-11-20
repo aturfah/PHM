@@ -30,9 +30,13 @@ PHM(
 
 \item{data}{An \eqn{N \times D} matrix of observations}
 
+\item{deltaPmc}{Not used; the \eqn{\Delta P_{\rm{mc}}} matrix is always computed from the cluster parameters. Kept for backward compatibility.}
+
 \item{verbose}{Boolean whether to suppress debug statements}
 
 \item{computePosterior}{Boolean whether to compute the Posterior matrix for the merges}
+
+\item{partitionWeightedDensity}{If \code{partition} is given without \code{paramsList}, whether to estimate each cluster's density with \code{\link[=constructPmcParamsWeightedPartition]{constructPmcParamsWeightedPartition()}} (\code{TRUE}, default) or \code{\link[=constructPmcParamsPartition]{constructPmcParamsPartition()}} (\code{FALSE})}
 
 \item{storeDeltaPmc}{Boolean whether to store the \eqn{\Delta P_{\rm{mc}}} matrix at each merging step. Initial \eqn{\Delta P_{\rm{mc}}} will be stored.}
 
@@ -67,7 +71,7 @@ Implements the PHM algorithm which constructs a clustering hierarchy by successi
 }
 \examples{
 set.seed(1)
-dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 params <- constructPmcParamsPartition(partition, dat, G=1:5)
 phm <- PHM(paramsList=params, data=dat, partition=partition)

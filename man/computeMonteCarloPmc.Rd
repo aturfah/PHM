@@ -37,9 +37,9 @@ Where the \eqn{M} observations are sampled from the overall data density \eqn{P(
 }
 \examples{
 set.seed(1)
-dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 params <- constructPmcParamsPartition(partition, dat, G=1:5)
-computeMonteCarloPmc(params, 1e5, verbose=T)
+computeMonteCarloPmc(params, 1e5, verbose=TRUE)
 
 }

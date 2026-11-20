@@ -14,6 +14,7 @@
 1. [Global and Localized Density Estimation](density_estimation/global_localized.md)
 2. [Weighted and Unweighted Density Estimation](density_estimation/weighted_unweighted.md)
 3. [Mixture Component Consolidation](density_estimation/consolidation.md)
+4. [Running a PHM Ensemble (serial, one machine, Slurm)](density_estimation/ensemble.md)
 
 ### Synthetic Data Examples
 

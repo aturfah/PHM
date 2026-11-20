@@ -10,7 +10,7 @@ globalDensityEstimation(
   rho = NULL,
   subsampleSize = NULL,
   replace = F,
-  seeds = 1:M,
+  seeds = phmSeeds(1000, M),
   numCores = 1,
   saveDir = NULL,
   prefix = "global",
@@ -20,42 +20,65 @@ globalDensityEstimation(
 )
 }
 \arguments{
-\item{X}{Numeric matrix for data}
+\item{X}{Numeric data matrix (\eqn{N \times D}).}
 
-\item{M}{Number of replicates over which to ensemble. Default is 1, producing a single density estimate.}
+\item{M}{Number of replicates. Default 1, a single density estimate.}
 
-\item{rho}{Proportion of dataset for subsample. Default is NULL, using the entire dataset.}
+\item{rho}{Fraction of rows used per replicate. Default \code{NULL}, all rows.}
 
-\item{replace}{Whether to sample with replacement for subsampling.}
+\item{subsampleSize}{Number of rows used per replicate, as an alternative
+to \code{rho}. Default \code{NULL}.}
 
-\item{seeds}{List of seeds to use across replicates.}
+\item{replace}{Whether to draw each replicate's rows with replacement.}
 
-\item{numCores}{Number of cores over which to parallelize the density estimation.}
+\item{seeds}{Seeds for the \code{M} replicates. The default,
+\code{phmSeeds(1000, M)}, matches \code{\link[=fitPHMEnsemble]{fitPHMEnsemble()}}'s default \code{seedBase}.}
 
-\item{saveDir}{Where to save intermediate density estimates (for rerunning analyses). NULL is not saving.}
+\item{numCores}{Number of replicates fit in parallel (forked processes;
+not available on Windows).}
 
-\item{prefix}{Filename prefix for saving intermediate density estimates. Ignored if saveDir is NULL.}
+\item{saveDir}{Folder in which to save each replicate's result for reuse.
+\code{NULL} (default) saves nothing.}
 
-\item{overwrite}{Whether to overwrite the results if they already exist. Ignoreed if saveDir is NULL}
+\item{prefix}{File name prefix for saved replicates. Ignored if \code{saveDir}
+is \code{NULL}.}
 
-\item{verbose}{Whether to print out logging messages.}
+\item{overwrite}{Whether to refit replicates that are already saved.
+Ignored if \code{saveDir} is \code{NULL}.}
 
-\item{...}{Parameters to provide to Mclust.}
+\item{verbose}{Whether to print progress messages.}
 
-\item{subSampSize}{Explicitly value for subsample size. Default is NULL, using the entire dataset.}
+\item{...}{Further arguments to \code{\link[=fitDensityReplicate]{fitDensityReplicate()}}, such as \code{G},
+\code{modelNames}, \code{GStep}, \code{GMax} and \code{stage2Init}.}
 }
 \value{
-List of lists where each sublist contains the
-proportion, mean, covariance matrix estimates
-for each component in the ensembled model.
+List of lists, one per pooled component, each with the
+component's \code{prob}, \code{mean}, \code{var} and \code{class}.
 }
 \description{
-EEP
+Fits \code{M} Gaussian mixture models, each to a (sub)sample of \code{X}, and pools
+their components into one mixture density, returned as a component list
+ready for \code{\link[=PHMv2]{PHMv2()}}. Each replicate is fit by \code{\link[=fitDensityReplicate]{fitDensityReplicate()}}, the
+same function the PHM ensemble pipeline uses (see \code{\link[=fitPHMEnsemble]{fitPHMEnsemble()}}), so
+the same \code{M}, subsample size and seeds give the same components here as
+in \code{\link[=fitPHMEnsemble]{fitPHMEnsemble()}} or the scripts in \verb{inst/ensemble/}.
 }
 \details{
-FILL ME IN
+Each replicate draws \code{round(rho * nrow(X))} rows (or \code{subsampleSize}
+rows), without replacement unless \code{replace = TRUE}, and selects a model
+and number of components by BIC. If the best \code{G} is the largest value
+tried, the range is widened automatically (see \code{GStep}/\code{GMax}, passed
+through \code{...}). The \code{M} replicates are pooled with equal weights, so
+each contributes \code{1/M} of the total probability.
+
+With \code{saveDir} set, each replicate's result is saved there and reused on
+later calls with the same \code{prefix}, subsample size and replicate index,
+unless \code{overwrite = TRUE}.
 }
 \examples{
-set seed(1)
+set.seed(1)
+dat <- matrix(c(rnorm(200), rnorm(200, 5), rnorm(200, -5)), ncol = 2, byrow = TRUE)
+params <- globalDensityEstimation(dat, M = 2, rho = 0.8, G = 1:5)
+length(params)
 
 }
