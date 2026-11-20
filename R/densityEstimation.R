@@ -87,7 +87,7 @@ globalDensityEstimation <- function(X,
     apply_func <- lapply
     if (numCores > 1 && M > 1) {
         apply_func <- function(X, FUN) {
-            parallel::mclapply(X, FUN, mc.cores=numCores, mc.preschedule=FALSE)
+            parallelApply(X, FUN, numCores, mc.preschedule=FALSE)
         }
         if (verbose) cat("Running in Parallel;", numCores, "cores\n")
     }
@@ -188,11 +188,11 @@ localizedDensityEstimation <- function(X,
         saveDir <- ""
     }
 
-    ## If multicore then use mclapply
+    ## If multicore then use mclapply (via parallelApply(), which stops if a worker fails)
     apply_func <- lapply
     if (numCores > 1 && M > 1) {
         apply_func <- function(X, FUN) {
-            parallel::mclapply(X, FUN, mc.cores=numCores)
+            parallelApply(X, FUN, numCores)
         }
         if (verbose) cat("Running in Parallel;", numCores, "cores\n")
     } else {

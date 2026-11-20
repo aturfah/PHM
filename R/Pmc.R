@@ -246,7 +246,7 @@ constructPmcParamsSubAggMclust <- function(data,
   ## Multicore Processing if specified
   apply_func <- lapply
   if (numCores > 1) apply_func <- function(X, FUN) {
-    parallel::mclapply(X, FUN, mc.cores=numCores)
+    parallelApply(X, FUN, numCores)
   }
 
   ## Break down into replicates
@@ -347,7 +347,7 @@ constructPmcParamsLocalizedEnsemble <- function(data,
   ## Multicore Processing if specified
   apply_func <- lapply
   if (numCores > 1) apply_func <- function(X, FUN) {
-    parallel::mclapply(X, FUN, mc.cores=numCores)
+    parallelApply(X, FUN, numCores)
   }
 
   ## Whether to do weighted or naive density
@@ -467,7 +467,7 @@ constructPmcParamsSubAggPartition <- function(data,
   clust_size <- sapply(clust_idx, length)
   clust_prob <- clust_size / sum(clust_size)
 
- apply_func <- if(numCores == 1) lapply else function(x, f) parallel::mclapply(x, f, mc.cores=numCores)
+ apply_func <- if(numCores == 1) lapply else function(x, f) parallelApply(x, f, numCores)
 
   params_raw <- lapply(1:replicates, function(repl) {
     if (verbose) cat("Replicate", repl, "\n")
@@ -916,7 +916,7 @@ computePairwisePmcMatrix <- function(paramsList, mcSamples, numCores=1, threshol
   ## Multicore functionality
   apply_func <- lapply
   if (numCores > 1) {
-    apply_func <- function(x, func) parallel::mclapply(x, func, mc.cores=numCores)
+    apply_func <- function(x, func) parallelApply(x, func, numCores)
   }
 
   ## Equalize probabilities across all components

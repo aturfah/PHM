@@ -107,10 +107,35 @@ computePosteriorProbMatrix <- function(paramsList, data) {
 }
 
 
+## parallel::mclapply() does not stop when a worker fails. A task that
+## throws an error comes back as a "try-error" object, and a worker killed by
+## the operating system (most often for running out of memory) comes back as
+## NULL, with only a warning. Code that then combines the results with
+## rbind() or c() silently drops that part of the work -- for PHMv2() this
+## means Monte Carlo batches go missing and every DeltaPmc comes out too
+## small. parallelApply() runs mclapply() and stops with an error instead.
+parallelApply <- function(X, FUN, numCores, ...) {
+  res <- parallel::mclapply(X, FUN, mc.cores = numCores, ...)
+  failed <- vapply(res, function(r) is.null(r) || inherits(r, "try-error"), logical(1))
+  if (any(failed)) {
+    errs <- vapply(res[failed], function(r) {
+      if (inherits(r, "try-error")) trimws(conditionMessage(attr(r, "condition"))) else "no result returned"
+    }, character(1))
+    killed <- vapply(res, is.null, logical(1))
+    stop(sprintf("%d of %d parallel task(s) failed (first: %s).%s",
+                 sum(failed), length(res), errs[1],
+                 if (any(killed)) paste0(" A task with no result was most likely killed by the ",
+                                         "operating system for running out of memory; try a ",
+                                         "smaller numCores or batchSize.") else ""),
+         call. = FALSE)
+  }
+  res
+}
+
 posteriorMatrixMCPmc <- function(paramsList, mcSamples, batchSize, numCores, verbose) {
   num_batches <- ceiling(mcSamples / batchSize)
   applyFunc <- lapply
-  if (numCores > 1) applyFunc <- function(x, func) parallel::mclapply(x, func, mc.cores=numCores)
+  if (numCores > 1) applyFunc <- function(x, func) parallelApply(x, func, numCores)
 
   if (verbose) cat("Drawing MC Samples\n")
   mc_obs <- sampleMixture(paramsList, mcSamples)
