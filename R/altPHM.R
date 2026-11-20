@@ -177,7 +177,7 @@ convertToPHMv2 <- function(phm) {
   res$mergeComps <- lapply(phm, function(x) x$merge_components)
   res$mergeComps[[1]] <- NA
   res$mergeValues <- sapply(phm, function(x) x$pmc_change)[1:(length(phm)-1)]
-  res$mergeValues <- c(NA, res$mergeVals)
+  res$mergeValues <- c(NA, res$mergeValues)
   res$mergeDeltaPmc <- res$mergeValues
   res$mergeCriterion <- "unscaled"
   res
@@ -353,8 +353,7 @@ constructVisData <- function(phmObj,
   } else if (scaleHeights == "log10" && phmObj$mergeCriterion != "alpha") {
     height <- -log10(height)
   } else if (scaleHeights %in% c("pmcdist")) {
-    load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "PHM"))
+    inv_log10 <- pmcScaleFunction()
     height <- inv_log10(log10(height))
     height <- height^2
   } else if (scaleHeights == "log10") {
@@ -574,6 +573,8 @@ constructVisData <- function(phmObj,
 #' @param initK Number of clusters from which to initialize the visualization
 #' @param threshold Value at which to stop merging subtrees, taken from `phmObj$mergeValues`
 #' @param scaleHeights How the merge criterion values should be translated into dendrogram heights. d* is default for alpha-scaled Pmc.
+#' @param displayValue Whether to label each merge with its merge value
+#' @param displayValueSize Text size of those labels (default 2)
 #' @inheritParams plotPHMDendrogram
 #' 
 #' @export 
@@ -700,6 +701,7 @@ plotPHMv2Dendrogram <- function(phmObj,
 #' @param initK Number of clusters from which to initialize the visualization
 #' @param fillScale How the merge criterion values should be translated into heatmap colors. d* is default for alpha-scaled Pmc.
 #' @param subsetClusters Which clusters to show on the heatmap. Allows to examine substructures of the tree.
+#' @param scaleAxis Whether to draw each cluster's row and column with a width proportional to its weight, instead of equal widths
 #' @inheritParams plotPHMMatrix
 #' 
 #' @export 
@@ -794,8 +796,7 @@ plotPHMv2Heatmap <- function(phmObj,
 
   fillScaleFunc <- log10
   if (fillScale == "pmcdist") {
-    load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "PHM"))
+    inv_log10 <- pmcScaleFunction()
     fillScaleFunc <- function(x) -inv_log10(log10(x))
   } else if (fillScale == "d*") {
     ## We multiply by negative 1 here because large value => small distance

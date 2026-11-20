@@ -44,6 +44,8 @@ mergeParams <- function(par1, par2) {
 #' @param data An \eqn{N \times D} matrix of observations
 #' @param verbose Boolean whether to suppress debug statements
 #' @param computePosterior Boolean whether to compute the Posterior matrix for the merges
+#' @param deltaPmc Not used; the \eqn{\Delta P_{\rm{mc}}} matrix is always computed from the cluster parameters. Kept for backward compatibility.
+#' @param partitionWeightedDensity If `partition` is given without `paramsList`, whether to estimate each cluster's density with [constructPmcParamsWeightedPartition()] (`TRUE`, default) or [constructPmcParamsPartition()] (`FALSE`)
 #' @param partitionModel If no partition provided, the covariance structure to estimate the density for each partition using [constructPmcParamsPartition()]
 #' @param partitionMaxComponents If specifying `partition`, the maximum number of components to estimate the density for each partition
 #' @param mc Boolean whether to use Monte Carlo integration to evaluate the \eqn{\Delta P_{\rm{mc}}} matrix
@@ -53,7 +55,7 @@ mergeParams <- function(par1, par2) {
 #' 
 #' @examples 
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' phm <- PHM(paramsList=params, data=dat, partition=partition)

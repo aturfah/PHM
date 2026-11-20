@@ -1,3 +1,6 @@
 ^PHM\.Rproj$
 ^\.Rproj\.user$
 ^data-raw$
+^LICENSE$
+^docs$
+^PHM_Explorer$

@@ -22,6 +22,8 @@ constructPmcParamsSubAggMclust(
 
 \item{replicates}{Number of replicates over which to ensemble}
 
+\item{subsampSize}{Number of observations to draw in each replicate. If NULL use entire dataset in each replicate}
+
 \item{G}{Number of components for each ensembled model}
 
 \item{saveDir}{Where to save intermediate density estimates (for rerunning analyses). NULL is not saving}
@@ -35,10 +37,6 @@ constructPmcParamsSubAggMclust(
 \item{seeds}{List of seeds to use across replicates}
 
 \item{...}{Parameters to provide to Mclust}
-
-\item{modelNames}{Covariance structures for each ensembled moddel}
-
-\item{subSampSize}{Number of subsamples to draw in each replicate. If NULL use entire dataset in each replicate}
 }
 \value{
 List of lists where each sublist contains the
@@ -52,6 +50,6 @@ EEP
 FILL ME IN
 }
 \examples{
-set seed(1)
+set.seed(1)
 
 }

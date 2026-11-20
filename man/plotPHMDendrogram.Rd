@@ -41,6 +41,8 @@ plotPHMDendrogram(
 
 \item{mergeLabelsSize}{Text size for the numeric value in the labels on the dendrogram}
 
+\item{mergeLabelsBorderSize}{Line width of the merge label box border}
+
 \item{mergeLabelsPadding}{Padding for the merge label text}
 
 \item{mergeLabelsR}{Radius for the rounded edges of the merge label box}

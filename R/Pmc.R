@@ -22,7 +22,8 @@
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
+#' library(mclust)
 #' mcl <- Mclust(dat)
 #' constructPmcParamsMclust(mcl)
 #'
@@ -78,7 +79,7 @@ constructPmcParamsMclust <- function(mclustObj, singleElement=F) {
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #'
@@ -127,7 +128,7 @@ constructPmcParamsPartition <- function(partition, data, ...) {
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params_w <- constructPmcParamsWeightedPartition(partition, dat, G=1:5)
 #'
@@ -205,9 +206,8 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #'
 #' @param data Numeric matrix for data
 #' @param G Number of components for each ensembled model
-#' @param modelNames Covariance structures for each ensembled moddel
 #' @param replicates Number of replicates over which to ensemble
-#' @param subSampSize Number of subsamples to draw in each replicate. If NULL use entire dataset in each replicate
+#' @param subsampSize Number of observations to draw in each replicate. If NULL use entire dataset in each replicate
 #' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving
 #' @param prefix Filename prefix for saving intermediate density estimates
 #' @param verbose Whether to print out logging messages
@@ -216,7 +216,7 @@ constructPmcParamsWeightedPartition <- function(partition, data, weights=NULL, t
 #' @param ... Parameters to provide to Mclust
 #'
 #' @examples
-#' set seed(1)
+#' set.seed(1)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
@@ -316,8 +316,8 @@ constructPmcParamsSubAggMclust <- function(data,
   gmm_res
 }
 
-#' E
-#' 
+## Older localized ensemble; superseded by localizedDensityEstimation().
+#' @noRd
 constructPmcParamsLocalizedEnsemble <- function(data,
                                                 clustFunc,
                                                 replicates,
@@ -434,13 +434,14 @@ constructPmcParamsLocalizedEnsemble <- function(data,
 #'
 #' @inheritParams constructPmcParamsWeightedPartition
 #' @param replicates Number of replicates over which to be ensembled
+#' @param subsampSize Maximum number of observations used per cluster in each replicate
 #' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving
 #' @param prefix Filename prefix for saving intermediate density estimates
 #' @param verbose Whether to print out logging messages
 #' @param numCores Number of cores over which to parallelize
 #'
 #' @examples
-#' set seed(1)
+#' set.seed(1)
 #'
 #' @returns List of lists where each sublist contains the
 #' proportion, mean, covariance matrix estimates
@@ -589,10 +590,10 @@ constructPmcParamsSubAggPartition <- function(data,
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
-#' computeMonteCarloPmc(params, 1e5, verbose=T)
+#' computeMonteCarloPmc(params, 1e5, verbose=TRUE)
 #'
 #' @return Monte Carlo estimate of \eqn{P_{\rm mc}}
 #' @export
@@ -632,10 +633,10 @@ computeMonteCarloPmc <- function(paramsList, mcSamples=1e5, batchSize=mcSamples,
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
-#' computeMonteCarloDeltaPmcMatrix(params, 1e5, verbose=T)
+#' computeMonteCarloDeltaPmcMatrix(params, 1e5, verbose=TRUE)
 #'
 #' @return \eqn{K \times K} matrix with each pair of clusters' \eqn{\Delta P_{\rm{mc}}} value.
 #' @export
@@ -674,7 +675,7 @@ computeMonteCarloDeltaPmcMatrix <- function(paramsList, mcSamples=1e6, batchSize
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computePmc(params)
@@ -794,7 +795,7 @@ computePmc <- function(paramsList, integralControl=list()) {
 #'
 #' @examples
 #' set.seed(1)
-#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=T)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 3), rnorm(200, -3)), ncol=2, byrow=TRUE)
 #' partition <- c(rep(1, 100), rep(2, 100), rep(3, 100))
 #' params <- constructPmcParamsPartition(partition, dat, G=1:5)
 #' computeDeltaPmcMatrix(params)
@@ -882,7 +883,7 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
       if (mc) {
         ppmc <- computeMonteCarloPmc(list(params_i, params_j), verbose=F, ...)
       } else {
-        ppmc <- computePmc(list(params_i, params_j), verbose=F, ...)$integral
+        ppmc <- computePmc(list(params_i, params_j), ...)$integral
       }
       output[i, j] <- ppmc
       output[j, i] <- ppmc
@@ -901,7 +902,7 @@ computePairwisePmcMatrixOLD <- function(paramsList, mc=T, ...) {
 #' @param equalProbs Whether to ignore prior weights for each component (i.e., Pmc based solely on mean/variance)
 #' @param threshold Pmc threshold for Pairwise Pmc, all values below threshold are treated as 0
 #' @param verbose Whether to print progress messages
-#' @param ... Additional parameters passed to [computePmc()] or [computeMonteCarloPmc()]
+#' @param thresholdTol Tolerance for the search over pairs: the search for the pair whose \eqn{P_{\rm{mc}}} is closest to `threshold` stops once it is within this distance
 #'
 #' @return \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters
 #'

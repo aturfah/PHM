@@ -23,3 +23,9 @@ library(PHM)
 library(mclust)
 ```
 
+## Running a PHM ensemble
+
+`fitPHMEnsemble()` fits an ensemble of Gaussian mixture models on random subsamples of the data and builds the PHM hierarchy on their pooled components. Its two halves, `fitDensityReplicate()` (one replicate) and `combineDensityReplicates()` (pooling plus `PHMv2()`), can also be run separately, so the replicates can be fit in parallel.
+
+The package installs command-line scripts for this in `inst/ensemble/` (find them with `system.file("ensemble", package = "PHM")`): a serial runner, a single-machine parallel runner, a Slurm job-array runner, and a worked example on the `double_ring` dataset. See [`inst/ensemble/README.md`](inst/ensemble/README.md) and the [user guide page](https://aturfah.github.io/PHM/density_estimation/ensemble.html).
+

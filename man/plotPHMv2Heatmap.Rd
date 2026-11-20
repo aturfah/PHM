@@ -41,6 +41,8 @@ plotPHMv2Heatmap(
 \item{legendPosition}{Where to put the legend for the heatmap colors. Default is to suppress.}
 
 \item{subsetClusters}{Which clusters to show on the heatmap. Allows to examine substructures of the tree.}
+
+\item{scaleAxis}{Whether to draw each cluster's row and column with a width proportional to its weight, instead of equal widths}
 }
 \description{
 Plot PHM Matrix (for v2)

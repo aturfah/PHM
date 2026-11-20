@@ -216,10 +216,12 @@ weightedMclust <- function(data, weights,
       return(mcl)
     }
 
-    ## Model names don't align with estep
-    mn_old <- mn
+    ## For G = 1, Mclust() reports its single-component model names ("X",
+    ## "XII", "XXI", "XXX"), which estep()/mstep() don't accept; use the
+    ## equivalent "V" names for both the E-step below and me.weighted().
     if (g == 1) {
       mn <- gsub("X", "V", mcl$modelName)
+      mcl$modelName <- mn
     }
 
     ## Get the Z matrix for data from mcl
@@ -228,7 +230,26 @@ weightedMclust <- function(data, weights,
     mcl$z <- mcl$z + .Machine$double.eps^2
     mcl$z <- mcl$z / rowSums(mcl$z)
 
-    do.call(mclust::me.weighted, c(list(weights=weights), mcl))
+    ## The weighted EM can break down (e.g. a component's covariance becomes
+    ## singular and its parameters turn NA); skip that candidate, as above.
+    fit <- tryCatch(do.call(mclust::me.weighted, c(list(weights=weights), mcl)),
+                    error = function(e) NULL)
+    if (is.null(fit) || anyNA(unlist(fit$parameters[c("pro", "mean", "variance")]))) {
+      if (verbose) cat("..........Skipping; weighted EM did not converge\n")
+      out <- list(bic=-Inf)
+      attributes(out) <- list(returnCode=-1)
+      return(out)
+    }
+
+    ## me.weighted() returns a log-likelihood but no BIC, which the model
+    ## selection below needs. Use the total weight as the effective sample
+    ## size, as the parameter-count check above does.
+    fit$bic <- if (is.finite(fit$loglik)) {
+      2 * fit$loglik - mcl_params * log(total_weights)
+    } else {
+      -Inf
+    }
+    fit
   })
 
   maxBIC <- -Inf
@@ -316,7 +337,7 @@ reweightedMclust <- function(data, weights, reweights,
       mcl$z <- mcl$z + .Machine$double.eps^2
       mcl$z <- mcl$z / rowSums(mcl$z)
 
-      do.call("mclust::me.weighted", c(list(weights=reweights), mcl))
+      do.call(mclust::me.weighted, c(list(weights=reweights), mcl))
     })
 
   maxBIC <- -Inf

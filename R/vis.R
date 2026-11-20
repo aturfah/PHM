@@ -29,8 +29,7 @@ constructPHMDendrogramData <- function(phm,
   } else if (scaleHeights == "log10") {
     height <- -log10(height)
   } else if (scaleHeights %in% c("pmcdist")) {
-    load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "PHM"))
+    inv_log10 <- pmcScaleFunction()
     height <- inv_log10(log10(height))
     height <- height^2
     height <- height + (1:length(height)) * 1e-6 ## Slight height offset
@@ -202,6 +201,7 @@ constructPHMDendrogramData <- function(phm,
 #' @param mergeLabelsSize Text size for the numeric value in the labels on the dendrogram
 #' @param mergeLabelsPadding Padding for the merge label text
 #' @param mergeLabelsR Radius for the rounded edges of the merge label box
+#' @param mergeLabelsBorderSize Line width of the merge label box border
 #' @param displayAxis String indicating what label to place on the leaf nodes of the dendrogram. See Details for more information.
 #' @param displayAxisSize Text size for the leaf node labels
 #' @param colorAxis Whether or not to color the labels on the leaf nodes
@@ -692,8 +692,7 @@ plotPHMMatrix <- function(phm, colors=NULL,
 
   fillScaleFunc <- log10
   if (fillScale == "pmcdist") {
-    load(system.file("extdata", "pmc_scale_function.RData", 
-                     package = "PHM"))
+    inv_log10 <- pmcScaleFunction()
     fillScaleFunc <- function(x) -inv_log10(log10(x))
   }
   matrix_long <- merge_matrix %>%
@@ -884,7 +883,7 @@ plotPmc2D <- function(paramsList,
   if (!suppressPmc) {
     labels_func <- function(x) {
       x_fmt <- format(round(x, 1), trim = TRUE)
-      x_fmt[x == logPmcThreshold] <- paste0("≤ ", logPmcThreshold)
+      x_fmt[x == logPmcThreshold] <- paste0("\u2264 ", logPmcThreshold)
       x_fmt
     }
     plt <- plt + ggplot2::geom_point(ggplot2::aes(x=X, y=Y, color=pmc)) +

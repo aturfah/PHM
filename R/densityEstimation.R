@@ -1,36 +1,61 @@
 #' Global (Ensemble) Density Estimation
 #'
-#' @description EEP
+#' @description
+#' Fits `M` Gaussian mixture models, each to a (sub)sample of `X`, and pools
+#' their components into one mixture density, returned as a component list
+#' ready for [PHMv2()]. Each replicate is fit by [fitDensityReplicate()], the
+#' same function the PHM ensemble pipeline uses (see [fitPHMEnsemble()]), so
+#' the same `M`, subsample size and seeds give the same components here as
+#' in [fitPHMEnsemble()] or the scripts in `inst/ensemble/`.
 #'
-#' @details FILL ME IN
+#' @details
+#' Each replicate draws `round(rho * nrow(X))` rows (or `subsampleSize`
+#' rows), without replacement unless `replace = TRUE`, and selects a model
+#' and number of components by BIC. If the best `G` is the largest value
+#' tried, the range is widened automatically (see `GStep`/`GMax`, passed
+#' through `...`). The `M` replicates are pooled with equal weights, so
+#' each contributes `1/M` of the total probability.
 #'
-#' @param X Numeric matrix for data
-#' @param M Number of replicates over which to ensemble. Default is 1, producing a single density estimate.
-#' @param rho Proportion of dataset for subsample. Default is NULL, using the entire dataset.
-#' @param subSampSize Explicitly value for subsample size. Default is NULL, using the entire dataset.
-#' @param replace Whether to sample with replacement for subsampling.
-#' @param seeds List of seeds to use across replicates.
-#' @param numCores Number of cores over which to parallelize the density estimation.
-#' @param saveDir Where to save intermediate density estimates (for rerunning analyses). NULL is not saving.
-#' @param prefix Filename prefix for saving intermediate density estimates. Ignored if saveDir is NULL.
-#' @param overwrite Whether to overwrite the results if they already exist. Ignoreed if saveDir is NULL
-#' @param verbose Whether to print out logging messages.
-#' @param ... Parameters to provide to Mclust.
+#' With `saveDir` set, each replicate's result is saved there and reused on
+#' later calls with the same `prefix`, subsample size and replicate index,
+#' unless `overwrite = TRUE`.
+#'
+#' @param X Numeric data matrix (\eqn{N \times D}).
+#' @param M Number of replicates. Default 1, a single density estimate.
+#' @param rho Fraction of rows used per replicate. Default `NULL`, all rows.
+#' @param subsampleSize Number of rows used per replicate, as an alternative
+#'   to `rho`. Default `NULL`.
+#' @param replace Whether to draw each replicate's rows with replacement.
+#' @param seeds Seeds for the `M` replicates. The default,
+#'   `phmSeeds(1000, M)`, matches [fitPHMEnsemble()]'s default `seedBase`.
+#' @param numCores Number of replicates fit in parallel (forked processes;
+#'   not available on Windows).
+#' @param saveDir Folder in which to save each replicate's result for reuse.
+#'   `NULL` (default) saves nothing.
+#' @param prefix File name prefix for saved replicates. Ignored if `saveDir`
+#'   is `NULL`.
+#' @param overwrite Whether to refit replicates that are already saved.
+#'   Ignored if `saveDir` is `NULL`.
+#' @param verbose Whether to print progress messages.
+#' @param ... Further arguments to [fitDensityReplicate()], such as `G`,
+#'   `modelNames`, `GStep`, `GMax` and `stage2Init`.
 #'
 #' @examples
-#' set seed(1)
+#' set.seed(1)
+#' dat <- matrix(c(rnorm(200), rnorm(200, 5), rnorm(200, -5)), ncol = 2, byrow = TRUE)
+#' params <- globalDensityEstimation(dat, M = 2, rho = 0.8, G = 1:5)
+#' length(params)
 #'
-#' @returns List of lists where each sublist contains the
-#' proportion, mean, covariance matrix estimates
-#' for each component in the ensembled model.
+#' @returns List of lists, one per pooled component, each with the
+#' component's `prob`, `mean`, `var` and `class`.
 #'
 #' @export
-globalDensityEstimation <- function(X, 
-                                    M=1, 
+globalDensityEstimation <- function(X,
+                                    M=1,
                                     rho=NULL,
                                     subsampleSize=NULL,
                                     replace=F,
-                                    seeds=1:M, 
+                                    seeds=phmSeeds(1000, M),
                                     numCores=1,
                                     saveDir=NULL,
                                     prefix="global",
@@ -45,93 +70,52 @@ globalDensityEstimation <- function(X,
         stop("Length of seeds must be equal to M")
     }
 
-    ## Logic for subsample size
+    ## Subsample size, expressed as rho for fitDensityReplicate()
     N <- nrow(X)
-    subsamp <- F
     if (!is.null(subsampleSize)) {
-        if (verbose) cat("Subsample Size Provided =", subsampleSize, "\n")
-        subsamp <- T
-    } else if (!is.null(rho)) {
-        ## rho provided, use that
-        subsampleSize = ceiling(N * rho)
-        if (verbose) cat("Rho Provided; Subsample Size =", subsampleSize, "\n")
-        subsamp <- T
-    } else {
-        subsampleSize <- N
-        if (verbose) cat("Using Full Sample; N =", subsampleSize, "\n")
+        rho <- subsampleSize / N
+    } else if (is.null(rho)) {
+        rho <- 1
     }
+    subsampleSize <- round(rho * N)
+    if (verbose) cat("Subsample size per replicate:", subsampleSize, "\n")
 
     ## Prepare save directory
-    backup_replicates <- F
-    if (!is.null(saveDir)) {
-        backup_replicates <- T
-        if (!dir.exists(saveDir)) dir.create(saveDir)
-    } else {
-        saveDir <- ""
-    }
+    if (!is.null(saveDir) && !dir.exists(saveDir)) dir.create(saveDir, recursive = TRUE)
 
-    ## If multicore then use mclapply
+    ## Fit replicates, in parallel if requested
     apply_func <- lapply
     if (numCores > 1 && M > 1) {
         apply_func <- function(X, FUN) {
-            parallel::mclapply(X, FUN, mc.cores=numCores)
+            parallel::mclapply(X, FUN, mc.cores=numCores, mc.preschedule=FALSE)
         }
         if (verbose) cat("Running in Parallel;", numCores, "cores\n")
-    } else {
-        if (verbose) cat("Running with Single Process\n")
     }
 
-    ## Iterate over seeds
     results <- apply_func(1:M, function(idx) {
-        ## Whether this replicate has already been run; check in saveDir if specified
-        filename <- paste(prefix, 
-            "ssize", subsampleSize,
-            "Repl", idx,
-            "f.RDS", sep="_"
-        )
-        filename <- file.path(saveDir, filename)
-        # need_to_run <- !file.exists(filename) || backup_replicates || overwrite
-        need_to_run <- (!file.exists(filename) && backup_replicates) || overwrite
+        filename <- if (is.null(saveDir)) NA else
+            file.path(saveDir, paste(prefix, "ssize", subsampleSize, "Repl", idx, "replicate.rds", sep="_"))
 
-        if (need_to_run) {
-            seed <- seeds[idx]
-            set.seed(seed)
-            if (verbose) cat("..Running Replicate", idx, "| Seed:", seed, "\n")
-
-            ## Subset the observations OR use entire dataset
-            if (subsamp) {
-                sub_idx <- sample.int(N, size = subsampleSize, replace=replace)
-                sub_X <- X[sub_idx, ]
-            } else {
-                sub_X <- X
-            }
-
-            ## Fit the GMM and construct Pmc Params
-            mcl <- mclust::Mclust(sub_X, ..., verbose=F)
-            params <- constructPmcParamsMclust(mcl)
-
-            ## Component label in form [Replicate]_[Component Index]
-            for (g in 1:mcl$G) {
-                params[[g]]$class <- paste(idx, params[[g]]$class, sep="_")
-            }
-
-            ## Write output
-            if (backup_replicates) saveRDS(params, filename)
-        } else {
+        if (!is.na(filename) && file.exists(filename) && !overwrite) {
             if (verbose) cat("..Loading Replicate", idx, "\n")
-            params <- readRDS(filename)
+            return(readRDS(filename))
         }
 
-        params
+        if (verbose) cat("..Running Replicate", idx, "| Seed:", seeds[idx], "\n")
+        args <- list(X, idx = idx, seed = seeds[idx], rho = rho, replace = replace, ...)
+        if (is.null(args$extendVerbose)) args$extendVerbose <- verbose
+        if (is.null(args$label)) args$label <- prefix
+        res <- do.call(fitDensityReplicate, args)
+        if (!is.na(filename)) saveRDS(res, filename)
+        res
     })
-    results <- do.call(c, results)
 
-    ## Normalize the Probabilities
-    for (idx in 1:length(results)) {
-        results[[idx]]$prob <- results[[idx]]$prob / M
+    failed <- vapply(results, function(r) is.null(r) || inherits(r, "try-error"), logical(1))
+    if (any(failed)) {
+        stop(sprintf("replicate(s) %s failed", paste(which(failed), collapse = ", ")))
     }
 
-    results
+    poolDensityReplicates(results, replicateWeighting = "equal", label = prefix)
 }
 
 
@@ -226,7 +210,7 @@ localizedDensityEstimation <- function(X,
             "f.RDS", sep="_"
         )
         filename <- file.path(saveDir, filename)
-        need_to_run <- (!file.exists(filename) && backup_replicates) || overwrite
+        need_to_run <- !backup_replicates || overwrite || !file.exists(filename)
 
         if (need_to_run) {
             if (verbose) cat("..Running Replicate", idx, "\n")

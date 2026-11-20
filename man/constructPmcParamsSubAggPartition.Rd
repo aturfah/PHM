@@ -25,6 +25,8 @@ constructPmcParamsSubAggPartition(
 
 \item{replicates}{Number of replicates over which to be ensembled}
 
+\item{subsampSize}{Maximum number of observations used per cluster in each replicate}
+
 \item{linkFunc}{Function to use to combine all distances within a cluster for weight calculation. Default is \code{min}}
 
 \item{threshold}{Threshold past which to not include weights (for computational efficiency)}
@@ -51,6 +53,6 @@ EEP
 PEW
 }
 \examples{
-set seed(1)
+set.seed(1)
 
 }

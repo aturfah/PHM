@@ -35,6 +35,10 @@ plotPHMv2Dendrogram(
 
 \item{displayAxisSize}{Text size for the leaf node labels}
 
+\item{displayValue}{Whether to label each merge with its merge value}
+
+\item{displayValueSize}{Text size of those labels (default 2)}
+
 \item{colorAxis}{Whether or not to color the labels on the leaf nodes}
 
 \item{groupProbs}{Vector of class probability conditional on base group membership}

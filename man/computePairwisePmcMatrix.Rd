@@ -23,11 +23,11 @@ computePairwisePmcMatrix(
 
 \item{threshold}{Pmc threshold for Pairwise Pmc, all values below threshold are treated as 0}
 
+\item{thresholdTol}{Tolerance for the search over pairs: the search for the pair whose \eqn{P_{\rm{mc}}} is closest to \code{threshold} stops once it is within this distance}
+
 \item{equalProbs}{Whether to ignore prior weights for each component (i.e., Pmc based solely on mean/variance)}
 
 \item{verbose}{Whether to print progress messages}
-
-\item{...}{Additional parameters passed to \code{\link[=computePmc]{computePmc()}} or \code{\link[=computeMonteCarloPmc]{computeMonteCarloPmc()}}}
 }
 \value{
 \eqn{K \times K} matrix with Pairwise \eqn{P_{\rm{mc}}} values for each pair of clusters

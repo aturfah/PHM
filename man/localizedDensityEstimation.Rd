@@ -26,7 +26,7 @@ localizedDensityEstimation(
 )
 }
 \arguments{
-\item{X}{Numeric matrix for data}
+\item{X}{Numeric data matrix (\eqn{N \times D}).}
 
 \item{partitionFunc}{Function taking input matrix X as input and returning a vector of partition labels.}
 
@@ -40,25 +40,34 @@ localizedDensityEstimation(
 
 \item{preserveClusters}{Whether to keep the components for a partition together or to treat them separately}
 
-\item{M}{Number of replicates over which to ensemble. Default is 1, producing a single density estimate.}
+\item{M}{Number of replicates. Default 1, a single density estimate.}
 
-\item{rho}{Proportion of dataset for subsample. Default is NULL, using the entire dataset.}
+\item{rho}{Fraction of rows used per replicate. Default \code{NULL}, all rows.}
 
-\item{replace}{Whether to sample with replacement for subsampling.}
+\item{subsampleSize}{Number of rows used per replicate, as an alternative
+to \code{rho}. Default \code{NULL}.}
 
-\item{seeds}{List of seeds to use across replicates.}
+\item{replace}{Whether to draw each replicate's rows with replacement.}
 
-\item{numCores}{Number of cores over which to parallelize the density estimation.}
+\item{seeds}{Seeds for the \code{M} replicates. The default,
+\code{phmSeeds(1000, M)}, matches \code{\link[=fitPHMEnsemble]{fitPHMEnsemble()}}'s default \code{seedBase}.}
 
-\item{saveDir}{Where to save intermediate density estimates (for rerunning analyses). NULL is not saving.}
+\item{numCores}{Number of replicates fit in parallel (forked processes;
+not available on Windows).}
 
-\item{prefix}{Filename prefix for saving intermediate density estimates. Ignored if saveDir is NULL.}
+\item{saveDir}{Folder in which to save each replicate's result for reuse.
+\code{NULL} (default) saves nothing.}
 
-\item{overwrite}{Whether to overwrite the results if they already exist. Ignoreed if saveDir is NULL}
+\item{prefix}{File name prefix for saved replicates. Ignored if \code{saveDir}
+is \code{NULL}.}
 
-\item{verbose}{Whether to print out logging messages.}
+\item{overwrite}{Whether to refit replicates that are already saved.
+Ignored if \code{saveDir} is \code{NULL}.}
 
-\item{...}{Parameters to provide to Mclust.}
+\item{verbose}{Whether to print progress messages.}
+
+\item{...}{Further arguments to \code{\link[=fitDensityReplicate]{fitDensityReplicate()}}, such as \code{G},
+\code{modelNames}, \code{GStep}, \code{GMax} and \code{stage2Init}.}
 }
 \description{
 EEP
