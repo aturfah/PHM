@@ -167,16 +167,19 @@ localizedDensityEstimation <- function(X,
     N <- nrow(X)
     subsamp <- F
     if (!is.null(subsampleSize)) {
-        if (verbose) cat("Subsample Size Provided =", subsampleSize, "\n")
+        verbosityPrint("Subsample Size Provided =", subsampleSize, vValue=verbose, vLevel=1)
+        # if (verbose) cat("Subsample Size Provided =", subsampleSize, "\n")
         subsamp <- T
     } else if (!is.null(rho)) {
         ## rho provided, use that
         subsampleSize = ceiling(N * rho)
-        if (verbose) cat("Rho Provided; Subsample Size =", subsampleSize, "\n")
+        verbosityPrint("Rho Provided; Subsample Size =", subsampleSize, vValue=verbose, vLevel=1)
+        # if (verbose) cat("Rho Provided; Subsample Size =", subsampleSize, "\n")
         subsamp <- T
     } else {
         subsampleSize <- N
-        if (verbose) cat("Using Full Sample; N =", subsampleSize, "\n")
+        # if (verbose) cat("Using Full Sample; N =", subsampleSize, "\n")
+        verbosityPrint("Using Full Sample; N =", subsampleSize, vValue=verbose, vLevel=1)
     }
 
     ## Prepare save directory
@@ -184,19 +187,20 @@ localizedDensityEstimation <- function(X,
     if (!is.null(saveDir)) {
         backup_replicates <- T
         if (!dir.exists(saveDir)) dir.create(saveDir)
+        verbosityPrint("Saving to:", saveDir, vValue=verbose, vLevel=1)
     } else {
         saveDir <- ""
     }
-
     ## If multicore then use mclapply (via parallelApply(), which stops if a worker fails)
     apply_func <- lapply
     if (numCores > 1 && M > 1) {
         apply_func <- function(X, FUN) {
             parallelApply(X, FUN, numCores)
         }
-        if (verbose) cat("Running in Parallel;", numCores, "cores\n")
+        verbosityPrint("Running in Parallel;", numCores, vValue=verbose, vLevel=1)
     } else {
-        if (verbose) cat("Running with Single Process\n")
+        # if (verbose) cat("Running with Single Process\n")
+        verbosityPrint("Running with Single Process", vValue=verbose, vLevel=1)
     }
 
     results <- apply_func(1:M, function(idx) {
@@ -213,7 +217,8 @@ localizedDensityEstimation <- function(X,
         need_to_run <- !backup_replicates || overwrite || !file.exists(filename)
 
         if (need_to_run) {
-            if (verbose) cat("..Running Replicate", idx, "\n")
+            # if (verbose) cat("..Running Replicate", idx, "\n")
+            verbosityPrint("Running Replicate", idx, vValue=verbose, vLevel=2)
 
             ## Subset the observations OR use entire dataset
             if (subsamp) {
@@ -225,13 +230,15 @@ localizedDensityEstimation <- function(X,
             }
 
             ## Partition Data + Construct Weight Matrix
-            if (verbose) cat("....Running Clustering\n")
+            # if (verbose) cat("....Running Clustering\n")
+            verbosityPrint("Running Clustering", vValue=verbose, vLevel=3)
             partitionFuncParams[["seed"]] <- seed
             partitionFuncParams[["X"]] <- sub_X
             partition <- do.call(partitionFunc, partitionFuncParams)
 
 
-            if (verbose) cat("....Constructing Weights\n")
+            # if (verbose) cat("....Constructing Weights\n")
+            verbosityPrint("Constructing Weights", vValue=verbose, vLevel=3)
             weightFuncParams[["X"]] <- sub_X
             weightFuncParams[["partition"]] <- partition
             weights <- do.call(weightFunc, weightFuncParams)
@@ -251,9 +258,10 @@ localizedDensityEstimation <- function(X,
                 sub_X_k_valid <- sub_X[valid, , drop=F]
                 w <- w[valid]
 
-                if (verbose) {
-                    cat("....Density Estimation: Cluster", k, "\n")
-                }
+                verbosityPrint("Density Estimation: Cluster", k, vValue=verbose, vLevel=3)
+                # if (verbose) {
+                #     cat("....Density Estimation: Cluster", k, "\n")
+                # }
 
                 wmcl <- weightedMclust(sub_X_k_valid, 
                                        init_data=sub_X_k,
@@ -276,7 +284,8 @@ localizedDensityEstimation <- function(X,
             ## Write output
             if (backup_replicates) saveRDS(params, filename)
         } else {
-            if (verbose) cat("..Loading Replicate", idx, "\n")
+            # if (verbose) cat("..Loading Replicate", idx, "\n")
+            verbosityPrint("Loading Replicate", idx, vValue=verbose, vLevel=2)
             params <- readRDS(filename)
         }
 
