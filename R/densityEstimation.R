@@ -78,7 +78,7 @@ globalDensityEstimation <- function(X,
         rho <- 1
     }
     subsampleSize <- round(rho * N)
-    if (verbose) cat("Subsample size per replicate:", subsampleSize, "\n")
+    verbosityPrint("Subsample size per replicate:", subsampleSize, vValue=verbose, vLevel=1)
 
     ## Prepare save directory
     if (!is.null(saveDir) && !dir.exists(saveDir)) dir.create(saveDir, recursive = TRUE)
@@ -89,7 +89,7 @@ globalDensityEstimation <- function(X,
         apply_func <- function(X, FUN) {
             parallelApply(X, FUN, numCores, mc.preschedule=FALSE)
         }
-        if (verbose) cat("Running in Parallel;", numCores, "cores\n")
+        verbosityPrint("Running in Parallel;", numCores, "cores", vValue=verbose, vLevel=1)
     }
 
     results <- apply_func(1:M, function(idx) {
@@ -97,13 +97,13 @@ globalDensityEstimation <- function(X,
             file.path(saveDir, paste(prefix, "ssize", subsampleSize, "Repl", idx, "replicate.rds", sep="_"))
 
         if (!is.na(filename) && file.exists(filename) && !overwrite) {
-            if (verbose) cat("..Loading Replicate", idx, "\n")
+            verbosityPrint("Loading Replicate", idx, vValue=verbose, vLevel=2)
             return(readRDS(filename))
         }
 
-        if (verbose) cat("..Running Replicate", idx, "| Seed:", seeds[idx], "\n")
+        verbosityPrint("Running Replicate", idx, "| Seed:", seeds[idx], vValue=verbose, vLevel=2)
         args <- list(X, idx = idx, seed = seeds[idx], rho = rho, replace = replace, ...)
-        if (is.null(args$extendVerbose)) args$extendVerbose <- verbose
+        if (is.null(args$extendVerbose)) args$extendVerbose <- isTRUE(verbose) | verbose > 0
         if (is.null(args$label)) args$label <- prefix
         res <- do.call(fitDensityReplicate, args)
         if (!is.na(filename)) saveRDS(res, filename)
@@ -194,7 +194,7 @@ localizedDensityEstimation <- function(X,
         apply_func <- function(X, FUN) {
             parallelApply(X, FUN, numCores)
         }
-        verbosityPrint("Running in Parallel;", numCores, vValue=verbose, vLevel=1)
+        verbosityPrint("Running in Parallel;", numCores, "cores", vValue=verbose, vLevel=1)
     } else {
         verbosityPrint("Running with Single Process", vValue=verbose, vLevel=1)
     }
