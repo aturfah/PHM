@@ -115,6 +115,8 @@ globalDensityEstimation <- function(X,
         stop(sprintf("replicate(s) %s failed", paste(which(failed), collapse = ", ")))
     }
 
+    verbosityPrint("Complete!", vValue=verbose, vLevel=1)
+
     poolDensityReplicates(results, replicateWeighting = "equal", label = prefix)
 }
 
@@ -287,6 +289,8 @@ localizedDensityEstimation <- function(X,
     for (idx in 1:length(results)) {
         results[[idx]]$prob <- results[[idx]]$prob / M
     }
+
+    verbosityPrint("Complete!", vValue=verbose, vLevel=1)
 
     results
 }
