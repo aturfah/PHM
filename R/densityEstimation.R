@@ -168,17 +168,14 @@ localizedDensityEstimation <- function(X,
     subsamp <- F
     if (!is.null(subsampleSize)) {
         verbosityPrint("Subsample Size Provided =", subsampleSize, vValue=verbose, vLevel=1)
-        # if (verbose) cat("Subsample Size Provided =", subsampleSize, "\n")
         subsamp <- T
     } else if (!is.null(rho)) {
         ## rho provided, use that
         subsampleSize = ceiling(N * rho)
         verbosityPrint("Rho Provided; Subsample Size =", subsampleSize, vValue=verbose, vLevel=1)
-        # if (verbose) cat("Rho Provided; Subsample Size =", subsampleSize, "\n")
         subsamp <- T
     } else {
         subsampleSize <- N
-        # if (verbose) cat("Using Full Sample; N =", subsampleSize, "\n")
         verbosityPrint("Using Full Sample; N =", subsampleSize, vValue=verbose, vLevel=1)
     }
 
@@ -199,7 +196,6 @@ localizedDensityEstimation <- function(X,
         }
         verbosityPrint("Running in Parallel;", numCores, vValue=verbose, vLevel=1)
     } else {
-        # if (verbose) cat("Running with Single Process\n")
         verbosityPrint("Running with Single Process", vValue=verbose, vLevel=1)
     }
 
@@ -217,7 +213,6 @@ localizedDensityEstimation <- function(X,
         need_to_run <- !backup_replicates || overwrite || !file.exists(filename)
 
         if (need_to_run) {
-            # if (verbose) cat("..Running Replicate", idx, "\n")
             verbosityPrint("Running Replicate", idx, vValue=verbose, vLevel=2)
 
             ## Subset the observations OR use entire dataset
@@ -230,14 +225,12 @@ localizedDensityEstimation <- function(X,
             }
 
             ## Partition Data + Construct Weight Matrix
-            # if (verbose) cat("....Running Clustering\n")
             verbosityPrint("Running Clustering", vValue=verbose, vLevel=3)
             partitionFuncParams[["seed"]] <- seed
             partitionFuncParams[["X"]] <- sub_X
             partition <- do.call(partitionFunc, partitionFuncParams)
 
 
-            # if (verbose) cat("....Constructing Weights\n")
             verbosityPrint("Constructing Weights", vValue=verbose, vLevel=3)
             weightFuncParams[["X"]] <- sub_X
             weightFuncParams[["partition"]] <- partition
@@ -259,10 +252,6 @@ localizedDensityEstimation <- function(X,
                 w <- w[valid]
 
                 verbosityPrint("Density Estimation: Cluster", k, vValue=verbose, vLevel=3)
-                # if (verbose) {
-                #     cat("....Density Estimation: Cluster", k, "\n")
-                # }
-
                 wmcl <- weightedMclust(sub_X_k_valid, 
                                        init_data=sub_X_k,
                                        weights=w, 
@@ -284,7 +273,6 @@ localizedDensityEstimation <- function(X,
             ## Write output
             if (backup_replicates) saveRDS(params, filename)
         } else {
-            # if (verbose) cat("..Loading Replicate", idx, "\n")
             verbosityPrint("Loading Replicate", idx, vValue=verbose, vLevel=2)
             params <- readRDS(filename)
         }
