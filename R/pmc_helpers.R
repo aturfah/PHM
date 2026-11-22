@@ -169,6 +169,7 @@ weightedMclust <- function(data, weights,
                            init_data=NULL, init_idx=NULL,
                            G=NULL, modelNames=NULL,
                            verbose=F,
+                           baseVerbosity=4,
                            ...) {
 
   if (is.null(dim(data))) data <- matrix(data, ncol=1)
@@ -203,11 +204,9 @@ weightedMclust <- function(data, weights,
   ## For provided G, fit the baseline GMM and then tune with weights
   total_weights  <- sum(weights)
   d <- ncol(data)
-  if (verbose) {
-    cat("......Cluster Size:", nrow(init_data), "\n")
-    cat("......Observations:", nrow(data), "\n")
-    cat("......Total Weights:", total_weights, "\n")
-  }
+  verbosityPrint("Cluster Size:", nrow(init_data), vValue=verbose, vLevel=baseVerbosity)
+  verbosityPrint("Observations:", nrow(data), vValue=verbose, vLevel=baseVerbosity)
+  verbosityPrint("Total Weights:", total_weights, vValue=verbose, vLevel=baseVerbosity)
 
   grid <- expand.grid(G = G, mn = modelNames, stringsAsFactors = FALSE)
 
@@ -217,15 +216,13 @@ weightedMclust <- function(data, weights,
 
     ## Don't allow models where number of params is > # of samples
     mcl_params <- mclust::nMclustParams(mn, d, g)
-    if (verbose) {
-      cat("........Model:", mn, "| G:", g, "| Params:", mcl_params, "\n")
-    }
+    verbosityPrint("Model:", mn, "| G:", g, "| Params:", mcl_params, 
+                   vValue=verbose, vLevel=baseVerbosity+1)
 
     if (mcl_params > total_weights) {
       out <- list(bic=-Inf)
-      if (verbose) {
-        cat(paste("..........Skipping; insufficient samples\n"))
-      }
+      verbosityPrint("Skipping; insufficient samples", 
+                vValue=verbose, vLevel=baseVerbosity+2)
       attributes(out) <- list(returnCode=-342)
       return(out)
     }
@@ -236,7 +233,8 @@ weightedMclust <- function(data, weights,
                       verbose=F, ...)
 
     if (is.null(mcl$parameters)) {
-      cat(paste("..........Skipping; Mclust did not fit properly\n"))
+      verbosityPrint("Skipping; Mclust did not fit properly", 
+                      vValue=verbose, vLevel=baseVerbosity+2)
       mcl$bic <- -Inf
       return(mcl)
     }
@@ -260,7 +258,8 @@ weightedMclust <- function(data, weights,
     fit <- tryCatch(do.call(mclust::me.weighted, c(list(weights=weights), mcl)),
                     error = function(e) NULL)
     if (is.null(fit) || anyNA(unlist(fit$parameters[c("pro", "mean", "variance")]))) {
-      if (verbose) cat("..........Skipping; weighted EM did not converge\n")
+      verbosityPrint("Skipping; weighted EM did not converge", 
+                      vValue=verbose, vLevel=baseVerbosity+2)
       out <- list(bic=-Inf)
       attributes(out) <- list(returnCode=-1)
       return(out)
