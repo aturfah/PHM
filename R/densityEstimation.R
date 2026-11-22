@@ -501,6 +501,7 @@ plotDensity2D <- function(paramsList,
 ##########################################################
 ### Old Density Estimation Functions; to be Deprecated ###
 ##########################################################
+
 #' Construct \eqn{P_{\rm{mc}}} parameter list from `Mclust` output
 #'
 #' @description
