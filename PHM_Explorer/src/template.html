@@ -1,0 +1,970 @@
+<meta charset="utf-8">
+<title>PHM Explorer</title>
+<style>
+:root {
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --surface-2: #f1efe9;
+  --border: #e2ded4;
+  --ink: #17160f;
+  --ink-soft: #6b6759;
+  --ink-faint: #a8a394;
+  --accent: #2a78d6;
+  --accent-soft: #dbe9fb;
+  --gold: #ffc400;
+  --gold-soft: #fcecc9;
+  --font-display: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --ink-rgb: 23, 22, 15;
+  --blue-rgb: 30, 90, 200;
+  --red-rgb: 205, 60, 50;
+  --ink-faint-rgb: 168, 163, 148;
+  --gold-rgb: 255, 196, 0;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17160f; --surface: #211f17; --surface-2: #292619; --border: #3c382a;
+    --ink: #f5f3ea; --ink-soft: #b8b3a2; --ink-faint: #756f5e;
+    --accent: #74b0f2; --accent-soft: #203350; --gold: #ffd43b; --gold-soft: #3a2e10;
+    --ink-rgb: 245, 243, 234;
+    --blue-rgb: 96, 150, 230; --red-rgb: 226, 110, 100;
+    --ink-faint-rgb: 117, 111, 94;
+    --gold-rgb: 255, 212, 59;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17160f; --surface: #211f17; --surface-2: #292619; --border: #3c382a;
+  --ink: #f5f3ea; --ink-soft: #b8b3a2; --ink-faint: #756f5e;
+  --accent: #74b0f2; --accent-soft: #203350; --gold: #ffd43b; --gold-soft: #3a2e10;
+  --ink-rgb: 245, 243, 234;
+  --blue-rgb: 96, 150, 230; --red-rgb: 226, 110, 100;
+  --ink-faint-rgb: 117, 111, 94;
+  --gold-rgb: 255, 212, 59;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font-body); margin: 0; padding-inline: 20px; padding-block: 28px 60px; font-size: 15px; line-height: 1.5; }
+.page { max-width: 1180px; margin: 0 auto; }
+
+header.hero { padding-bottom: 18px; border-bottom: 1px solid var(--border); margin-bottom: 22px; }
+.eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--accent); margin: 0 0 10px; }
+h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.1; margin: 0 0 10px; text-wrap: balance; }
+.dek { font-size: 1rem; color: var(--ink-soft); max-width: 66ch; margin: 0 0 16px; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 12px; }
+.pill { font-family: var(--font-mono); font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; color: var(--ink-soft); }
+.pill b { color: var(--ink); font-weight: 600; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.controls-right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 14px; }
+.ctrl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-family: var(--font-mono); color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px; }
+.ctrl b { color: var(--ink); }
+.ctrl input[type="number"] { width: 56px; font-family: var(--font-mono); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; color: var(--ink); }
+.ctrl-file { position: relative; overflow: hidden; cursor: pointer; }
+.ctrl-file input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; }
+.ctrl-file:hover { border-color: var(--accent); color: var(--ink); }
+.drop-hint { font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+.drop-hint code { font-family: var(--font-mono); }
+
+#drop-overlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(var(--ink-rgb), 0.55);
+  align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#drop-overlay.active { display: flex; }
+.drop-overlay-card {
+  font-family: var(--font-mono); font-size: 15px; color: var(--ink);
+  background: var(--surface); border: 2px dashed var(--accent); border-radius: 14px;
+  padding: 28px 36px;
+}
+.drop-overlay-card code { font-family: var(--font-mono); font-weight: 700; }
+
+.layout { display: grid; grid-template-columns: 1.15fr 1fr; gap: 18px; align-items: start; }
+.layout.no-scatter { grid-template-columns: 1fr; max-width: 640px; margin: 0 auto; }
+@media (max-width: 860px) { .layout { grid-template-columns: 1fr; } }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px 18px; }
+.panel h2 { font-family: var(--font-display); font-size: 1.05rem; font-weight: 600; margin: 0 0 2px; }
+.panel .sub { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 12px; min-height: 1.4em; }
+.stack { display: flex; flex-direction: column; gap: 18px; }
+
+canvas, svg { display: block; width: 100%; height: auto; }
+.plotbox { border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); overflow: hidden; position: relative; }
+
+/* Dendrogram + heatmap fused into one shared-x-axis figure: the two plots
+   sit in a single .combo column with no gap and share the exact same
+   horizontal margin/scale (see svgX() and renderHeatmap()'s marginFrac), so
+   leaf N in the tree lines up pixel-for-pixel with column N in the heatmap
+   directly beneath it -- one border wraps both, and only a single divider
+   line (not two stacked borders) separates them. */
+.combo { display: flex; flex-direction: column; border-radius: 10px; border: 1px solid var(--border); overflow: hidden; background: var(--surface-2); }
+.combo .plotbox { border: none; border-radius: 0; }
+.combo .plotbox + .plotbox { border-top: 1px solid var(--border); }
+
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: 12px; color: var(--ink-soft); }
+/* Gradient's left end matches PROB_ALPHA_FLOOR in the script below (probability
+   0 is now fully transparent) -- keep these in sync. */
+.probgrad { width: 130px; height: 10px; border-radius: 5px; border: 1px solid var(--border); background: linear-gradient(to right, rgba(var(--gold-rgb),0), rgba(var(--gold-rgb),1)); }
+
+.swatch { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.swatch i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.swatch em { font-style: normal; color: var(--ink-faint); font-family: var(--font-mono); font-size: 11px; }
+.legend.cats { gap: 6px 14px; }
+
+.hint { font-size: 12px; color: var(--ink-faint); margin-top: 8px; font-family: var(--font-mono); }
+
+.info { border-radius: 10px; background: var(--surface-2); border: 1px solid var(--border); padding: 14px 16px; margin-top: 14px; min-height: 92px; }
+.info .headline { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+.info .row { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; color: var(--ink-soft); padding: 3px 0; border-top: 1px solid var(--border); }
+.info .row:first-of-type { border-top: none; }
+.info .row b { color: var(--ink); font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.placeholder { color: var(--ink-faint); font-size: 12.5px; font-style: italic; }
+
+footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); min-height: 1.2em; }
+
+.hit { fill: transparent; cursor: crosshair; pointer-events: all; }
+.seg { stroke: var(--ink-faint); stroke-width: 1.3; fill: none; pointer-events: none; }
+.seg.active { stroke: var(--gold); stroke-width: 2.4; }
+.leaftick { fill: var(--ink-faint); pointer-events: none; }
+.leaftick.active { fill: var(--gold); }
+.leaflabel { font-family: var(--font-mono); font-size: 2.6px; text-anchor: middle; fill: var(--ink-faint); }
+</style>
+
+<div class="page">
+
+<header class="hero">
+  <p class="eyebrow">PHM &middot; interactive</p>
+  <div class="meta" id="meta-pills"></div>
+  <div class="controls">
+    <label class="ctrl">
+      <span>show top</span>
+      <input type="number" id="threshold-input" min="2" step="1" />
+      <span>of <b id="threshold-max">&mdash;</b> components</span>
+    </label>
+    <div class="controls-right">
+      <span class="drop-hint">drag and drop a JSON export on the page, or</span>
+      <label class="ctrl ctrl-file">
+        <span>load a PHM export&hellip;</span>
+        <input type="file" id="file-input" accept=".json,application/json" />
+      </label>
+    </div>
+  </div>
+</header>
+
+<div id="drop-overlay" aria-hidden="true">
+  <div class="drop-overlay-card">Drop a PHM export (<code>.json</code>) to load it</div>
+</div>
+
+<div class="layout" id="layout">
+  <div class="stack" id="scatter-stack">
+    <div class="panel" id="posterior-panel">
+      <h2>Scatter Plot</h2>
+      <div class="plotbox"><canvas id="scatter"></canvas></div>
+      <div class="legend" id="scatter-legend"></div>
+      <p class="hint" id="scatter-hint">hover a dendrogram branch or leaf &rarr;</p>
+    </div>
+    <div class="panel" id="annot-panel" style="display:none;">
+      <h2 id="annot-title">Annotation</h2>
+      <p class="sub">Static view of the same points, one color per category. Not used by the fit.</p>
+      <div class="plotbox"><canvas id="annot"></canvas></div>
+      <div class="legend cats" id="annot-legend"></div>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="panel">
+      <h2>PHM Result</h2>
+      <div class="combo">
+        <div class="plotbox"><svg id="dendro" viewBox="0 0 100 62" preserveAspectRatio="none"></svg></div>
+        <div class="plotbox"><canvas id="heatmap"></canvas></div>
+      </div>
+      <p class="hint">blue = well separated &middot; red = weakly distinguishable &middot; each column below lines up with the leaf directly above it</p>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:18px;">
+  <h2>Branch detail</h2>
+  <div class="info" id="info-panel">
+    <p class="placeholder">Hover a leaf tick or a merge branch in the dendrogram above to inspect it here.</p>
+  </div>
+</div>
+
+<footer id="footer-text"></footer>
+
+</div>
+
+<script id="app-data" type="application/json">__DATA_JSON__</script>
+<script>
+(function() {
+  "use strict";
+
+  function asArray(v) { return v == null ? [] : (Array.isArray(v) ? v : [v]); }
+  function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  function uniq(arr) {
+    var seen = {}, out = [];
+    for (var i = 0; i < arr.length; i++) { var v = arr[i]; if (!seen[v]) { seen[v] = true; out.push(v); } }
+    return out;
+  }
+
+  // ===================================================================
+  // App state
+  // ===================================================================
+  var RAW = null;                 // full-fidelity export as currently loaded
+  var HEIGHT_RANGE = null;        // {min, max} over the CURRENTLY VISIBLE internal
+                                   // heights only (VIEW.internal), recomputed on every
+                                   // rebuildView(). When more components are fitted
+                                   // than the display threshold, everything finer than
+                                   // the threshold is merged away first (see collapse())
+                                   // and the remaining displayK-1 merges are what gets
+                                   // plotted -- exactly as if PHM had been asked for a
+                                   // displayK-component tree in the first place, so the
+                                   // y-axis and heatmap colors always use the full
+                                   // vertical/color range for whatever is on screen,
+                                   // instead of being anchored to heights that got
+                                   // collapsed away and are no longer shown at all.
+  var VIEW = null;                // current collapsed view: {displayK, leaves, internal, groupPosOfRaw}
+  var svg, scatterCanvas, scatterCtx, heatCanvas, heatCtx, infoPanel, layoutEl, scatterStackEl;
+  var annotCanvas, posteriorPanelEl, annotPanelEl;
+  var nodeDomEls = null;          // Map: view-node object -> [dom elements] (for bolding on hover)
+  var activeEls = [];
+  var lastPickedNode = null;
+  var heatGrid = null;            // cached displayK x displayK fill-color grid
+
+  document.addEventListener("DOMContentLoaded", init);
+
+  function init() {
+    svg = document.getElementById("dendro");
+    scatterCanvas = document.getElementById("scatter");
+    scatterCtx = scatterCanvas.getContext("2d");
+    heatCanvas = document.getElementById("heatmap");
+    heatCtx = heatCanvas.getContext("2d");
+    infoPanel = document.getElementById("info-panel");
+    layoutEl = document.getElementById("layout");
+    scatterStackEl = document.getElementById("scatter-stack");
+    annotCanvas = document.getElementById("annot");
+    posteriorPanelEl = document.getElementById("posterior-panel");
+    annotPanelEl = document.getElementById("annot-panel");
+
+    document.getElementById("threshold-input").addEventListener("change", onThresholdChange);
+    document.getElementById("file-input").addEventListener("change", onFileChosen);
+    initDragAndDrop();
+
+    var initial = JSON.parse(document.getElementById("app-data").textContent);
+    loadData(initial);
+  }
+
+  // ===================================================================
+  // Manual file selection: click-to-browse (file-input, above) and
+  // drag-and-drop (anywhere on the page) both funnel through loadFile(),
+  // which reads, parses and validates before handing off to loadData().
+  // ===================================================================
+  function loadFile(file) {
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function() {
+      var parsed;
+      try {
+        parsed = JSON.parse(String(reader.result));
+      } catch (err) {
+        alert("Couldn't parse that file as JSON: " + err.message);
+        return;
+      }
+      if (!parsed || !parsed.meta || !parsed.nodes || !parsed.xlabOrder) {
+        alert("That file doesn't look like a PHM Explorer export (expected meta/nodes/xlabOrder fields).");
+        return;
+      }
+      loadData(parsed);
+    };
+    reader.onerror = function() {
+      alert("Couldn't read that file: " + (reader.error ? reader.error.message : "unknown error"));
+    };
+    reader.readAsText(file);
+  }
+
+  function initDragAndDrop() {
+    var overlay = document.getElementById("drop-overlay");
+    var dragDepth = 0; // tracks nested dragenter/dragleave across child elements
+
+    function isFileDrag(e) {
+      var types = e.dataTransfer && e.dataTransfer.types;
+      return !!types && Array.prototype.indexOf.call(types, "Files") !== -1;
+    }
+
+    document.addEventListener("dragenter", function(e) {
+      if (!isFileDrag(e)) return;
+      e.preventDefault();
+      dragDepth++;
+      overlay.classList.add("active");
+    });
+    document.addEventListener("dragover", function(e) {
+      if (!isFileDrag(e)) return;
+      e.preventDefault(); // required for drop to fire
+      e.dataTransfer.dropEffect = "copy";
+    });
+    document.addEventListener("dragleave", function(e) {
+      if (!isFileDrag(e)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (dragDepth === 0) overlay.classList.remove("active");
+    });
+    document.addEventListener("drop", function(e) {
+      if (!isFileDrag(e)) return;
+      e.preventDefault();
+      dragDepth = 0;
+      overlay.classList.remove("active");
+      var files = e.dataTransfer.files;
+      if (!files || !files.length) return;
+      if (files.length > 1) {
+        alert("Drop just one PHM export file at a time -- loading " + files[0].name + ".");
+      }
+      loadFile(files[0]);
+    });
+    // Belt-and-suspenders: if the user drops outside a recognized target or
+    // the browser doesn't fire dragleave reliably, never leave the overlay stuck.
+    window.addEventListener("dragend", function() {
+      dragDepth = 0;
+      overlay.classList.remove("active");
+    });
+  }
+
+  // ===================================================================
+  // Loading a (possibly new) export
+  // ===================================================================
+  function loadData(raw) {
+    RAW = raw;
+    var K = raw.meta.K;
+
+    var hasScatter = !!(raw.points && raw.z);
+    var hasAnnot = !!(raw.points && raw.annotation && raw.annotation.codes &&
+                      raw.annotation.codes.length === raw.points.x1.length);
+    if (raw.annotation && raw.points && !hasAnnot) {
+      alert("This export's annotation doesn't have one entry per point, so it was ignored.");
+    }
+    posteriorPanelEl.style.display = hasScatter ? "" : "none";
+    annotPanelEl.style.display = hasAnnot ? "" : "none";
+    scatterStackEl.style.display = (hasScatter || hasAnnot) ? "" : "none";
+    layoutEl.classList.toggle("no-scatter", !(hasScatter || hasAnnot));
+    scatterCanvas._domain = null; // a newly loaded file has its own point range
+
+    renderMeta(raw, !!raw.points);
+    renderLegend(hasScatter);
+    var dekAnnot = document.getElementById("dek-annot");
+    if (dekAnnot) dekAnnot.style.display = hasAnnot ? "" : "none";
+    if (hasAnnot) renderAnnotation();
+
+    var thresholdInput = document.getElementById("threshold-input");
+    var defaultThreshold = Math.min(K, 20);
+    thresholdInput.min = 2;
+    thresholdInput.max = K;
+    thresholdInput.value = defaultThreshold;
+    document.getElementById("threshold-max").textContent = K;
+
+    rebuildView(defaultThreshold);
+  }
+
+  function renderMeta(raw, hasScatter) {
+    var pills = [];
+    pills.push(pillHtml("components (K)", raw.meta.K));
+    if (hasScatter) pills.push(pillHtml("n", raw.meta.n));
+    document.getElementById("meta-pills").innerHTML = pills.join("");
+
+    var footerBits = [];
+    if (raw.meta.label) footerBits.push(raw.meta.label);
+    if (raw.meta.generatedAt) footerBits.push("exported " + raw.meta.generatedAt);
+    document.getElementById("footer-text").textContent = footerBits.join(" \u00b7 ");
+  }
+  function pillHtml(label, value) {
+    return '<span class="pill">' + label + ': <b>' + value + '</b></span>';
+  }
+  function renderLegend(hasScatter) {
+    var legend = document.getElementById("scatter-legend");
+    if (!hasScatter) { legend.innerHTML = ""; return; }
+    legend.innerHTML = '<span>posterior probability</span><span class="probgrad"></span><span>0 &rarr; 1</span>';
+  }
+
+  // ===================================================================
+  // Static categorical annotation (optional, display-only)
+  // ===================================================================
+  // Fixed, color-blind-friendly hues first (Okabe-Ito order, minus black and
+  // yellow, which vanish on the panel's background); past that, evenly spaced
+  // hues by golden angle so any number of categories still gets distinct colors.
+  var CAT_PALETTE = ["#0072b2", "#d55e00", "#009e73", "#cc79a7", "#56b4e9",
+                     "#e69f00", "#7a3fb0", "#8c564b", "#17becf", "#b5b300"];
+  function categoryColor(i) {
+    if (i < CAT_PALETTE.length) return CAT_PALETTE[i];
+    return "hsl(" + Math.round(((i - CAT_PALETTE.length) * 137.508) % 360) + ",60%,48%)";
+  }
+
+  function renderAnnotation() {
+    var A = RAW.annotation, x1 = RAW.points.x1, x2 = RAW.points.x2, N = x1.length;
+    document.getElementById("annot-title").textContent =
+      A.name && A.name !== "annotation" ? "Annotation: " + A.name : "Annotation";
+    var SW = 620, SH = 520, pad = 24;
+    var ctx = setupCanvas(annotCanvas, SW, SH);
+    var x1min = Math.min.apply(null, x1), x1max = Math.max.apply(null, x1);
+    var x2min = Math.min.apply(null, x2), x2max = Math.max.apply(null, x2);
+    var w = (x1max - x1min) || 1, h = (x2max - x2min) || 1;
+    function sx(v) { return pad + (v - x1min) / w * (SW - 2 * pad); }
+    function sy(v) { return SH - pad - (v - x2min) / h * (SH - 2 * pad); }
+
+    ctx.fillStyle = cssVar("--surface-2");
+    ctx.fillRect(0, 0, SW, SH);
+
+    var levels = asArray(A.levels), counts = new Array(levels.length).fill(0), nNA = 0;
+    for (var j = 0; j < N; j++) {
+      var c = A.codes[j];
+      if (c == null) nNA++; else counts[c - 1]++;
+    }
+    // Unlabeled points first (underneath), in neutral gray.
+    ctx.fillStyle = "rgba(" + (cssVar("--ink-faint-rgb") || "168,163,148") + ",0.6)";
+    for (var a = 0; a < N; a++) {
+      if (A.codes[a] != null) continue;
+      ctx.beginPath(); ctx.arc(sx(x1[a]), sy(x2[a]), 1.8, 0, 2 * Math.PI); ctx.fill();
+    }
+    ctx.globalAlpha = 0.85;
+    for (var L = 0; L < levels.length; L++) {
+      ctx.fillStyle = categoryColor(L);
+      for (var b = 0; b < N; b++) {
+        if (A.codes[b] !== L + 1) continue;
+        ctx.beginPath(); ctx.arc(sx(x1[b]), sy(x2[b]), 1.8, 0, 2 * Math.PI); ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    var html = levels.map(function(lv, i) {
+      return '<span class="swatch"><i style="background:' + categoryColor(i) + '"></i>' +
+             escapeHtml(String(lv)) + ' <em>' + counts[i] + '</em></span>';
+    });
+    if (nNA > 0) {
+      html.push('<span class="swatch"><i style="background:rgb(' + (cssVar("--ink-faint-rgb") || "168,163,148") +
+                ')"></i>unlabeled <em>' + nNA + '</em></span>');
+    }
+    document.getElementById("annot-legend").innerHTML = html.join("");
+  }
+  function escapeHtml(t) {
+    return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ===================================================================
+  // Collapsing the full-fidelity tree down to `displayK` leaves
+  // ===================================================================
+  function collapse(raw, displayK) {
+    var K = raw.meta.K;
+    var internalFull = raw.nodes.slice(K); // K-1, chronological, ascending height
+
+    var posOfRaw = {};
+    raw.xlabOrder.forEach(function(comp, idx) { posOfRaw[comp] = idx + 1; });
+
+    if (displayK >= K) {
+      var groupPosOfRawFull = {};
+      raw.xlabOrder.forEach(function(comp, idx) { groupPosOfRawFull[comp] = idx + 1; });
+      return {
+        displayK: K,
+        numAbsorbed: 0,
+        leaves: raw.nodes.slice(0, K).map(function(n) {
+          return { type: "leaf", members: asArray(n.members), pos_min: n.pos_min, pos_max: n.pos_max, height: 0 };
+        }),
+        internal: internalFull.map(function(n) {
+          return { type: "internal", members: asArray(n.members), pos_min: n.pos_min, pos_max: n.pos_max, height: n.height };
+        }),
+        groupPosOfRaw: groupPosOfRawFull
+      };
+    }
+
+    var numAbsorbed = K - displayK;
+    var absorbed = internalFull.slice(0, numAbsorbed);
+    var visible = internalFull.slice(numAbsorbed);
+
+    var parent = {};
+    for (var rid = 1; rid <= K; rid++) parent[rid] = rid;
+    function find(x) { while (parent[x] !== x) x = parent[x]; return x; }
+    function union(a, b) { var ra = find(a), rb = find(b); if (ra !== rb) parent[rb] = ra; }
+    absorbed.forEach(function(nd) {
+      var mem = asArray(nd.members);
+      for (var i = 1; i < mem.length; i++) union(mem[0], mem[i]);
+    });
+
+    var groupsMap = {};
+    for (var r = 1; r <= K; r++) {
+      var rep = find(r);
+      (groupsMap[rep] = groupsMap[rep] || []).push(r);
+    }
+    var reps = Object.keys(groupsMap).map(Number);
+    reps.sort(function(a, b) {
+      var pa = Math.min.apply(null, groupsMap[a].map(function(m) { return posOfRaw[m]; }));
+      var pb = Math.min.apply(null, groupsMap[b].map(function(m) { return posOfRaw[m]; }));
+      return pa - pb;
+    });
+    var groupPos = {}; // representative raw id -> display position
+    reps.forEach(function(r, i) { groupPos[r] = i + 1; });
+
+    var groupPosOfRaw = {};
+    for (var rr = 1; rr <= K; rr++) groupPosOfRaw[rr] = groupPos[find(rr)];
+
+    var leaves = reps.map(function(r, i) {
+      return { type: "leaf", members: groupsMap[r], pos_min: i + 1, pos_max: i + 1, height: 0 };
+    });
+
+    var internal = visible.map(function(nd) {
+      var mem = asArray(nd.members);
+      var positions = uniq(mem.map(function(m) { return groupPos[find(m)]; }));
+      return {
+        type: "internal", members: mem,
+        pos_min: Math.min.apply(null, positions), pos_max: Math.max.apply(null, positions),
+        height: nd.height
+      };
+    });
+
+    return { displayK: displayK, numAbsorbed: numAbsorbed, leaves: leaves, internal: internal, groupPosOfRaw: groupPosOfRaw };
+  }
+
+  // ===================================================================
+  // Probability lookup (sparse per-point posterior probabilities)
+  // ===================================================================
+  function probOfMembership(pointIdx, memberSet) {
+    var entries = RAW.z[pointIdx];
+    if (!entries || !entries.length) return 0;
+    var sum = 0;
+    for (var i = 0; i < entries.length; i++) {
+      var pair = entries[i];
+      if (memberSet.has(pair[0])) sum += pair[1];
+    }
+    return sum > 1 ? 1 : sum;
+  }
+
+  // ===================================================================
+  // Threshold control + file loader
+  // ===================================================================
+  function rebuildView(displayK) {
+    VIEW = collapse(RAW, displayK);
+    var visibleHeights = VIEW.internal.map(function(n) { return n.height; });
+    HEIGHT_RANGE = { min: Math.min.apply(null, visibleHeights), max: Math.max.apply(null, visibleHeights) };
+    heatGrid = null;
+    clearActive();
+    setInfo(null);
+    lastPickedNode = null;
+    renderDendrogram();
+    renderHeatmap();
+    renderScatter(null);
+  }
+
+  function onThresholdChange(e) {
+    var K = RAW.meta.K;
+    var v = Math.round(Number(e.target.value) || 2);
+    v = Math.max(2, Math.min(K, v));
+    e.target.value = v;
+    rebuildView(v);
+  }
+
+  function onFileChosen(e) {
+    var file = e.target.files && e.target.files[0];
+    loadFile(file);
+    e.target.value = "";
+  }
+
+  // ===================================================================
+  // Dendrogram
+  // ===================================================================
+  var VBW = 100, VBH = 62;
+  var plotTop = 4, plotBottom = VBH - 10;
+
+  // Shared horizontal margin, as a fraction of the plot width, for the
+  // leaf/column axis -- used by BOTH svgX() below (the dendrogram) and
+  // renderHeatmap() so that leaf N in the tree and column N in the heatmap
+  // land at the exact same horizontal fraction of the shared .combo box,
+  // regardless of its actual rendered pixel width. Keep these in sync.
+  var H_MARGIN_FRAC = 4 / 100;
+
+  // Anchored at the smallest real merge height (not the tallest): a dataset
+  // where the root towers far above everything else -- typical, since the
+  // root is "everything vs everything" -- would otherwise get compressed by
+  // a max-anchored log scale until nearly all of the finer structure reads
+  // as a flat line at the baseline. Anchoring at the minimum instead gives
+  // the finest merge a fixed, non-negligible lift (log1p(1)) regardless of
+  // the dataset's absolute height units, and scales purely off the RATIO of
+  // every other height to it, so this works the same way for any PHM fit.
+  function yScale(h) { return Math.log1p(h / HEIGHT_RANGE.min); }
+  function yMaxDisp() { return yScale(HEIGHT_RANGE.max); }
+
+  function renderDendrogram() {
+    while (svg.firstChild) svg.removeChild(svg.firstChild);
+    svg.setAttribute("viewBox", "0 0 " + VBW + " " + VBH);
+    nodeDomEls = [];
+
+    var K = RAW.meta.K;
+    var displayK = VIEW.displayK;
+    var internalFull = RAW.nodes.slice(K);
+
+    function svgX(pos) { return VBW * H_MARGIN_FRAC + (pos - 0.5) / displayK * VBW * (1 - 2 * H_MARGIN_FRAC); }
+
+    // Declumped display-y: guarantee a minimum on-screen gap between any two
+    // merge heights, so two branches whose heights differ by only a
+    // fraction of a percent still get their own hoverable band -- see the
+    // note further down at pickNode().
+    var MIN_GAP = 1.0;
+    var heightsAsc = VIEW.internal.map(function(n) { return n.height; }).slice().sort(function(a, b) { return a - b; });
+    var adjByHeight = {};
+    var prevAdj = plotBottom;
+    heightsAsc.forEach(function(h) {
+      var key = h.toFixed(6);
+      if (adjByHeight.hasOwnProperty(key)) return;
+      var raw = plotBottom - (yScale(h) / yMaxDisp()) * (plotBottom - plotTop);
+      var adj = Math.min(raw, prevAdj - MIN_GAP);
+      adjByHeight[key] = adj;
+      prevAdj = adj;
+    });
+    function dispY(h) {
+      if (h === 0) return plotBottom;
+      var key = h.toFixed(6);
+      if (adjByHeight.hasOwnProperty(key)) return adjByHeight[key];
+      return plotBottom - (yScale(h) / yMaxDisp()) * (plotBottom - plotTop);
+    }
+
+    var ns = "http://www.w3.org/2000/svg";
+    function el(tag, attrs) {
+      var e = document.createElementNS(ns, tag);
+      for (var k in attrs) e.setAttribute(k, attrs[k]);
+      return e;
+    }
+
+    svg.appendChild(el("line", { x1: svgX(1) - 2, x2: svgX(displayK) + 2, y1: plotBottom, y2: plotBottom, stroke: "var(--border)", "stroke-width": 0.4 }));
+
+    // ---- build bracket geometry by replaying the FULL merge history,
+    // drawing only the merges that survive the current collapse; raw
+    // components absorbed into a collapsed leaf just update that leaf's
+    // "active" position without drawing anything. ----
+    // Each "active" entry tracks where a raw component's current cluster is
+    // presently drawn: y === null means "still at the baseline" (an
+    // untouched leaf, or one absorbed into a collapsed leaf); any other y
+    // is an actual display y-coordinate already computed via dispY().
+    var active = {}; // raw component id -> {x, y}
+    for (var rid = 1; rid <= K; rid++) active[rid] = { x: VIEW.groupPosOfRaw[rid], y: null };
+    function svgYof(state) { return state.y === null ? plotBottom : state.y; }
+
+    var domByNode = []; // parallel to VIEW.internal
+    for (var i = 0; i < internalFull.length; i++) {
+      var nd = internalFull[i];
+      var leftMem = asArray(nd.left_members), rightMem = asArray(nd.right_members);
+      var leftState = active[leftMem[0]], rightState = active[rightMem[0]];
+      var allMem = asArray(nd.members);
+      if (i < VIEW.numAbsorbed) {
+        var groupX = VIEW.groupPosOfRaw[allMem[0]];
+        var st = { x: groupX, y: null };
+        allMem.forEach(function(m) { active[m] = st; });
+        continue;
+      }
+      var h = nd.height;
+      var y = dispY(h);
+      // leftState.x/rightState.x are display POSITIONS (1..displayK), not svg
+      // coordinates -- svgX() maps position -> the actual 0..100 viewBox x.
+      // Averaging happens in position space (newState.x below) so it stays
+      // correct however svgX() ends up rescaling; only the drawn line
+      // endpoints need the svg-space conversion.
+      var lPos = leftState.x, rPos = rightState.x;
+      var lx = svgX(lPos), rx = svgX(rPos);
+      var segEls = [];
+      segEls.push(svg.appendChild(el("line", { class: "seg", x1: lx, x2: lx, y1: svgYof(leftState), y2: y })));
+      segEls.push(svg.appendChild(el("line", { class: "seg", x1: rx, x2: rx, y1: svgYof(rightState), y2: y })));
+      segEls.push(svg.appendChild(el("line", { class: "seg", x1: lx, x2: rx, y1: y, y2: y })));
+      var newState = { x: (lPos + rPos) / 2, y: y };
+      allMem.forEach(function(m) { active[m] = newState; });
+      domByNode.push(segEls);
+    }
+    for (var vi = 0; vi < VIEW.internal.length; vi++) nodeDomEls.push([VIEW.internal[vi], domByNode[vi]]);
+
+    // leaf ticks + labels
+    for (var p = 1; p <= displayK; p++) {
+      var leafNode = VIEW.leaves[p - 1];
+      var mem = leafNode.members;
+      var tick = el("circle", { class: "leaftick", cx: svgX(p), cy: plotBottom, r: 1.1 });
+      svg.appendChild(tick);
+      var lbl = el("text", { class: "leaflabel", x: svgX(p), y: plotBottom + 4.4 });
+      lbl.textContent = mem.length === 1 ? mem[0] : ("\u00d7" + mem.length);
+      svg.appendChild(lbl);
+      nodeDomEls.push([leafNode, [tick]]);
+    }
+
+    // ---- hit-testing: a single transparent overlay, matched analytically.
+    // Every mousemove is converted to svg coordinates and matched to the
+    // closest node in the SAME declumped display-y space used to draw the
+    // tree; declumping already guarantees each merge a minimum on-screen
+    // gap, so plain nearest-neighbor (plus a tiny tie epsilon for residual
+    // sub-pixel rounding, favoring the more specific/narrower node) is
+    // enough -- no separate "leaf zone" special case needed. ----
+    var overlay = el("rect", { x: 0, y: 0, width: VBW, height: VBH, class: "hit" });
+    svg.appendChild(overlay);
+
+    var hitNodes = VIEW.leaves.concat(VIEW.internal).map(function(n) {
+      return { node: n, sy: dispY(n.height), range: n.pos_max - n.pos_min };
+    });
+    var TIE_EPS = 0.05;
+
+    function pickNode(svgPosX, svgPosY) {
+      var pos = Math.round((svgPosX - VBW * H_MARGIN_FRAC) / (VBW * (1 - 2 * H_MARGIN_FRAC)) * displayK + 0.5);
+      pos = Math.max(1, Math.min(displayK, pos));
+      var best = null, bestD = Infinity, bestRange = Infinity;
+      for (var j = 0; j < hitNodes.length; j++) {
+        var entry = hitNodes[j], n = entry.node;
+        if (pos < n.pos_min || pos > n.pos_max) continue;
+        var d = Math.abs(entry.sy - svgPosY);
+        if (d < bestD - TIE_EPS) {
+          best = n; bestD = d; bestRange = entry.range;
+        } else if (d < bestD + TIE_EPS && entry.range < bestRange) {
+          best = n; bestD = Math.min(bestD, d); bestRange = entry.range;
+        }
+      }
+      return best;
+    }
+
+    function clientToSvg(clientX, clientY) {
+      var pt = svg.createSVGPoint();
+      pt.x = clientX; pt.y = clientY;
+      var ctm = svg.getScreenCTM();
+      if (!ctm) return null;
+      var p = pt.matrixTransform(ctm.inverse());
+      return { x: p.x, y: p.y };
+    }
+    function handleMove(clientX, clientY) {
+      var p = clientToSvg(clientX, clientY);
+      if (!p) return;
+      var node = pickNode(p.x, p.y);
+      if (node && node !== lastPickedNode) {
+        lastPickedNode = node;
+        onEnter(node);
+      }
+    }
+    svg.addEventListener("mousemove", function(e) { handleMove(e.clientX, e.clientY); });
+    svg.addEventListener("mouseleave", function() { lastPickedNode = null; onLeave(); });
+    svg.addEventListener("touchstart", function(e) { if (e.touches && e.touches[0]) handleMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+    svg.addEventListener("touchmove", function(e) { if (e.touches && e.touches[0]) handleMove(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+  }
+
+  // ===================================================================
+  // Heatmap
+  // ===================================================================
+  function heightBetween(a, b) {
+    // smallest-height VIEW.internal node whose range spans both display
+    // positions a and b -- i.e. the merge that first joins them.
+    var best = Infinity;
+    for (var i = 0; i < VIEW.internal.length; i++) {
+      var n = VIEW.internal[i];
+      if (n.pos_min <= a && a <= n.pos_max && n.pos_min <= b && b <= n.pos_max) {
+        if (n.height < best) best = n.height;
+      }
+    }
+    return best;
+  }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function fillForHeight(h) {
+    var z = -h, lo = -HEIGHT_RANGE.max, hi = -HEIGHT_RANGE.min, mid = (lo + hi) / 2;
+    var t, r, g, b;
+    var BLUE = [0, 0, 255], WHITE = [255, 255, 255], RED = [255, 0, 0];
+    if (hi === lo) { r = 255; g = 255; b = 255; }
+    else if (z <= mid) {
+      t = mid === lo ? 0 : (z - lo) / (mid - lo);
+      r = lerp(BLUE[0], WHITE[0], t); g = lerp(BLUE[1], WHITE[1], t); b = lerp(BLUE[2], WHITE[2], t);
+    } else {
+      t = hi === mid ? 1 : (z - mid) / (hi - mid);
+      r = lerp(WHITE[0], RED[0], t); g = lerp(WHITE[1], RED[1], t); b = lerp(WHITE[2], RED[2], t);
+    }
+    return "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")";
+  }
+
+  function buildHeatGrid() {
+    var K = VIEW.displayK;
+    var grid = new Array(K);
+    for (var a = 1; a <= K; a++) {
+      grid[a - 1] = new Array(K);
+      for (var b = 1; b <= K; b++) {
+        if (a === b) { grid[a - 1][b - 1] = "#7f7f7f"; continue; }
+        var h = heightBetween(a, b);
+        grid[a - 1][b - 1] = fillForHeight(h);
+      }
+    }
+    return grid;
+  }
+
+  function setupCanvas(canvas, cssW, cssH) {
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = cssW * dpr; canvas.height = cssH * dpr;
+    canvas.style.width = cssW + "px"; canvas.style.height = cssH + "px";
+    var ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return ctx;
+  }
+
+  function renderHeatmap(hoveredNode) {
+    // Size to the ACTUAL current width of its box, measured live, rather
+    // than a fixed constant -- setupCanvas sets an explicit pixel width via
+    // inline style, which otherwise silently overrides the "width:100%" CSS
+    // rule and leaves the canvas a fixed size regardless of its container.
+    // That fixed size was the real reason the heatmap never lined up with
+    // the dendrogram above it: even with matching margins, a 400px-wide
+    // heatmap under a ~462px-wide (or any other width) dendrogram can't
+    // share column positions. Re-measuring on every render also keeps them
+    // aligned across a window resize or a layout change (e.g. loading a
+    // no-scatter file, which changes the column width).
+    var HW = heatCanvas.parentElement.clientWidth;
+    heatCtx = setupCanvas(heatCanvas, HW, HW);
+    if (!heatGrid) heatGrid = buildHeatGrid();
+    var K = VIEW.displayK;
+    // Inset by the SAME margin fraction svgX() uses for the dendrogram above,
+    // so column a here sits at the identical horizontal fraction of the
+    // shared .combo box as leaf a+1 does in the tree -- that's what makes
+    // the two read as one aligned figure instead of two independently-scaled
+    // plots that happen to be stacked.
+    var margin = HW * H_MARGIN_FRAC;
+    var usable = HW - 2 * margin;
+    var cell = usable / K;
+    heatCtx.clearRect(0, 0, HW, HW);
+    for (var a = 0; a < K; a++) {
+      for (var b = 0; b < K; b++) {
+        heatCtx.fillStyle = heatGrid[a][b];
+        heatCtx.fillRect(margin + a * cell, margin + b * cell, cell + 0.5, cell + 0.5);
+      }
+    }
+    if (hoveredNode) {
+      var x0 = margin + (hoveredNode.pos_min - 1) * cell, x1 = margin + hoveredNode.pos_max * cell;
+      heatCtx.strokeStyle = cssVar("--gold");
+      heatCtx.lineWidth = 3;
+      heatCtx.strokeRect(x0 + 1.5, x0 + 1.5, x1 - x0 - 3, x1 - x0 - 3);
+    }
+  }
+
+  // ===================================================================
+  // Scatter (optional)
+  // ===================================================================
+  // Floor alpha for a posterior probability of exactly 0 -- keep in sync
+  // with the CSS .probgrad gradient's left stop above. A point that a
+  // hovered branch claims with p=0 is now fully transparent (vanishes
+  // completely) rather than showing as a faint mark.
+  var PROB_ALPHA_FLOOR = 0;
+
+  // Separate floor for the ambient, no-branch-hovered point cloud (unrelated
+  // to posterior probability) -- keeps the full data shape faintly visible
+  // as context when nothing is hovered. Not affected by PROB_ALPHA_FLOOR.
+  var AMBIENT_ALPHA = 0.05;
+
+  function renderScatter(hoveredNode) {
+    if (!RAW.points || !RAW.z) return;
+    var SW = 620, SH = 520, pad = 24;
+    if (!scatterCanvas._sized) { scatterCtx = setupCanvas(scatterCanvas, SW, SH); scatterCanvas._sized = true; }
+    var x1 = RAW.points.x1, x2 = RAW.points.x2, N = x1.length;
+    if (!scatterCanvas._domain) {
+      var x1min = Math.min.apply(null, x1), x1max = Math.max.apply(null, x1);
+      var x2min = Math.min.apply(null, x2), x2max = Math.max.apply(null, x2);
+      scatterCanvas._domain = { x1min: x1min, x1max: x1max, x2min: x2min, x2max: x2max };
+    }
+    var dom = scatterCanvas._domain;
+    function sx(v) { return pad + (v - dom.x1min) / (dom.x1max - dom.x1min) * (SW - 2 * pad); }
+    function sy(v) { return SH - pad - (v - dom.x2min) / (dom.x2max - dom.x2min) * (SH - 2 * pad); }
+
+    scatterCtx.clearRect(0, 0, SW, SH);
+    scatterCtx.fillStyle = cssVar("--surface-2");
+    scatterCtx.fillRect(0, 0, SW, SH);
+
+    if (!hoveredNode) {
+      // No branch highlighted: show the full point cloud in neutral gray, at
+      // a low floor alpha, so the data's shape is always visible as context.
+      // Hovering then switches points to the gold/yellow highlight color
+      // (below), scaled by how strongly the hovered branch claims them,
+      // rather than just raising this same gray's opacity.
+      var grayFloor = cssVar("--ink-faint-rgb") || "168,163,148";
+      scatterCtx.fillStyle = "rgba(" + grayFloor + "," + AMBIENT_ALPHA.toFixed(3) + ")";
+      for (var j = 0; j < N; j++) {
+        scatterCtx.beginPath();
+        scatterCtx.arc(sx(x1[j]), sy(x2[j]), 1.6, 0, 2 * Math.PI);
+        scatterCtx.fill();
+      }
+      return;
+    }
+
+    var memberSet = new Set(hoveredNode.members);
+    var pts = [];
+    for (var i = 0; i < N; i++) {
+      pts.push({ i: i, p: probOfMembership(i, memberSet) });
+    }
+    pts.sort(function(a, b) { return a.p - b.p; }); // draw most-certain points last (on top)
+
+    var gold = cssVar("--gold-rgb") || "237,161,0";
+    for (var k = 0; k < pts.length; k++) {
+      var pt = pts[k];
+      var alpha = PROB_ALPHA_FLOOR + (1 - PROB_ALPHA_FLOOR) * pt.p;
+      scatterCtx.beginPath();
+      scatterCtx.arc(sx(x1[pt.i]), sy(x2[pt.i]), 1.6, 0, 2 * Math.PI);
+      scatterCtx.fillStyle = "rgba(" + gold + "," + alpha.toFixed(3) + ")";
+      scatterCtx.fill();
+    }
+  }
+
+  // ===================================================================
+  // Hover wiring + info panel
+  // ===================================================================
+  function clearActive() {
+    activeEls.forEach(function(e) { e.classList.remove("active"); });
+    activeEls = [];
+  }
+
+  function memberSummary(members) {
+    if (members.length <= 12) return "{" + members.join(", ") + "}";
+    return members.length + " components";
+  }
+
+  function setInfo(node) {
+    if (!node) {
+      infoPanel.innerHTML = '<p class="placeholder">Hover a leaf tick or a merge branch in the dendrogram (or a block of the heatmap) to inspect it here.</p>';
+      return;
+    }
+    var members = node.members;
+    var isLeaf = node.type === "leaf";
+    var title = isLeaf
+      ? (members.length === 1
+          ? "Component " + members[0] + " (single Gaussian, leaf)"
+          : "Collapsed leaf: " + members.length + " components " + memberSummary(members))
+      : "Merged group: components " + memberSummary(members);
+
+    var html = '<div class="headline">' + title + '</div>';
+    html += '<div class="row"><span>components in this branch</span><b>' + members.length + ' / ' + RAW.meta.K + '</b></div>';
+    html += '<div class="row"><span>d* merge height</span><b>' + (isLeaf ? "0.0000 (leaf)" : node.height.toFixed(4)) + '</b></div>';
+    if (RAW.points && RAW.z) {
+      var memberSet = new Set(members);
+      var n = RAW.z.length, count = 0, sum = 0;
+      for (var i = 0; i < n; i++) {
+        var p = probOfMembership(i, memberSet);
+        sum += p;
+        if (p > 0.5) count++;
+      }
+      html += '<div class="row"><span>points with posterior P &gt; 0.5</span><b>' + count + ' / ' + n + '</b></div>';
+      html += '<div class="row"><span>mean posterior probability</span><b>' + (sum / n).toFixed(4) + '</b></div>';
+    }
+    infoPanel.innerHTML = html;
+  }
+
+  function onEnter(node) {
+    clearActive();
+    renderScatter(node);
+    renderHeatmap(node);
+    setInfo(node);
+    // Highlight the hovered node's whole subtree, not just the one bracket
+    // under the cursor: in a hierarchical-clustering tree, a node's
+    // [pos_min, pos_max] range strictly contains every descendant's range
+    // and no non-descendant's, so range containment alone correctly picks
+    // out every branch and leaf tick between the hovered node and the
+    // leaves, with no need to walk parent/child pointers explicitly.
+    for (var i = 0; i < nodeDomEls.length; i++) {
+      var n = nodeDomEls[i][0];
+      if (n.pos_min >= node.pos_min && n.pos_max <= node.pos_max) {
+        nodeDomEls[i][1].forEach(function(e) { e.classList.add("active"); activeEls.push(e); });
+      }
+    }
+  }
+  function onLeave() {
+    clearActive();
+    renderScatter(null);
+    renderHeatmap(null);
+    setInfo(null);
+  }
+})();
+</script>

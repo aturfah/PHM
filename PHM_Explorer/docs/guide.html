@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Explorer Field Guide</title>
+<style>
+  :root {
+    --paper: #faf7f1;
+    --surface: #f1ecdf;
+    --ink: #24201a;
+    --ink-soft: #5c5344;
+    --ink-faint: #948a76;
+    --border: #ddd3bd;
+    --amber: #a8660a;
+    --amber-rgb: 168, 102, 10;
+    --gold: #d99400;
+    --code-bg: #24201a;
+    --code-ink: #f1ecdf;
+    --code-key: #e0b34a;
+    --blue: #3a6ea8;
+    --red: #b6472f;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1a170f;
+      --surface: #221e15;
+      --ink: #efe9db;
+      --ink-soft: #b8ae99;
+      --ink-faint: #786e5c;
+      --border: #3a3427;
+      --amber: #e6a53a;
+      --amber-rgb: 230, 165, 58;
+      --gold: #ffca3a;
+      --code-bg: #0f0d09;
+      --code-ink: #eee7d6;
+      --code-key: #ffca3a;
+      --blue: #6f9fd6;
+      --red: #d97a5f;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1a170f;
+    --surface: #221e15;
+    --ink: #efe9db;
+    --ink-soft: #b8ae99;
+    --ink-faint: #786e5c;
+    --border: #3a3427;
+    --amber: #e6a53a;
+    --amber-rgb: 230, 165, 58;
+    --gold: #ffca3a;
+    --code-bg: #0f0d09;
+    --code-ink: #eee7d6;
+    --code-key: #ffca3a;
+    --blue: #6f9fd6;
+    --red: #d97a5f;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 15.5px;
+    line-height: 1.65;
+    margin: 0;
+  }
+  ::selection { background: rgba(var(--amber-rgb), 0.28); }
+
+  a { color: var(--amber); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:hover { text-decoration-thickness: 2px; }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 96px;
+    display: grid;
+    grid-template-columns: 220px minmax(0, 720px);
+    gap: 56px;
+    justify-content: center;
+  }
+  @media (max-width: 880px) {
+    .shell { grid-template-columns: 1fr; gap: 28px; padding: 28px 18px 72px; }
+    nav.toc { display: none; }
+  }
+
+  header.hero {
+    grid-column: 1 / -1;
+    max-width: 720px;
+    margin: 0 auto 8px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+  }
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(30px, 4.4vw, 42px);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .dek {
+    font-size: 16.5px;
+    color: var(--ink-soft);
+    max-width: 62ch;
+    margin: 0 0 18px;
+  }
+  .hero-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .hero-links a.button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 8px 14px;
+    border-radius: 7px;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .hero-links a.button:hover { background: var(--amber); }
+  .hero-links .note { color: var(--ink-faint); }
+
+  nav.toc {
+    position: sticky;
+    top: 32px;
+    align-self: start;
+    padding-top: 4px;
+  }
+  nav.toc .label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+  nav.toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--border);
+  }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    padding: 7px 0 7px 16px;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    color: var(--ink-soft);
+    text-decoration: none;
+    font-size: 13.5px;
+  }
+  nav.toc a .num {
+    font-family: var(--font-mono);
+    color: var(--ink-faint);
+    margin-right: 8px;
+  }
+  nav.toc a:hover { color: var(--ink); }
+  nav.toc a.active {
+    color: var(--ink);
+    font-weight: 600;
+    border-left-color: var(--gold);
+  }
+
+  main { min-width: 0; }
+
+  section.step {
+    padding: 40px 0;
+    border-bottom: 1px solid var(--border);
+    scroll-margin-top: 24px;
+  }
+  section.step:last-of-type { border-bottom: none; }
+
+  .step-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 8px;
+  }
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    color: var(--gold);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 24px;
+    margin: 0;
+    letter-spacing: -0.005em;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    margin: 26px 0 10px;
+    color: var(--ink);
+  }
+  p { margin: 0 0 14px; }
+  section.step > p:first-of-type { margin-left: 30px; }
+  section.step > .body { margin-left: 30px; }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .codeblock {
+    position: relative;
+    background: var(--code-bg);
+    color: var(--code-ink);
+    border-radius: 10px;
+    margin: 14px 0 18px;
+    overflow: auto;
+  }
+  .codeblock pre {
+    margin: 0;
+    padding: 16px 18px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .codeblock code { background: none; border: none; padding: 0; color: inherit; font-size: 1em; }
+  .codeblock .cmt { color: #9c927a; }
+  .codeblock .kw { color: var(--code-key); }
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--code-ink);
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 6px;
+    padding: 4px 9px;
+    cursor: pointer;
+  }
+  .copy-btn:hover { background: rgba(255,255,255,0.16); }
+
+  table.args {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 20px;
+    font-size: 13.5px;
+  }
+  table.args th, table.args td {
+    text-align: left;
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  table.args th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+  }
+  table.args td.arg { font-family: var(--font-mono); font-size: 13px; color: var(--ink); white-space: nowrap; }
+  table.args td.req { color: var(--ink-faint); font-size: 12px; }
+  .overflow-wrap { overflow-x: auto; }
+
+  .callout {
+    display: flex;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0 20px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+  }
+  .callout b { color: var(--ink); }
+
+  .field-ui {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    margin: 4px 0 18px;
+  }
+  .field-ui .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 12px;
+    color: var(--ink-soft);
+  }
+  .field-ui .chip b { color: var(--ink); font-weight: 600; }
+
+  .legend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 10px 0 20px;
+  }
+  .legend-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    margin-top: 3px;
+    flex-shrink: 0;
+  }
+  .legend-item .txt b { display: block; font-size: 13px; margin-bottom: 2px; }
+  .legend-item .txt span { font-size: 12.5px; color: var(--ink-soft); }
+
+  .diagram {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    padding: 18px;
+    margin: 12px 0 20px;
+  }
+  .diagram svg { width: 100%; height: auto; display: block; }
+  .diagram figcaption { font-size: 12px; color: var(--ink-faint); text-align: center; margin-top: 8px; font-family: var(--font-mono); }
+
+  footer.page-foot {
+    grid-column: 1 / -1;
+    max-width: 720px;
+    margin: 8px auto 0;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+</style>
+
+</head>
+<body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<div class="shell">
+
+  <header class="hero">
+    <p class="eyebrow">Field guide</p>
+    <h1 class="title">Getting your PHM result into the Explorer</h1>
+    <p class="dek">Two steps: export a fitted <code>phm2</code> object to JSON from R, then load that
+      file into the interactive dendrogram &amp; &Delta;P<sub>mc</sub> heatmap. This page covers both,
+      and exactly what the exporter needs from your fit.</p>
+    <div class="hero-links">
+      <a class="button" href="../index.html">Open the Explorer &rarr;</a>
+      <span class="note">no installation of the app itself &mdash; it runs in the browser</span>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <p class="label">On this page</p>
+    <ol id="toc-list">
+      <li><a href="#install"><span class="num">01</span>Install</a></li>
+      <li><a href="#export"><span class="num">02</span>Export a result</a></li>
+      <li><a href="#arguments"><span class="num">03</span>Exporter arguments</a></li>
+      <li><a href="#load"><span class="num">04</span>Load it in</a></li>
+      <li><a href="#read"><span class="num">05</span>Reading the display</a></li>
+      <li><a href="#notes"><span class="num">06</span>Notes &amp; troubleshooting</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="step" id="install">
+      <div class="step-head">
+        <span class="step-num">01</span>
+        <h2>Install</h2>
+      </div>
+      <p>The Explorer itself is a self-contained web page &mdash; there's nothing to install for it.
+        What you need on the R side is the <code>PHM</code> package (to produce a fit) and
+        <code>jsonlite</code> (to write the export). Both come from the usual places:</p>
+      <div class="codeblock">
+        <button class="copy-btn" type="button">Copy</button>
+        <pre><code><span class="cmt"># once per machine</span>
+install.packages(<span class="kw">"jsonlite"</span>)
+install.packages(<span class="kw">"remotes"</span>)         <span class="cmt"># if you don't already have it</span>
+remotes::install_github(<span class="kw">"aturfah/PHM"</span>)</code></pre>
+      </div>
+      <p>Then grab <code>export_phm_json.R</code> &mdash; the exporter script &mdash; and keep it
+        next to your analysis. It has no dependencies beyond <code>PHM</code> and
+        <code>jsonlite</code>, both loaded internally with <code>library()</code>.</p>
+    </section>
+
+    <section class="step" id="export">
+      <div class="step-head">
+        <span class="step-num">02</span>
+        <h2>Export a result</h2>
+      </div>
+      <p>Fit as usual with <code>PHMv2()</code>, then hand the result to <code>export_phm_json()</code>.
+        It always exports the <b>full-fidelity tree</b> &mdash; every fitted component as a leaf,
+        every merge &mdash; the Explorer collapses that down to fewer leaves for display, live,
+        in the browser. You never re-export just to change the display threshold.</p>
+      <div class="codeblock">
+        <button class="copy-btn" type="button">Copy</button>
+        <pre><code>library(PHM)
+source(<span class="kw">"export_phm_json.R"</span>)
+
+fit &lt;- PHMv2(X, ...)   <span class="cmt"># your existing fit, X is 2D here</span>
+
+export_phm_json(
+  fit,
+  X        = X,                                <span class="cmt"># optional &mdash; adds the scatter panel</span>
+  out_path = <span class="kw">"my_result_export.json"</span>,
+  label    = <span class="kw">"two moons benchmark, n = 1000"</span>
+)</code></pre>
+      </div>
+      <div class="callout">
+        <span>&#9432;</span>
+        <span><b>Only <code>phm2</code> is required.</b> Everything else &mdash; the scatter panel,
+          per-point shading, the footer label &mdash; is optional and simply doesn't render if
+          you leave it out.</span>
+      </div>
+      <p>This also works on a pooled or ensemble fit (for example, a <code>paramsList</code>
+        assembled across bootstrap replicates) &mdash; nothing in the exporter assumes a single
+        <code>mclust</code> object exists.</p>
+
+      <h3>When the fit isn't already 2D</h3>
+      <p><code>X</code> and the scatter panel's layout are two different jobs, and the exporter
+        keeps them separate. <code>X</code> is only ever used to compute posterior probabilities
+        &mdash; it has to match the fit's own dimensionality, whatever that is. What actually gets
+        plotted is a separate argument, <code>xy</code>: any n&times;2 layout of your choosing.
+        If you don't pass <code>xy</code>, the first two columns of <code>X</code>
+        (<code>X[, 1:2]</code>) are plotted; for a 2D fit that is the fitted space itself, which
+        is why the example above never needed to mention it. Once your original data has more than
+        two dimensions, the first two columns are usually a poor view, so hand the exporter a real
+        embedding &mdash; a UMAP or t-SNE projection, a couple of principal components, anything
+        two-dimensional &mdash; instead:</p>
+      <div class="codeblock">
+        <button class="copy-btn" type="button">Copy</button>
+        <pre><code><span class="cmt"># X is the full original-space data the fit was built on (any dimension)</span>
+fit &lt;- PHMv2(X, ...)
+
+<span class="cmt"># a 2D layout computed separately, purely for the scatter panel</span>
+embedding &lt;- umap::umap(X)$layout
+
+export_phm_json(
+  fit,
+  X        = X,          <span class="cmt"># drives the posterior shading &mdash; full dimensionality</span>
+  xy       = embedding,  <span class="cmt"># drives what's actually plotted &mdash; any 2D layout</span>
+  out_path = <span class="kw">"my_result_export.json"</span>
+)</code></pre>
+      </div>
+      <p>If you don't have the original data at all &mdash; say you only kept someone else's
+        posterior probabilities &mdash; pass those as <code>z</code> directly alongside
+        <code>xy</code>; <code>X</code> isn't needed in that case.</p>
+    </section>
+
+    <section class="step" id="arguments">
+      <div class="step-head">
+        <span class="step-num">03</span>
+        <h2>Exporter arguments</h2>
+      </div>
+      <p>The full signature is <code>export_phm_json(phm2, X = NULL, xy = NULL, z = NULL, out_path = "phm_export.json", label = NULL, digits = 4, prob_eps = 0.005)</code>.</p>
+      <div class="overflow-wrap">
+      <table class="args">
+        <thead><tr><th>Argument</th><th>Required</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="arg">phm2</td>
+            <td class="req">yes</td>
+            <td>Your <code>PHMv2()</code> result. Only <code>phm2$paramsList</code> is
+              assumed to exist &mdash; a single fit or a pooled/ensemble list both work.</td>
+          </tr>
+          <tr>
+            <td class="arg">X</td>
+            <td class="req">optional</td>
+            <td>Original-space data the fit was built on, matrix or data frame, column count
+              matching the fit's own dimensionality. Used only to compute posterior
+              probabilities when <code>z</code> isn't supplied &mdash; never plotted directly
+              unless it also happens to be what you pass as <code>xy</code>.</td>
+          </tr>
+          <tr>
+            <td class="arg">xy</td>
+            <td class="req">optional</td>
+            <td>n&times;2 coordinates for the scatter panel &mdash; what's actually drawn on
+              screen. Any 2D layout: a UMAP/t-SNE embedding, a PCA projection, or the fit's own
+              two dimensions. If omitted and <code>X</code> is given, the first two columns of
+              <code>X</code> (<code>X[, 1:2]</code>) are used.</td>
+          </tr>
+          <tr>
+            <td class="arg">annotation</td>
+            <td class="req">optional</td>
+            <td>A length-n factor or character vector of categories, one per row of the layout.
+              Adds a second, static scatter panel with one color per category. Display-only:
+              the fit and the posterior shading never see it. <code>NA</code> shows as
+              &ldquo;unlabeled&rdquo;. Row i must be the same observation as row i of
+              <code>X</code>; the exporter errors if the lengths differ. Exports without it
+              are unchanged.</td>
+          </tr>
+          <tr>
+            <td class="arg">z</td>
+            <td class="req">optional</td>
+            <td>An n&times;K posterior-probability matrix. If <code>X</code> is given (matching
+              the fit's dimensionality) and <code>z</code> isn't, it's computed for you &mdash;
+              a Gaussian-mixture posterior via Cholesky log-density and softmax &mdash; straight
+              from <code>phm2$paramsList</code>, so this works even with no <code>mclust</code>
+              object at all. Pass this directly when you already have posteriors from elsewhere;
+              <code>X</code> is then optional.</td>
+          </tr>
+          <tr>
+            <td class="arg">out_path</td>
+            <td class="req">optional</td>
+            <td>Where to write the JSON. Default <code>"phm_export.json"</code>.</td>
+          </tr>
+          <tr>
+            <td class="arg">label</td>
+            <td class="req">optional</td>
+            <td>A short free-text description of the run (e.g. <code>"compound benchmark,
+              n=11700, seed=202"</code>), shown in the Explorer's footer.</td>
+          </tr>
+          <tr>
+            <td class="arg">digits</td>
+            <td class="req">optional</td>
+            <td>Rounding applied to point coordinates and merge heights. Default <code>4</code>.</td>
+          </tr>
+          <tr>
+            <td class="arg">prob_eps</td>
+            <td class="req">optional</td>
+            <td>Posterior probabilities at or below this are dropped from the (sparse)
+              export. Default <code>0.005</code> &mdash; keeps the file small even with
+              hundreds of fitted components, since posteriors are typically concentrated
+              on a handful per point.</td>
+          </tr>
+        </tbody>
+      </table>
+      </div>
+      <p style="color:var(--ink-soft); font-size:13.5px;">The resulting file carries
+        <code>meta</code> (K, merge criterion, n, label), the authoritative leaf order,
+        the merge tree (leaves + internal merges with their d*-scaled heights), and &mdash;
+        whenever a layout and a source of posteriors were both available &mdash; the plotted
+        coordinates and their sparse posterior weights. Tile colors for the heatmap aren't
+        precomputed; the Explorer derives them live from each merge's height, so recoloring
+        at a different display threshold needs no second export.</p>
+    </section>
+
+    <section class="step" id="load">
+      <div class="step-head">
+        <span class="step-num">04</span>
+        <h2>Load it in</h2>
+      </div>
+      <p>Open the Explorer, then use the controls in the header:</p>
+      <div class="field-ui">
+        <span class="chip"><b>load a PHM export&hellip;</b> &rarr; choose your <code>.json</code> file</span>
+        <span class="chip">or drag &amp; drop the <code>.json</code> file anywhere on the page</span>
+        <span class="chip"><b>show top</b> N <b>of</b> K <b>components</b> &rarr; collapse finer merges for display</span>
+      </div>
+      <p>Either loading method accepts anything <code>export_phm_json()</code> produced, and both go
+        through the same validation (a clear alert if the file isn't a PHM Explorer export, instead
+        of a silent failure). Loading a new
+        file fully replaces whatever was showing &mdash; scatter panel, threshold range, and
+        footer label all update to match. The threshold control never needs a re-export: raising
+        or lowering it re-collapses the same full-fidelity tree client-side, absorbing the
+        chronologically finest merges first, exactly as if <code>PHMv2</code> had been asked
+        for that many components from the start.</p>
+      <div class="callout">
+        <span>&#9432;</span>
+        <span>Nothing on this page assumes ground-truth labels &mdash; every color and shading
+          comes from the fit itself. The one exception is an optional <code>annotation</code>
+          you export yourself, shown in its own static panel and never used by the fit.</span>
+      </div>
+    </section>
+
+    <section class="step" id="read">
+      <div class="step-head">
+        <span class="step-num">05</span>
+        <h2>Reading the display</h2>
+      </div>
+      <p>Hover a leaf tick or a merge branch in the dendrogram to inspect it. The whole subtree
+        beneath your cursor highlights together, down to every leaf it contains, and three
+        other panels answer in sync:</p>
+      <div class="legend-grid">
+        <div class="legend-item">
+          <span class="swatch" style="background: var(--gold);"></span>
+          <span class="txt"><b>Gold</b><span>The hovered branch &mdash; in the tree, and the points it claims in the scatter panel, shaded by posterior probability.</span></span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: var(--ink-faint);"></span>
+          <span class="txt"><b>Gray</b><span>Everything not currently hovered. Scatter points stay faintly visible at rest, never fully transparent.</span></span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: var(--blue);"></span>
+          <span class="txt"><b>Blue heatmap cell</b><span>That pair of components merges late &mdash; well separated, distinguishable.</span></span>
+        </div>
+        <div class="legend-item">
+          <span class="swatch" style="background: var(--red);"></span>
+          <span class="txt"><b>Red heatmap cell</b><span>That pair merges early &mdash; weakly distinguishable at the fitted resolution.</span></span>
+        </div>
+      </div>
+      <p>The heatmap sits directly beneath the dendrogram, column-for-column aligned with the
+        leaf above it, so a branch and its corresponding block of the &Delta;P<sub>mc</sub> matrix
+        read as one figure. The branch detail panel below both fills in the numbers for whatever
+        you're hovering: which components it groups, the d*-scaled merge height, and &mdash; with
+        a scatter panel loaded &mdash; how many points fall inside it.</p>
+    </section>
+
+    <section class="step" id="notes">
+      <div class="step-head">
+        <span class="step-num">06</span>
+        <h2>Notes &amp; troubleshooting</h2>
+      </div>
+      <p><b>"That file doesn't look like a PHM Explorer export"</b> &mdash; the loader
+        checks for <code>meta</code>, <code>nodes</code>, and <code>xlabOrder</code> at the top
+        level of the JSON. This means the file wasn't produced by <code>export_phm_json()</code>,
+        or was edited afterward and lost one of those keys.</p>
+      <p><b>No scatter panel showing</b> &mdash; it only appears when the export includes both
+        <code>points</code> and <code>z</code>, which needs a 2D layout (<code>xy</code>, or
+        <code>X[, 1:2]</code> when <code>xy</code> is omitted) <i>and</i> a source of posteriors (<code>z</code>,
+        or <code>X</code> in the fit's native dimensionality). A tree-only export is entirely
+        valid; it just has nothing to shade.</p>
+      <p><b>"X has N column(s) but the fit has M dimension(s)"</b> &mdash; <code>X</code> has to
+        match whatever <code>PHMv2()</code> was actually fit on; it's never truncated to 2
+        columns for you. If your fit is higher-dimensional, pass the full <code>X</code> as-is
+        and hand the exporter a separate 2D <code>xy</code> for the layout (see
+        <a href="#export">above</a>).</p>
+      <p><b>Large fits stay fast</b> &mdash; per-point posteriors are stored sparsely
+        (<code>prob_eps</code>), and heatmap colors are computed from merge heights rather than
+        stored as a full K&times;K matrix, so exports scale gracefully into the thousands of
+        points and dozens of components.</p>
+      <p style="margin-bottom:0;">Everything above the threshold line is derived once per
+        export and reused for any display resolution &mdash; if you only want a different number
+        of components shown, reach for the <b>show top &hellip; of K</b> control before you
+        reach for R.</p>
+    </section>
+
+  </main>
+
+  <footer class="page-foot">
+    <span>PHM &middot; The Distinguishability Criterion</span>
+    <span id="year-span"></span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  document.getElementById("year-span").textContent =
+    "github.com/aturfah/PHM";
+
+  // Copy-to-clipboard for code blocks
+  document.querySelectorAll(".copy-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var block = btn.closest(".codeblock");
+      var codeEl = block.querySelector("code");
+      var text = codeEl.textContent;
+      var done = function () {
+        var prev = btn.textContent;
+        btn.textContent = "Copied";
+        setTimeout(function () { btn.textContent = prev; }, 1400);
+      };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done, done);
+        } else {
+          done();
+        }
+      } catch (e) { done(); }
+    });
+  });
+
+  // Scrollspy for the TOC
+  try {
+    var sections = Array.prototype.slice.call(document.querySelectorAll("section.step"));
+    var links = {};
+    document.querySelectorAll("#toc-list a").forEach(function (a) {
+      links[a.getAttribute("href").slice(1)] = a;
+    });
+    if ("IntersectionObserver" in window && sections.length) {
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          var link = links[entry.target.id];
+          if (!link) return;
+          if (entry.isIntersecting) {
+            Object.keys(links).forEach(function (k) { links[k].classList.remove("active"); });
+            link.classList.add("active");
+          }
+        });
+      }, { rootMargin: "-15% 0px -70% 0px", threshold: 0 });
+      sections.forEach(function (s) { observer.observe(s); });
+    }
+  } catch (e) { /* no-op if unsupported */ }
+})();
+</script>
+
+</body>
+</html>
