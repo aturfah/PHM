@@ -3,9 +3,9 @@
 **Version 1.0**
 
 This package implements the PHM algorithm for multiresolution and consensus clustering analysis, as well as its associated visualizations. 
-The method and computational procedures are described in [Turfah and Wen (2025)](https://www.biorxiv.org/content/10.1101/2025.06.13.659529v1).
+The method and computational procedures are described in [Turfah and Wen (2025)](https://www.biorxiv.org/content/10.1101/2025.06.13.659529v1) and [Turfah and Wen (2026)](https://arxiv.org/abs/2611.32945).
 
-For questions/commens regarding the package, please contact Ali Turfah (aturfah at umich dot com).
+For questions/commens regarding the package, please contact Ali Turfah (aturfah at umich dot edu) and William Wen (xwen at umich dot edu).
 
 Please see our [user guide](https://aturfah.github.io/PHM) for a detailed guide and use case examples.
 
