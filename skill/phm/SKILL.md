@@ -119,10 +119,10 @@ plotPmc2D(params, X, labels, PmcColor = "#222222")    # 2-D data only: where P_m
 PHM Explorer is a self-contained HTML page (dendrogram, ΔP_mc heatmap, and a scatter shaded by posterior probability) for browsing a `PHMv2` fit, collapsing it live to any number of leaves, and hovering branches to see which points they claim. The skill bundles it in `scripts/explorer/`:
 
 ```sh
-Rscript scripts/explorer/r/view_in_explorer.R phm_fit.rds X.rds --plot=plot.rds
+Rscript scripts/explorer/r/view_in_explorer.R phm_fit.rds X.rds --scatter=scatter.rds
 ```
 
-writes `phm_fit_export.json` and a standalone `phm_fit_explorer.html` next to the fit and opens it. `X.rds` adds posterior shading; `--plot=` gives 2-D coordinates (UMAP, PCs) and an optional `annotation` column when the data have more than two dimensions. From R, `source("scripts/explorer/r/export_phm_json.R")` and call `export_phm_json(fit, X = X, xy = embedding, annotation = cell_type, out_path = "fit.json")`. The exporter expects an alpha-scaled fit whose `paramsList` entries are single Gaussians (ensembles, `globalDensityEstimation()`, Mclust). For partition fits with multi-component clusters, pass `z = computePosteriorProbMatrix(params, X)` instead of `X`. Details, the plot-data format and troubleshooting are in `references/explorer.md`. Requires jsonlite and python3.
+writes `phm_fit_export.json` and a standalone `phm_fit_explorer.html` next to the fit and opens it. `X.rds` adds the scatter panel, shaded by posterior probability and laid out on `X[, 1:2]`; `--scatter=` gives better 2-D coordinates (UMAP, t-SNE) and an optional `annotation` column, which matters when the data have more than two dimensions. From R, `source("scripts/explorer/r/export_phm_json.R")` and call `export_phm_json(fit, X = X, xy = embedding, annotation = cell_type, out_path = "fit.json")`. The exporter expects an alpha-scaled fit whose `paramsList` entries are single Gaussians (ensembles, `globalDensityEstimation()`, Mclust). For partition fits with multi-component clusters, pass `z = computePosteriorProbMatrix(params, X)` instead of `X`. Details, the scatter-data format and troubleshooting are in `references/explorer.md`. Requires jsonlite and python3.
 
 ## Scale and speed
 
@@ -158,7 +158,7 @@ State what the hierarchy says in plain terms. Early merges (large ΔP_mc, low in
 - `references/api.md`: every exported function with its signature, defaults, the `paramsList` format, output structures and bundled datasets. Read it when writing or debugging calls.
 - `references/workflows.md`: worked recipes (GMM, comparing clusterers, soft weights, choosing a resolution, merge criteria, consensus via subsampling, localized density estimation, large data, Seurat embeddings, the original `PHM()`).
 - `references/ensemble.md`: the PHM ensemble in R and from the command line (serial, one machine, Slurm), `config.R` fields, seeds, failures and reruns, scaling advice.
-- `references/explorer.md`: exporting to PHM Explorer, plot-data format, reading the display, troubleshooting.
+- `references/explorer.md`: exporting to PHM Explorer, scatter-data format, reading the display, troubleshooting.
 - `scripts/setup_phm.R`: checks for and installs PHM and its dependencies.
 - `scripts/explorer/`: the PHM Explorer exporter (`r/export_phm_json.R`), one-command viewer (`r/view_in_explorer.R`), page template and builder (`src/`).
 

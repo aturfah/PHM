@@ -56,6 +56,7 @@ h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.7rem
 .pill b { color: var(--ink); font-weight: 600; }
 
 .controls { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: center; }
+.controls-right { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 10px 14px; }
 .ctrl { display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-family: var(--font-mono); color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px; }
 .ctrl b { color: var(--ink); }
 .ctrl input[type="number"] { width: 56px; font-family: var(--font-mono); font-size: 13px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; color: var(--ink); }
@@ -135,13 +136,6 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
 
 <header class="hero">
   <p class="eyebrow">PHM &middot; interactive</p>
-  <h1>Hover the tree, watch the data answer</h1>
-  <p class="dek">Every branch of this merge tree is a claim about which fitted components
-  are statistically indistinguishable. Hover a branch to see which block of the
-  &Delta;P<sub>mc</sub> heatmap it corresponds to, and &mdash; when point coordinates are
-  available &mdash; which points it claims, shaded by posterior probability. No ground-truth
-  labels are assumed anywhere on this page.<span id="dek-annot" style="display:none;"> The
-  annotation shown in the static plot is display-only; the fit never used it.</span></p>
   <div class="meta" id="meta-pills"></div>
   <div class="controls">
     <label class="ctrl">
@@ -149,11 +143,13 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
       <input type="number" id="threshold-input" min="2" step="1" />
       <span>of <b id="threshold-max">&mdash;</b> components</span>
     </label>
-    <label class="ctrl ctrl-file">
-      <span>load a PHM export&hellip;</span>
-      <input type="file" id="file-input" accept=".json,application/json" />
-    </label>
-    <span class="drop-hint">or drag &amp; drop a <code>.json</code> export anywhere on this page</span>
+    <div class="controls-right">
+      <span class="drop-hint">drag and drop a JSON export on the page, or</span>
+      <label class="ctrl ctrl-file">
+        <span>load a PHM export&hellip;</span>
+        <input type="file" id="file-input" accept=".json,application/json" />
+      </label>
+    </div>
   </div>
 </header>
 
@@ -164,8 +160,7 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
 <div class="layout" id="layout">
   <div class="stack" id="scatter-stack">
     <div class="panel" id="posterior-panel">
-      <h2>Data</h2>
-      <p class="sub">No ground truth is assumed or used. Hover a branch to shade its points by posterior probability.</p>
+      <h2>Scatter Plot</h2>
       <div class="plotbox"><canvas id="scatter"></canvas></div>
       <div class="legend" id="scatter-legend"></div>
       <p class="hint" id="scatter-hint">hover a dendrogram branch or leaf &rarr;</p>
@@ -181,7 +176,6 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
   <div class="stack">
     <div class="panel">
       <h2>PHM Result</h2>
-      <p class="sub" id="dendro-sub"></p>
       <div class="combo">
         <div class="plotbox"><svg id="dendro" viewBox="0 0 100 62" preserveAspectRatio="none"></svg></div>
         <div class="plotbox"><canvas id="heatmap"></canvas></div>
@@ -356,7 +350,8 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
 
     renderMeta(raw, !!raw.points);
     renderLegend(hasScatter);
-    document.getElementById("dek-annot").style.display = hasAnnot ? "" : "none";
+    var dekAnnot = document.getElementById("dek-annot");
+    if (dekAnnot) dekAnnot.style.display = hasAnnot ? "" : "none";
     if (hasAnnot) renderAnnotation();
 
     var thresholdInput = document.getElementById("threshold-input");
@@ -373,7 +368,6 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
     var pills = [];
     pills.push(pillHtml("components (K)", raw.meta.K));
     if (hasScatter) pills.push(pillHtml("n", raw.meta.n));
-    if (raw.meta.mergeCriterion) pills.push(pillHtml("merge criterion", raw.meta.mergeCriterion));
     document.getElementById("meta-pills").innerHTML = pills.join("");
 
     var footerBits = [];
@@ -604,11 +598,6 @@ footer { margin-top: 26px; padding-top: 16px; border-top: 1px solid var(--border
     var internalFull = RAW.nodes.slice(K);
 
     function svgX(pos) { return VBW * H_MARGIN_FRAC + (pos - 0.5) / displayK * VBW * (1 - 2 * H_MARGIN_FRAC); }
-
-    document.getElementById("dendro-sub").textContent =
-      (displayK - 1) + " merges over " + displayK + " leaves" +
-      (displayK < K ? " (collapsed from " + K + " fitted components)" : " (every fitted component)") +
-      " \u00b7 height = d* scale";
 
     // Declumped display-y: guarantee a minimum on-screen gap between any two
     // merge heights, so two branches whose heights differ by only a

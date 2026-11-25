@@ -32,17 +32,15 @@
 ##             compute posterior probabilities when `z` isn't supplied. Its
 ##             column count must match the fit's own dimensionality (every
 ##             column PHMv2 was fit on) -- this is deliberately NOT truncated
-##             to 2 columns, because it has nothing to do with what gets
-##             plotted (see `xy`).
+##             to 2 columns for the posteriors. When `xy` isn't given, X[, 1:2]
+##             also serves as the scatter layout (see `xy`).
 ##   xy        Optional n x 2 coordinates for the scatter panel specifically
 ##             -- what the point actually LOOKS like on screen. Any 2D
 ##             layout works: the fit's own two dimensions, a UMAP or t-SNE
 ##             embedding computed separately, a PCA projection, and so on.
 ##             It's never used for anything but placing the dots. If omitted
-##             and `X` happens to already have exactly 2 columns, `X` itself
-##             is used (keeps every pre-existing call working unchanged for
-##             2D fits); if `X` has more than 2 columns and `xy` isn't given,
-##             the scatter panel is simply omitted.
+##             and `X` is given, the first two columns of `X` are used
+##             (xy = X[, 1:2]) -- for a 2D fit that is the fitted space itself.
 ##   z         Optional n x K posterior-probability matrix (K = number of
 ##             fitted components), e.g. mcl$z for a single Mclust fit. If X
 ##             is supplied but z is not, it is computed generically from
@@ -75,8 +73,8 @@
 ## and stops with an error if they disagree; verifying that the rows are in
 ## the same ORDER is the caller's job.
 ##
-## The scatter panel appears only when BOTH a 2D layout (`xy`, or `X` when
-## it's already 2D) and a source of posterior probabilities (`z`, or `X` in
+## The scatter panel appears only when BOTH a 2D layout (`xy`, or X[, 1:2]
+## when `xy` is omitted) and a source of posterior probabilities (`z`, or `X` in
 ## the fit's native dimensionality) are available. A layout with no way to
 ## shade it is not enough on its own -- the app has nothing else to color
 ## the points by.
@@ -100,10 +98,16 @@ export_phm_json <- function(phm2, X = NULL, xy = NULL, z = NULL, annotation = NU
     if (ncol(xy) != 2) stop("xy must have exactly 2 columns (it's the scatter panel's plot layout).")
   }
 
-  ## If the fit itself is already 2D and no separate layout was given, the
-  ## fitted space doubles as the plot -- this is what every pre-existing
-  ## call already looked like, so it keeps working unchanged.
-  if (is.null(xy) && !is.null(X) && ncol(X) == 2) xy <- X
+  ## No separate layout given: plot the first two columns of X. For a 2D fit
+  ## that is the fitted space itself; for higher-dimensional X it is just
+  ## X[, 1:2] (X itself, all columns, still drives the posteriors).
+  if (is.null(xy) && !is.null(X) && ncol(X) >= 2) {
+    if (ncol(X) > 2) {
+      message("xy not supplied: plotting the first two columns of X (X[, 1:2]) in the scatter panel. ",
+              "Pass `xy` to use a different 2D layout (e.g. UMAP/t-SNE/PCA).")
+    }
+    xy <- X[, 1:2, drop = FALSE]
+  }
 
   has_layout <- !is.null(xy)
   n <- if (has_layout) nrow(xy) else if (!is.null(X)) nrow(X) else NA_integer_

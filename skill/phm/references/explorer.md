@@ -16,16 +16,16 @@ Requirements: the PHM package, jsonlite, and python3 (for `build.py`).
 ## One command
 
 ```sh
-Rscript scripts/explorer/r/view_in_explorer.R <fit.rds> [X.rds] [--plot=<plot.rds>]
+Rscript scripts/explorer/r/view_in_explorer.R <fit.rds> [X.rds] [--scatter=<scatter.rds>]
 ```
 
 | Argument | Meaning |
 |---|---|
 | `fit.rds` | A saved `PHMv2` object, e.g. `fitPHMEnsemble()` output or the ensemble pipeline's `outPath`. |
-| `X.rds` | Optional. The N × D matrix the fit was built on. Used to compute posteriors; also the scatter layout when D = 2. Without it you get the tree and heatmap only. |
-| `--plot=plot.rds` | Optional. A data frame with numeric `x`, `y` (the scatter layout, needed when D > 2), optional `annotation` (categorical; adds a second, static panel colored by category; `NA` = unlabeled) and optional `id` (checked against `rownames(X)`). Row i must be observation i of X. |
+| `X.rds` | Optional. An N × D matrix in the fit's own D dimensions: the fitting data, a subsample of it, or new data. Used to compute posteriors, and without `--scatter=` its first two columns `X[, 1:2]` are the scatter layout. Without it you get the tree and heatmap only. |
+| `--scatter=scatter.rds` | Optional (the flag was `--plot=` before Nov 25, 2026). A data frame with numeric `x`, `y` (the scatter layout, replacing `X[, 1:2]`; use it whenever D > 2), optional `annotation` (categorical; adds a second, static panel colored by category; `NA` = unlabeled) and optional `id` (checked against `rownames(X)`). Row i must be observation i of X. |
 
-It writes `<fit>_export.json` and `<fit>_explorer.html` next to the fit and opens the page (`open` on macOS, `xdg-open` on Linux; otherwise it prints the path). It checks for PHM, jsonlite, python3 and its own helper files first and lists every problem at once. It stops, using none of the plot data, if the plot rows do not match X in count or `id`. Keep the script inside `scripts/explorer/r/`: it locates `export_phm_json.R` and `../src/build.py` relative to itself.
+It writes `<fit>_export.json` and `<fit>_explorer.html` next to the fit and opens the page (`open` on macOS, `xdg-open` on Linux; otherwise it prints the path). It checks for PHM, jsonlite, python3 and its own helper files first and lists every problem at once. It stops, using none of the scatter data, if its rows do not match X in count or `id`. Keep the script inside `scripts/explorer/r/`: it locates `export_phm_json.R` and `../src/build.py` relative to itself.
 
 When running headless (an agent with no browser), skip the opening step by calling the two pieces directly:
 
@@ -44,8 +44,8 @@ source("scripts/explorer/r/export_phm_json.R")
 
 export_phm_json(
   fit,                         # PHMv2 result (required)
-  X          = X,              # optional: data in the fit's own dimension, for posteriors
-  xy         = embedding,      # optional: n x 2 layout (UMAP, t-SNE, 2 PCs); defaults to X when X is 2-D
+  X          = X,              # optional: data in the fit's own dimension, for posteriors (fitting data, a subsample, or new data)
+  xy         = embedding,      # optional: n x 2 layout (UMAP, t-SNE); defaults to X[, 1:2]
   z          = NULL,           # optional: n x K posteriors, instead of X
   annotation = cell_type,      # optional: length-n categories for the static panel
   annotation_name = "cell type",
@@ -56,13 +56,13 @@ export_phm_json(
 )
 ```
 
-The scatter appears only when the export has both a layout (`xy`, or 2-D `X`) and posteriors (`z`, or `X` in the fit's dimension).
+The scatter appears only when the export has both a layout (`xy`, or `X[, 1:2]` when `xy` is omitted) and posteriors (`z`, or `X` in the fit's dimension). When X has more than two columns and `xy` is omitted, the exporter says it is plotting `X[, 1:2]`; for PCs that is PC1 vs PC2, often a poor picture of the clusters, so prefer a UMAP or t-SNE `xy`.
 
 ## What the exporter can and cannot take
 
 - **Alpha-scaled fits only.** Heights are computed on the `"d*"` scale, so a fit made with `scaling = "unscaled"` or `"average"` fails with "d scaling only makes sense with alpha criterion". Re-run `PHMv2(paramsList = fit$paramsList, deltaPmc = fit$deltaPmc, scaling = "alpha")`; it reuses the ΔP_mc matrix, so no Monte Carlo.
 - **Single-Gaussian leaves for automatic posteriors.** With `X`, posteriors are computed assuming each `paramsList` element is one Gaussian, which holds for ensembles, `globalDensityEstimation()`, `constructPmcParamsMclust()` and `localizedDensityEstimation(preserveClusters = FALSE)`. For partition fits whose clusters are mixtures (`constructPmcParamsWeightedPartition()`, `preserveClusters = TRUE`), passing `X` fails with "X has 2 column(s) but the fit has 6 dimension(s)". Pass `z = computePosteriorProbMatrix(fit$paramsList, X)` and `xy` instead.
-- **`X` must have the fit's dimension**, never truncated to 2 columns. For D > 2 pass the full X and a separate 2-D `xy`.
+- **`X` must have the fit's dimension**, never truncated to 2 columns; its rows need not be the fitting data (a subsample or new data works). For D > 2 pass the full X and, for a useful picture, a separate 2-D `xy`.
 - **Size.** Exports scale to thousands of components and tens of thousands of points (posteriors stored sparsely). For millions of points, export a subsample, taking the same rows from X, `xy` and `annotation`.
 - `PHM()` (v1) results: convert first with `convertToPHMv2(phm)`; they then need `paramsList` and alpha scaling, so in practice re-run `PHMv2()` on the v1 `params`.
 
@@ -79,8 +79,10 @@ The scatter appears only when the export has both a layout (`xy`, or 2-D `X`) an
 | Message or symptom | Cause and fix |
 |---|---|
 | "That file doesn't look like a PHM Explorer export" | The JSON lacks top-level `meta`, `nodes` or `xlabOrder`; it was not made by `export_phm_json()` or was edited. Re-export. |
-| No scatter panel | The export lacks a layout or posteriors. Give 2-D `X`, or `xy` plus `X`/`z`. |
+| No scatter panel | The export lacks posteriors (no `X` or `z`) or a layout. Give `X`, or `xy` plus `z`. |
+| Scatter looks like an uninformative blob | `xy` was omitted for D > 2 data, so `X[, 1:2]` was plotted. Pass a UMAP/t-SNE `xy` (or `--scatter=`). |
 | "X has N column(s) but the fit has M dimension(s)" | X is not the data the fit used, or the leaves are mixtures. See above. |
 | "d scaling only makes sense with alpha criterion" | Non-alpha fit; re-run with `scaling = "alpha"` reusing `deltaPmc`. |
-| "plot data has N rows but X has M" / id mismatch | Plot data not aligned with X; nothing from it was used. |
+| "scatter data has N rows but X has M" / id mismatch | Scatter data not aligned with X; nothing from it was used. |
+| "usage: ... [--scatter=<plot.rds>]" when passing `--plot=` | The flag was renamed; use `--scatter=`. |
 | `python3 not found` | Install Python 3, or build elsewhere: the `.json` alone can be loaded into any already-built page. |

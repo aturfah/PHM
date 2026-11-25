@@ -525,21 +525,31 @@ if (requireNamespace("jsonlite", quietly = TRUE) && nzchar(Sys.which("python3"))
         raises(capture.output(export_phm_json(fit_un, xy = Xm, z = computePosteriorProbMatrix(params_mc, Xm),
                                               out_path = file.path(tdir, "u.json")))))
   saveRDS(ens, file.path(tdir, "fit.rds")); saveRDS(Xr, file.path(tdir, "X.rds"))
-  saveRDS(data.frame(x = Xr[, 1], y = Xr[, 2], annotation = factor(truth_r)), file.path(tdir, "plot.rds"))
+  saveRDS(data.frame(x = Xr[, 1], y = Xr[, 2], annotation = factor(truth_r)), file.path(tdir, "scatter.rds"))
   st <- system2(file.path(R.home("bin"), "Rscript"),
                 c(shQuote(file.path(explorer_dir, "r", "view_in_explorer.R")), shQuote(file.path(tdir, "fit.rds")),
-                  shQuote(file.path(tdir, "X.rds")), paste0("--plot=", shQuote(file.path(tdir, "plot.rds")))),
+                  shQuote(file.path(tdir, "X.rds")), paste0("--scatter=", shQuote(file.path(tdir, "scatter.rds")))),
                 stdout = FALSE, stderr = FALSE, env = "BROWSER=true")
   html <- file.path(tdir, "fit_explorer.html")
   check("view_in_explorer.R writes <fit>_export.json and <fit>_explorer.html with the data embedded",
         file.exists(file.path(tdir, "fit_export.json")) && file.exists(html) &&
           !any(grepl("__DATA_JSON__", readLines(html, warn = FALSE), fixed = TRUE)))
-  saveRDS(data.frame(x = Xr[-1, 1], y = Xr[-1, 2]), file.path(tdir, "plot_bad.rds"))
+  saveRDS(data.frame(x = Xr[-1, 1], y = Xr[-1, 2]), file.path(tdir, "scatter_bad.rds"))
   st_bad <- system2(file.path(R.home("bin"), "Rscript"),
                     c(shQuote(file.path(explorer_dir, "r", "view_in_explorer.R")), shQuote(file.path(tdir, "fit.rds")),
-                      shQuote(file.path(tdir, "X.rds")), paste0("--plot=", shQuote(file.path(tdir, "plot_bad.rds")))),
+                      shQuote(file.path(tdir, "X.rds")), paste0("--scatter=", shQuote(file.path(tdir, "scatter_bad.rds")))),
                     stdout = FALSE, stderr = FALSE)
-  check("view_in_explorer.R refuses plot data whose row count differs from X", !identical(st_bad, 0L))
+  check("view_in_explorer.R refuses scatter data whose row count differs from X", !identical(st_bad, 0L))
+  st_old <- system2(file.path(R.home("bin"), "Rscript"),
+                    c(shQuote(file.path(explorer_dir, "r", "view_in_explorer.R")), shQuote(file.path(tdir, "fit.rds")),
+                      paste0("--plot=", shQuote(file.path(tdir, "scatter.rds")))), stdout = FALSE, stderr = FALSE)
+  check("the old --plot= flag is rejected (renamed to --scatter=)", !identical(st_old, 0L))
+  X3 <- cbind(Xm, Xm[, 1] * Xm[, 2])
+  fit3 <- PHMv2(paramsList = constructPmcParamsMclust(mclust::Mclust(X3, G = 4, verbose = FALSE)), mcSamples = 2e4)
+  msg3 <- capture.output(export_phm_json(fit3, X = X3, out_path = file.path(tdir, "d3.json")), type = "message")
+  js3 <- jsonlite::fromJSON(file.path(tdir, "d3.json"))
+  check("D > 2 without xy: the scatter uses X[, 1:2] and says so",
+        !is.null(js3$points) && isTRUE(all.equal(js3$points$x1, round(X3[, 1], 4))) && any(grepl("X\\[, 1:2\\]", msg3)))
   out_b <- system2("python3", c(shQuote(file.path(explorer_dir, "src", "build.py")), "--data", shQuote(file.path(tdir, "ens.json")),
                                  "--out", shQuote(file.path(tdir, "ens.html"))), stdout = TRUE, stderr = TRUE)
   check("headless route: build.py turns an export into a page", file.exists(file.path(tdir, "ens.html")))

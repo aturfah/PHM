@@ -10,20 +10,20 @@
 ## any directory.
 ##
 ## Usage:
-##   Rscript view_in_explorer.R <fit.rds> [X.rds] [--plot=<plot.rds>]
+##   Rscript view_in_explorer.R <fit.rds> [X.rds] [--scatter=<plot.rds>]
 ##
 ## <fit.rds>  Required. A saved PHMv2() result, e.g. from
 ##            combineDensityReplicates() (whatever CFG$outPath pointed at).
 ## [X.rds]    Optional. The same data matrix that fit was run on (CFG$dataPath).
 ##            Adds the scatter panel. Without it you still get a complete,
 ##            valid export -- just the dendrogram/heatmap, no scatter (see
-##            README.md: "A tree-only export is entirely valid."). If your
-##            data has more than 2 columns, this is used only to compute
-##            posteriors, not as the plot layout -- use --plot= below for a
-##            scatter in that case.
+##            README.md: "A tree-only export is entirely valid."). Without
+##            --scatter=, the first two columns of X (X[, 1:2]) are plotted;
+##            if X has more than 2 columns, use --scatter= below to plot a
+##            better 2D layout (UMAP, t-SNE, PCA, ...) instead.
 ##
-## [--plot=]  Optional. A data frame for 2D plotting, used only by the Explorer
-##            (see README.md, "Viewing a saved fit in one command"). Columns:
+## [--scatter=]  Optional. A data frame for 2D plotting, used only by the Explorer
+##            (see README.md, "Launch explorer from command line"). Columns:
 ##              x, y         required, numeric -- the 2D coordinates to plot;
 ##                           they replace X as the scatter layout, so this is
 ##                           how to get a scatter for data with D > 2
@@ -34,8 +34,8 @@
 ##            Row i must be the same observation as row i of X. That is the
 ##            caller's responsibility; this script stops with an error only on
 ##            clear evidence of misalignment (different row counts, or ids that
-##            disagree with X's rownames) and then uses NONE of the plot data.
-##            The plot data never touches the fit.
+##            disagree with X's rownames) and then uses NONE of the scatter data.
+##            The scatter data never touches the fit.
 ##
 ## Output: <fit.rds>'s own directory gets two new files next to it, named
 ## after <fit.rds> itself -- e.g. phm_fit.rds -> phm_fit_export.json and
@@ -46,18 +46,18 @@
 ## PHM_Explorer/ is the parent of the r/ folder this script lives in.
 PHM_EXPLORER_DIR <- local({
   f <- sub("^--file=", "", grep("^--file=", commandArgs(trailingOnly = FALSE), value = TRUE))
-  if (length(f) != 1) stop("run this with Rscript: Rscript view_in_explorer.R <fit.rds> [X.rds] [--plot=<plot.rds>]")
+  if (length(f) != 1) stop("run this with Rscript: Rscript view_in_explorer.R <fit.rds> [X.rds] [--scatter=<plot.rds>]")
   dirname(dirname(normalizePath(f)))
 })
 
-usage <- "usage: Rscript view_in_explorer.R <fit.rds> [X.rds] [--plot=<plot.rds>]"
+usage <- "usage: Rscript view_in_explorer.R <fit.rds> [X.rds] [--scatter=<plot.rds>]"
 cliArgs <- commandArgs(trailingOnly = TRUE)
-plotFlag <- grepl("^--plot=", cliArgs)
-plotPath <- if (any(plotFlag)) sub("^--plot=", "", cliArgs[plotFlag][1]) else NA
-if (sum(plotFlag) > 1) stop(usage)
-posArgs <- cliArgs[!plotFlag]
+scatterFlag <- grepl("^--scatter=", cliArgs)
+scatterPath <- if (any(scatterFlag)) sub("^--scatter=", "", cliArgs[scatterFlag][1]) else NA
+if (sum(scatterFlag) > 1) stop(usage)
+posArgs <- cliArgs[!scatterFlag]
 if (any(grepl("^--", posArgs)) || length(posArgs) < 1 || length(posArgs) > 2 ||
-    (!is.na(plotPath) && !nzchar(plotPath))) {
+    (!is.na(scatterPath) && !nzchar(scatterPath))) {
   stop(usage)
 }
 rdsPath <- posArgs[1]
@@ -75,8 +75,8 @@ if (!is.na(xPath) && !file.exists(xPath)) {
   problems <- c(problems, sprintf("data file '%s' not found", xPath))
 }
 
-if (!is.na(plotPath) && !file.exists(plotPath)) {
-  problems <- c(problems, sprintf("plot data file '%s' not found", plotPath))
+if (!is.na(scatterPath) && !file.exists(scatterPath)) {
+  problems <- c(problems, sprintf("scatter data file '%s' not found", scatterPath))
 }
 
 exporterPath <- file.path(PHM_EXPLORER_DIR, "r", "export_phm_json.R")
@@ -112,38 +112,38 @@ source(exporterPath)
 fit <- readRDS(rdsPath)
 X <- if (!is.na(xPath)) readRDS(xPath) else NULL
 
-## --- optional plotting data: validate before anything is written; on any
+## --- optional scatter data: validate before anything is written; on any
 ## problem, stop and use none of it ---
 xy <- NULL
 annotation <- NULL
-if (!is.na(plotPath)) {
-  plotDat <- readRDS(plotPath)
-  if (!is.data.frame(plotDat) && !is.matrix(plotDat)) {
-    stop(sprintf("plot data '%s' must be a data frame (or matrix) with columns x and y", plotPath))
+if (!is.na(scatterPath)) {
+  scatterDat <- readRDS(scatterPath)
+  if (!is.data.frame(scatterDat) && !is.matrix(scatterDat)) {
+    stop(sprintf("scatter data '%s' must be a data frame (or matrix) with columns x and y", scatterPath))
   }
-  plotDat <- as.data.frame(plotDat, stringsAsFactors = FALSE)
-  if (!all(c("x", "y") %in% names(plotDat))) {
-    stop(sprintf("plot data '%s' must have columns named x and y (found: %s)",
-                 plotPath, paste(names(plotDat), collapse = ", ")))
+  scatterDat <- as.data.frame(scatterDat, stringsAsFactors = FALSE)
+  if (!all(c("x", "y") %in% names(scatterDat))) {
+    stop(sprintf("scatter data '%s' must have columns named x and y (found: %s)",
+                 scatterPath, paste(names(scatterDat), collapse = ", ")))
   }
-  if (!is.numeric(plotDat$x) || !is.numeric(plotDat$y) ||
-      !all(is.finite(plotDat$x)) || !all(is.finite(plotDat$y))) {
-    stop("plot data columns x and y must be numeric with no NA/NaN/Inf")
+  if (!is.numeric(scatterDat$x) || !is.numeric(scatterDat$y) ||
+      !all(is.finite(scatterDat$x)) || !all(is.finite(scatterDat$y))) {
+    stop("scatter data columns x and y must be numeric with no NA/NaN/Inf")
   }
   if (!is.null(X)) {
-    if (nrow(plotDat) != nrow(X)) {
-      stop(sprintf(paste0("plot data has %d rows but X has %d -- they must be the same observations ",
-                          "in the same order. Plot data NOT used."), nrow(plotDat), nrow(X)))
+    if (nrow(scatterDat) != nrow(X)) {
+      stop(sprintf(paste0("scatter data has %d rows but X has %d -- they must be the same observations ",
+                          "in the same order. Scatter data NOT used."), nrow(scatterDat), nrow(X)))
     }
-    if ("id" %in% names(plotDat) && !is.null(rownames(X)) &&
-        !identical(as.character(plotDat$id), rownames(X))) {
-      stop("plot data's id column does not match X's rownames (values or order). Plot data NOT used.")
+    if ("id" %in% names(scatterDat) && !is.null(rownames(X)) &&
+        !identical(as.character(scatterDat$id), rownames(X))) {
+      stop("scatter data's id column does not match X's rownames (values or order). Scatter data NOT used.")
     }
   } else {
-    cat("note: no X given, so plot data alignment with the data cannot be checked (and posterior shading is unavailable)\n")
+    cat("note: no X given, so scatter data alignment with the data cannot be checked (and posterior shading is unavailable)\n")
   }
-  xy <- cbind(x = plotDat$x, y = plotDat$y)
-  if ("annotation" %in% names(plotDat)) annotation <- plotDat$annotation
+  xy <- cbind(x = scatterDat$x, y = scatterDat$y)
+  if ("annotation" %in% names(scatterDat)) annotation <- scatterDat$annotation
 }
 
 rdsDir <- dirname(normalizePath(rdsPath))
